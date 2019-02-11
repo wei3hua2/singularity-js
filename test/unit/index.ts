@@ -17,7 +17,7 @@ m.describe('Index', () => {
   });
 
   m.it('should be whatever action', async function () {
-    console.log(snet.eth);
+    // console.log(snet.eth);
   });
 
 })
