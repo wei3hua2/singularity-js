@@ -31,7 +31,7 @@ class Snet {
 
     constructor(web3) {
         this.web3 = web3;
-        console.log('hello world from constructor : ' + this.web3);
+        this.eth = new Eth(web3);
     }
 }
 

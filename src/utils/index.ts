@@ -1,7 +1,7 @@
-function agiToCogs(agi): number {
+function agiToCogs(agi: any): number {
     return agi * 100000000;
 }
-function cogsToAgi(cogs): number {
+function cogsToAgi(cogs: any): number {
     return cogs / 100000000;
 }
 

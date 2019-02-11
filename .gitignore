@@ -62,3 +62,4 @@ typings/
 
 # output directory for TypeScript
 build
+dist

@@ -2,12 +2,14 @@
   "name": "snet-webclient",
   "version": "0.1.0",
   "description": "web client for singularitynet",
-  "main": "snet.js",
+  "main": "dist/snet-webclient.min.js",
   "scripts": {
-    "watch": "tsc -w",
-    "build": "tsc",
+    "watch": "webpack --watch --config webpack.config.js",
+    "build": "webpack --config webpack.config.js",
+    "clean": "rm -rf build dist",
     "test-unit": "mocha -r ts-node/register test/unit/**.ts",
     "test-browser": "node_modules/karma/bin/karma start karma.conf.js",
+    "showcase": "node_modules/http-server/bin/http-server",
     "postinstall": "scripts/install.js",
     "uninstall": "scripts/uninstall.js"
   },
@@ -21,21 +23,27 @@
     "url": "https://github.com/wei3hua2/snet-webclient/issues"
   },
   "homepage": "https://github.com/wei3hua2/snet-webclient#readme",
-  "dependencies": {},
+  "dependencies": {
+    "bluebird": "^3.5.3"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.4",
     "@types/chai-as-promised": "^7.1.0",
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.5.2",
     "babel-loader": "^8.0.5",
+    "chai": "^4.2.0",
+    "http-server": "^0.11.1",
     "jasmine-core": "^3.3.0",
     "karma": "^4.0.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^2.0.1",
     "karma-webpack": "^3.0.5",
     "mocha": "^5.2.0",
+    "ts-loader": "^5.3.3",
     "ts-node": "^6.0.5",
     "typescript": "^2.8.3",
-    "webpack": "^4.29.3"
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
   }
 }

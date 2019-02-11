@@ -7,9 +7,10 @@
    ],
   "compilerOptions": {
     "lib": [
-     "es2017","es2015","dom","es6"
+     "es2017","es2015","dom","es6", "es5"
     ],
-    "outDir":"build",
+    "sourceMap": true,
+    "outDir":"dist",
     "skipLibCheck": true,
     "types":["node"],
     "target": "es2015",
@@ -17,6 +18,11 @@
     "declaration": true,
     "strict": false,
     "esModuleInterop": true,
-    "experimentalDecorators":true
+    "experimentalDecorators":true,
+    "noImplicitAny": false,
+    // "module": "es6",
+    // "target": "es5" 
+    // "jsx": "react"
+    // "allowJs": true
   }
 }
