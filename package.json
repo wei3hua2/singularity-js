@@ -1,0 +1,33 @@
+{
+  "name": "snet-webclient",
+  "version": "0.1.0",
+  "description": "web client for singularitynet",
+  "main": "snet.js",
+  "scripts": {
+    "watch": "tsc -w",
+    "build": "tsc",
+    "test": "mocha -r ts-node/register test/**.ts",
+    "postinstall": "scripts/install.js",
+    "uninstall": "scripts/uninstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wei3hua2/snet-webclient.git"
+  },
+  "author": "James Chong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wei3hua2/snet-webclient/issues"
+  },
+  "homepage": "https://github.com/wei3hua2/snet-webclient#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^10.5.2",
+    "@types/chai": "^4.1.4",
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/mocha": "^5.2.0",
+    "mocha": "^5.2.0",
+    "ts-node": "^6.0.5",
+    "typescript": "^2.8.3"
+  }
+}
