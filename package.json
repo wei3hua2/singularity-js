@@ -8,6 +8,7 @@
     "build": "webpack --config webpack.config.js",
     "clean": "rm -rf build dist",
     "test-unit": "mocha -r ts-node/register test/unit/**.ts",
+    "test-node": "mocha -r ts-node/register test/node/**.ts --timeout 15000",
     "test-browser": "node_modules/karma/bin/karma start karma.conf.js",
     "showcase": "node_modules/http-server/bin/http-server",
     "postinstall": "scripts/install.js",
@@ -24,7 +25,12 @@
   },
   "homepage": "https://github.com/wei3hua2/snet-webclient#readme",
   "dependencies": {
-    "bluebird": "^3.5.3"
+    "axios": "^0.18.0",
+    "bluebird": "^3.5.3",
+    "grpc-web-client": "^0.6.3",
+    "protobufjs": "^6.8.8",
+    "singularitynet-platform-contracts": "^0.2.6",
+    "singularitynet-token-contracts": "^2.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
@@ -43,6 +49,7 @@
     "ts-loader": "^5.3.3",
     "ts-node": "^6.0.5",
     "typescript": "^2.8.3",
+    "web3": "1.0.0-beta.37",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3"
   }

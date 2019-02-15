@@ -2,18 +2,216 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Plain Example</title>
+  <title>Plain</title>
   <base href="/">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <script src="./dist/snet-webclient.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 <body>
-    <h1>Plain Example</h1>
-  
+    <nav class="navbar navbar-light" style="background-color: #e3f2ee;">
+        <a class="navbar-brand">Plain</a>
+    </nav>
+
+    <div class="container">
+        <ul id="main-info" class="list-group row">
+            <li class="list-group-item">
+                <span>Web3 version : </span>
+                <span id="web3-version">-</span>
+            </li>
+            <li class="list-group-item">
+                <span>Network Name: </span>
+                <span id="web3-network-name">-</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2 class="row display-4">Contracts</h2>
+        <div class="row">
+            <div class="container jumbotron">
+                <h3 class="row">Tokens</h3> <br/>
+                <div class="row">
+                    <ul class="col-6" id="contract-tokens-call-list">
+                        <li class="list-group-item">Call</li>
+                    </ul>
+                    <ul class="col-6" id="contract-tokens-transact-list">
+                        <li class="list-group-item">Transact</li>
+                    </ul>
+                </div>
+                <ul class="row" id="contract-tokens-event-list">
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="container">
+                <h3 class="row">Registry</h3> <br/>
+                <!-- <div class="btn-group row" role="group" aria-label="registry-control">
+                    <button type="button" onclick="getMethods('registry')" class="btn btn-secondary">Methods</button>
+                </div> -->
+                <div class="row">
+                    <ul class="col-6" id="contract-registry-call-list"></ul>
+                    <ul class="col-6" id="contract-registry-transact-list"></ul>
+                </div>
+                <ul class="row" id="contract-registry-event-list"></ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="container">
+                <h3 class="row">MultiPartyEscrow</h3> <br/>
+                <!-- <div class="btn-group row" role="group" aria-label="mpe-control">
+                    <button type="button" onclick="getMethods('mpe')" class="btn btn-secondary">Methods</button>
+                </div> -->
+                <div class="row">
+                    <ul class="col-6" id="contract-mpe-call-list"></ul>
+                    <ul class="col-6" id="contract-mpe-transact-list"></ul>
+                </div>
+                <ul class="row" id="contract-mpe-event-list"></ul>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="container jumbotron">
+        <h2 class="row display-4">Marketplace</h2>
+        <div class="btn-group row" role="group" aria-label="contract-control">
+            <button type="button" onclick="mpOrganizations()" class="btn btn-secondary">Organizations</button>
+        </div>
+        <div class="row">
+            <ul id="markeplace-list"></ul>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="executionModal" tabindex="-1" role="dialog" aria-labelledby="executeModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="executeModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="row" style="text-decoration: underline">Input : </div>
+                    <div class="row" id="inputs-modal"></div>
+                    <div class="row" style="text-decoration: underline">Result : </div>
+                    <div class="row" id="result-output"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="execute()">Execute</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.core.min.js"></script>
+
+    <script src="./dist/snet-webclient.min.js"></script>
     <script>
-        let instance = snet.create(web3);
+        function getMethods(contractName) {
+            var abi;
+            if(contractName === 'tokens') abi = instance.contracts.tokens.getAbi();
+            else if(contractName === 'registry') abi = instance.contracts.registry.getAbi();
+            else if(contractName === 'mpe') abi = instance.contracts.mpe.getAbi();
+            
+            const calls = _.filter(abi, (method) => method.constant);
+            const transacts = _.filter(abi, (method) => method.type==='function' && !method.constant);
+            const events = _.filter(abi, (method) => method.type === 'event');
+            
+            _.each(calls, (c) => $("#contract-"+contractName+"-call-list").append(methodTemplates(contractName, c)));
+            _.each(transacts, (t) => $("#contract-"+contractName+"-transact-list").append(methodTemplates(contractName, t)));
+            _.each(events, (e) => $("#contract-"+contractName+"-event-list").append(methodTemplates(contractName, e)));
+        }
+        function methodTemplates (contractName, method) {
+            var color = method.constant ? '#aaffcc' : '#ffddaa';
+            var inputs = _.map(method.inputs, (input) => '' + input.name + ' (' + input.type + ')').join('<br/>') || '-';
+            var outputs = _.map(method.outputs, (output) => '' + output.name + ' (' + output.type + ')').join('<br/>') || '-';
+            method.contractName = contractName;
+            var payload = encodeURI(JSON.stringify(method));
+
+            return '<li onclick="openModal(\''+payload+'\')" class="list-group-item" style="background-color:'+color+';">'   
+                    +'<h5 style="font-weight:bold">'+ method.name +'</h5>'
+                    +'<div class="row">'
+                    +'<div class="col-6">'
+                    +'<div style="text-decoration:underline">Input :</div>'
+                    +'<div>'+ inputs +'</div>'
+                    +'</div>'
+                    +'<div class="col-6">'
+                    +'<div style="text-decoration:underline">Output :</div>'
+                    +'<div>'+ outputs +'</div>'
+                    +'</div>'
+                    +'</div>'
+                    '</li>';
+        }
+
+        function mpOrganizations() {
+            instance.marketplace.organizations().then((response) => {
+                const orgs = response.data.organizations;
+                _.each(orgs, (org) => 
+                    $("#markeplace-list")
+                        .append('<li class="list-group-item">' + org.org_id + '</li>'));
+            });
+        }
+
+        function openModal(stringJson) {
+            var payload = JSON.parse(decodeURI(stringJson));    
+            $('#executeModalLabel').text(payload.name);
+            $('#executionModal').val(payload);
+            $('#executionModal').modal({});
+            
+            _.each(payload.inputs, (input) => {
+                $('#inputs-modal').append(
+                    '<div><span>'+input.name+' : </span><input class="param-input-modal" name="'+input.name+'" type="'+deriveInputType(input.type)+'"></div>');
+            });
+
+        }
+        function deriveInputType(solidityType) {
+            // _.some([],solidityType);
+            return 'text';
+        }
+        function execute() {
+            var payload = $('#executionModal').val();
+            
+            var inputs = $('.param-input-modal').map(function(){
+                return this.value;
+            });
+            console.log(inputs);
+            
+            console.log(payload);
+            instance.contracts[payload.contractName][payload.name](...inputs).then((result) => {
+                console.log(result.join('\n'));
+                $('#result-output').text(result);
+            });
+        }
+
+        $('#executionModal').on('hide.bs.modal', function (e) {
+            $('#executeModalLabel').text();
+            $('#executionModal').val(null);
+            $('#result-output').text('');
+            $('#input-modal').empty();
+        });
+
+
+
+        const instance = snet.create(web3);
+        $('#web3-version').text(instance.getWeb3Version());
+        instance.getNetwork().then((network) => $('#web3-network-name').text(network.name));
+
+        getMethods('tokens');
+        getMethods('registry');
+        getMethods('mpe');
+
+        console.log(instance.contracts.registry.getAbi());
+
+        
     </script>
 </body>
 </html>

@@ -15,7 +15,7 @@
     "types":["node"],
     "target": "es2015",
     "module": "commonjs",
-    "declaration": true,
+    // "declaration": true,
     "strict": false,
     "esModuleInterop": true,
     "experimentalDecorators":true,
@@ -23,6 +23,6 @@
     // "module": "es6",
     // "target": "es5" 
     // "jsx": "react"
-    // "allowJs": true
+    "allowJs": true
   }
 }

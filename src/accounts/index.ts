@@ -1,6 +1,5 @@
 class Accounts {
-    constructor(){
-    }
+    constructor(){}
 }
 
 export {Accounts}

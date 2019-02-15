@@ -63,3 +63,4 @@ typings/
 # output directory for TypeScript
 build
 dist
+test/config

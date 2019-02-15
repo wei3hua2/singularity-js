@@ -8,14 +8,12 @@ const rootWindow = window;
     //     // AMD. Register as an anonymous module.
     //     // @ts-ignore
     //     define(['snet-webclient'], factory);
-    // } else if (typeof module === 'object' && module.exports) {
-    //     // Node. Does not work with strict CommonJS, but
-    //     // only CommonJS-like environments that support module.exports,
-    //     // like Node.
-    //     module.exports = factory(require('snet-webclient'));
-    // } else {
+    if (typeof module === 'object' && module.exports) {
+        // module.exports = factory(require('snet-webclient'));
+        module.exports = factory(require('snet-webclient'));
+    } else {
         root.snet = factory(snet);
-    // }
+    }
 }(rootWindow || this, function (b) {
     return b;
 }));

@@ -10,7 +10,6 @@ m.beforeEach(() => {
 
 m.describe('ClazzDefinition', () => {
   m.it('should ensure class and modules are defined', async function() {
-    c.expect(snet.Eth).to.exist;
     c.expect(snet.Mpe).to.exist;
     c.expect(snet.Tokens).to.exist;
     c.expect(snet.Accounts).to.exist;
