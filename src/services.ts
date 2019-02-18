@@ -9,7 +9,7 @@ import {frameRequest} from './utils/grpc';
 import { ChunkParser, ChunkType } from "grpc-web-client/dist/ChunkParser";
 
 //@ts-ignore
-import MarketplaceNetwork from './MarketplaceNetwork.json';
+import MarketplaceNetwork from './network.json';
 
 
 
@@ -222,7 +222,7 @@ class Services {
         return serviceObject;
     }
 
-    processGrpcResponse(response, callback) {
+    private processGrpcResponse(response, callback) {
         let error = null, chunk, chunkMessage;
         const status = response.statusText;
 

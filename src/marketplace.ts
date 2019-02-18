@@ -2,7 +2,7 @@ import {Eth} from './eth';
 import axios from 'axios';
 
 //@ts-ignore
-import MarketplaceNetwork from './MarketplaceNetwork.json';
+import MarketplaceNetwork from './network.json';
 
 class Marketplace {
     eth: Eth;

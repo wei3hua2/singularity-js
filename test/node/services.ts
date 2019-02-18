@@ -6,14 +6,14 @@ import {Services} from '../../src/services';
 
 let web3, eth, svc;
 
-m.before(() => {
-    web3 = initWeb3();
-    eth = new Eth(web3);
-    svc = new Services(eth);
-});
-m.after(() => {
-    eth.close();
-});
+// m.before(() => {
+//     web3 = initWeb3();
+//     eth = new Eth(web3);
+//     svc = new Services(eth);
+// });
+// m.after(() => {
+//     eth.close();
+// });
 
 m.describe.skip('Services', () => {
   m.it('should create get proto file url', async function() {

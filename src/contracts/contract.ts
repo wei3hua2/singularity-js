@@ -52,7 +52,7 @@ abstract class Contract {
 
 interface ContractTxOptions extends TransactOptions {
     signTx?: boolean;
-    fromPrivateKey?: string;
+    privateKey?: string;
     contractAddress?: string;
 }
 

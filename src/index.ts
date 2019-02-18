@@ -1,6 +1,5 @@
 import * as snet from './snet';
 
-const rootWindow = window;
 
 (function (root, factory) {
     // // @ts-ignore
@@ -14,6 +13,6 @@ const rootWindow = window;
     } else {
         root.snet = factory(snet);
     }
-}(rootWindow || this, function (b) {
+}(this, function (b) {
     return b;
 }));

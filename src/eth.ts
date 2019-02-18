@@ -72,7 +72,7 @@ class Eth {
 
                 if(txOptions.signTx) {
                     const signedPayload = await this.signTx(
-                        txOptions.fromPrivateKey, txOptions.from, txOptions.contractAddress, contractMethod);
+                        txOptions.privateKey, txOptions.from, txOptions.contractAddress, contractMethod);
 
                     return await this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction']);
                     
@@ -139,6 +139,14 @@ class Eth {
     sign(sha3Message:string, opts:SignOptions = {}) {
         if(opts.privateKey) return this.web3.eth.accounts.sign(sha3Message, opts.privateKey);
         else throw new Error('No approach to signing');
+    }
+
+    async signMessage(message:any, privateKey:string = null) : Promise<Buffer>{
+        const sha3Message: string = this.soliditySha3(...message);
+        const signed = (await this.sign(sha3Message, {privateKey:privateKey})).signature;
+        const stripped = signed.substring(2, signed.length);
+        
+        return new Buffer(Buffer.from(stripped, 'hex'));
     }
 }
 
