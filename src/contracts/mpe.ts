@@ -1,3 +1,7 @@
+/**
+ * @module Contract
+ */
+
 import {Contract} from './contract';
 //@ts-ignore
 import AGITokenNetworks from 'singularitynet-platform-contracts/networks/MultiPartyEscrow.json';

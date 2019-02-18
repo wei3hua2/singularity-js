@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ */
+
 import {Registry} from './contracts/registry';
 import {Mpe} from './contracts/mpe';
 import {SnetError} from './errors/snet-error';

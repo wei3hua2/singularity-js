@@ -1,3 +1,7 @@
+/**
+ * @module Channel
+ */
+
 import {Root, Service} from 'protobufjs';
 import {frameRequest, convertGrpcResponseChunk} from './utils/grpc';
 import axios from 'axios';

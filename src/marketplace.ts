@@ -1,3 +1,7 @@
+/**
+ * @module Marketplace
+ */
+
 import {Eth} from './eth';
 import axios from 'axios';
 

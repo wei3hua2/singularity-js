@@ -1,3 +1,7 @@
+/**
+ * @module Service
+ */
+
 import {Eth} from './eth';
 import {Mpe} from './contracts/mpe';
 import {Registry} from './contracts/registry';

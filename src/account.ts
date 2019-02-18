@@ -1,3 +1,7 @@
+/**
+ * @module Account
+ */
+
 import {Registry} from './contracts/registry';
 import {Mpe} from './contracts/mpe';
 import {Tokens} from './contracts/tokens';

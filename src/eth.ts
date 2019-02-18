@@ -1,3 +1,7 @@
+/**
+ * @hidden
+ */
+
 import * as bb from 'bluebird';
 import {ContractTxOptions} from './contracts/contract';
 

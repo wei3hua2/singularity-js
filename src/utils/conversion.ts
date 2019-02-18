@@ -1,3 +1,7 @@
+/**
+ * @module Utils
+ */
+
 function agiToCogs(agi: any): number {
     return agi * 100000000;
 }

@@ -1,3 +1,7 @@
+/**
+ * @module Organization
+ */
+
 import {Account} from './account';
 import {Service} from './service';
 import {Tokens} from './contracts/tokens';

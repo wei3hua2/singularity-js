@@ -1,6 +1,11 @@
+/**
+ * @module Contract
+ */
+
 import {Contract} from './contract';
 //@ts-ignore
 import AGITokenNetworks from 'singularitynet-token-contracts/networks/SingularityNetToken.json';
+
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-token-contracts/abi/SingularityNetToken.json';
 

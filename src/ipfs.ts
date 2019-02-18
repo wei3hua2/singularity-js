@@ -1,3 +1,7 @@
+/**
+ * @module Utils
+ */
+
 import axios from 'axios';
 
 class Ipfs {

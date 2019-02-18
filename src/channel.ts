@@ -1,3 +1,7 @@
+/**
+ * @module Channel
+ */
+
 import {Mpe} from './contracts/mpe';
 import {Eth} from './eth';
 import { ChannelState } from './channel-state';

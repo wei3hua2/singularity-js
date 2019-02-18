@@ -1,6 +1,5 @@
 import * as snet from './snet';
 
-
 (function (root, factory) {
     // // @ts-ignore
     // if (typeof define === 'function' && define.amd) {

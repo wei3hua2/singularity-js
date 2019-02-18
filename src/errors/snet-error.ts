@@ -1,3 +1,7 @@
+/**
+ * @module Error
+ */
+
 class SnetError extends Error {
     constructor(error_code:string, ...params) {
         const err = ERROR_CODES[error_code] || {message:'unknown error found'};

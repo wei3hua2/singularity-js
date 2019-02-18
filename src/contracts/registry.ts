@@ -1,3 +1,7 @@
+/**
+ * @module Contract
+ */
+
 import {Contract} from './contract';
 //@ts-ignore
 import RegistryNetworks from 'singularitynet-platform-contracts/networks/Registry.json';

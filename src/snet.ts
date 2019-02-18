@@ -1,3 +1,7 @@
+/**
+ * @module Snet
+ */
+
 import {Eth} from './eth';
 
 import {Registry} from './contracts/registry';
@@ -15,7 +19,6 @@ import PromiEvent from 'web3-core-promievent';
 class Options {
     web3Provider: string;
 }
-
 
 class Snet {
     web3: any;

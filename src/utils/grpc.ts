@@ -1,3 +1,7 @@
+/**
+ * @module Utils
+ */
+
 const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
 import { Root, Service, Namespace } from 'protobufjs';
 import {Eth} from '../eth';

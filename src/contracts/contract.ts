@@ -1,3 +1,7 @@
+/**
+ * @ignore
+ */
+
 import {Eth, TransactOptions} from '../eth';
 
 abstract class Contract {
