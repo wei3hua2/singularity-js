@@ -1,16 +1,13 @@
 /**
- * @module Repository
+ * @ignore
  */
 
-import {Registry} from './contracts/registry';
-import {Mpe} from './contracts/mpe';
-import {SnetError} from './errors/snet-error';
-import {CoreModel} from './core-model';
+import {Model} from './model';
 
-class Repository extends CoreModel{
+class Repository extends Model{
     
-    constructor(registry:Registry, mpe:Mpe, fields:any){
-        super(registry, mpe, fields);
+    constructor(web3:any, fields:any){
+        super(web3, fields);
     }
 
     async fetch(){

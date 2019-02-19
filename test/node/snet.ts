@@ -18,12 +18,12 @@ m.after(() => {
 
 m.describe('Snet', () => {
   m.xit('should get list organizations', async function () {
-    const snet = Snet.create(web3);
+    const snet = Snet.init(web3);
     const orgs = await snet.listOrganizations();
   });
 
   m.xit('should get organization snet', async function (done) {
-    const snet = Snet.create(web3);
+    const snet = Snet.init(web3);
     
     // const org = await snet.getOrganization('snet');
     // console.log(org.toString());
@@ -36,7 +36,7 @@ m.describe('Snet', () => {
   });
 
   m.it('should run job snet.example_service', async function () {
-    const snet = Snet.create(web3);
+    const snet = Snet.init(web3);
 
     const svc = await snet.getService('snet','example-service');
     const result = await svc.fetch();
@@ -61,9 +61,9 @@ m.describe('Snet', () => {
 
 
   m.xit('should snet', async function() {
-    const snet = Snet.create(web3);
+    const snet = Snet.init(web3);
 
-    const result = await snet.runService('snet','example-service', 
+    const result = await snet.runJob('snet','example-service', 
       'add', {a:3, b:5}, 
       {from:PERSONAL_ACCOUNT, amountInCogs:1, ocExpiration:10000, privateKey:PERSONAL_PRIVATE_KEY});
 

@@ -1,5 +1,5 @@
 /**
- * @module Error
+ * @module snet
  */
 
 class SnetError extends Error {
@@ -13,6 +13,17 @@ class SnetError extends Error {
 }
 
 
+enum ERROR_CODE {
+    /** 
+    * when org id is not found
+    */
+    org_id_not_found = "org_id_not_found",
+    org_id_svc_not_found = "org_id_svc_not_found"
+}
+
+/**
+ * @ignore
+ */
 const ERROR_CODES = {
     "org_id_not_found":{
         message:'Organization Id not found'
@@ -22,4 +33,4 @@ const ERROR_CODES = {
     }
 };
 
-export {SnetError, ERROR_CODES}
+export {SnetError, ERROR_CODE}

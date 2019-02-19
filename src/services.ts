@@ -1,5 +1,5 @@
 /**
- * @module Service
+ * @ignore
  */
 
 import {Eth} from './eth';

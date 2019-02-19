@@ -1,0 +1,12 @@
+{
+    "src":["./src/"],
+    "exclude":["./src/eth.ts","./src/index.ts","./src/services.ts","./src/utils/grpc.ts",
+        "./src/model.ts","./src/core.ts","./src/repository.ts","./src/contracts/contract.ts"],
+    "name":"Singularitynet-js",
+    "out":"docs-html",
+    "excludePrivate":true,
+    "excludeProtected": true,
+    "excludeExternals": true,
+    "readme": "documentation.md",
+    "theme":"default"
+}

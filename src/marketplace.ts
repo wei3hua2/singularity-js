@@ -1,5 +1,5 @@
 /**
- * @module Marketplace
+ * @module snet
  */
 
 import {Eth} from './eth';

@@ -23,16 +23,16 @@ m.after(() => {
     eth.close();
 })
 
-m.describe.only('Account', () => {
+m.describe('Account', () => {
     m.xit('should get current account', async function () {
-        const curAccts = await Account.getCurrentAccounts(registry, mpe, tokens);
+        const curAccts = await Account.getCurrentAccounts(web3);
 
         c.expect(curAccts.length).to.be.equals(0);
     });
 
     m.it('should transfer for main to test account', async function () {
-        const acct = Account.create(registry, mpe, tokens, {id:PERSONAL_ACCOUNT}, {privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = Account.create(registry, mpe, tokens, {id:TEST_ACCOUNT}, {privateKey:TEST_ACCOUNT_PK});
+        const acct = Account.create(web3, {id:PERSONAL_ACCOUNT}, {privateKey:PERSONAL_ACCOUNT_PK});
+        const testAcct = Account.create(web3, {id:TEST_ACCOUNT}, {privateKey:TEST_ACCOUNT_PK});
 
         const response = await acct.transfer(testAcct, 10);
         console.log(response);
@@ -51,8 +51,8 @@ m.describe.only('Account', () => {
     });
 
     m.it('should get account information', async function () {
-        const acct = Account.create(registry, mpe, tokens, {id:PERSONAL_ACCOUNT});
-        const testAcct = Account.create(registry, mpe, tokens, {id:TEST_ACCOUNT});
+        const acct = Account.create(web3, {id:PERSONAL_ACCOUNT});
+        const testAcct = Account.create(web3, {id:TEST_ACCOUNT});
         
         const agiTokens = await acct.getAgiTokens();
         const escrowBalance = await acct.getEscrowBalances();

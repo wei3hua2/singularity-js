@@ -1,5 +1,5 @@
 /**
- * @module Utils
+ * @ignore
  */
 
 const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
@@ -47,8 +47,8 @@ function convertGrpcResponseChunk(response, callback) {
     }
 }
 
-function processProtoToArray(protoObj:any): Promise<any> {
-    const root = Root.fromJSON(protoObj[0]);
+function processProtoToArray(protoJson:Object): Promise<any> {
+    const root = Root.fromJSON(protoJson[0]);
     const rootNSProto = _processRootNamespace(root);
 
     const proto = rootNSProto['nestedArray'].reduce( (accumulator, ele) => {

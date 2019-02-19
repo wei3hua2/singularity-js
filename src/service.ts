@@ -1,62 +1,85 @@
 /**
- * @module Service
+ * @module service
+ * @preferred
+ * 
  */
 
-import {Registry} from './contracts/registry';
-import {Mpe} from './contracts/mpe';
+
 import {SnetError} from './errors/snet-error';
-import {CoreModel} from './core-model';
-import {Eth} from './eth';
-import {Marketplace} from './marketplace';
+import {Model} from './model';
+import * as pb from 'protobufjs';
 import {Channel} from './channel';
 import {Ipfs} from './ipfs';
 import axios from 'axios';
 import {PromiEvent} from 'web3-core-promievent';
 import {processProtoToArray, getServiceProto, frameRequest, convertGrpcResponseChunk} from './utils/grpc';
 
-
-class Service extends CoreModel{
+/**
+ * To run the service. The logic for execution is from here.
+ */
+class Service extends Model{
     orgId: string;
     metadataURI: string;
     metadata: ServiceMetadata;
-    protoService: any;
+    protoService: pb.Service;
     tags: string[];
     private protoBuf: any;
 
-    private _eth: Eth;
-    private _marketplace:Marketplace;
-
     jobPromise:PromiEvent<any>;
 
-    constructor(registry:Registry, mpe:Mpe, marketplace:Marketplace, 
-        fields:any, orgId:string) {
-        super(registry, mpe, fields);
-        this._eth = registry.eth;
-        this._marketplace = marketplace;
+    /** @ignore*/
+    private constructor(web3, orgId:string, fields:any) {
+        super(web3, fields);
 
         if(!orgId) throw new SnetError('org_id_svc_not_found', orgId);
-
         this.orgId = orgId;
     }
 
+    /**
+     * Fetch additional data and metadata from the registry and Ipfs.
+     */
     public async fetch(): Promise<boolean> {
+        console.log('fetched : '+this._fetched);
+
         if(!this._fetched) {
             const svcReg = await this._registry.getServiceRegistrationById(this.orgId, this.id);
             const metadata = await Ipfs.cat(svcReg.metadataURI);
             const proto = await getServiceProto(this._eth, this.orgId, this.id);
             
-            this.populate(svcReg, metadata, proto);
+            this.metadataURI = svcReg.metadataURI;
+            this.tags = svcReg.tags;
+            this.metadata = metadata;
+            this.protoBuf = processProtoToArray(proto);
+            this.protoService = this.protoBuf['Service'][0];
+            
             this._fetched = true;
         }
-        
         return this._fetched;
     }
 
+    /**
+     * List the methods in the protocol buffer.
+     * 
+     */
+    public async listMethods(): Promise<{[method:string]:pb.Method}> {
+        if(!this._fetched) await this.fetch();
+
+        return this.protoService.methods;
+    }
+
+    /**
+     * 
+     * Job execution
+     * 
+     * @param method The method name to execute.
+     * @param request The payload of the method.
+     * @param opts Additional options.
+     */
     public runJob(method:string, request:any, opts:any = {}): PromiEvent<any> {
         this.jobPromise = new PromiEvent();
         this.jobPromise.emit(RUN_JOB_STATE.start_job, method, request);
 
-        Channel.getAvailableChannels(this._marketplace, this._mpe, 
+        Channel.getAvailableChannels(this.web3, 
             opts.from, this.orgId, this.id).then(
                 (channels) => {
                     this.jobPromise.emit(RUN_JOB_STATE.available_channels, channels);
@@ -81,6 +104,9 @@ class Service extends CoreModel{
         return this.jobPromise;
     }
 
+    /**
+     * @ignore
+     */
     public toString(): string {
         return `\n*** Service ${this.id} :`+
         `\norgId: ${this.orgId}` +
@@ -108,7 +134,6 @@ class Service extends CoreModel{
         const requestHeaders = await this.parseAgentRequestHeader(signed, channel, price_in_cogs);
         promi.emit(RUN_JOB_STATE.request_header, requestHeaders);
 
-        // @ts-ignore
         return this.protoService.create(
             (method, requestObject, callback) => {
                 const fullmethod = method.toString().split(' ')[1].trim().substring(1);
@@ -161,21 +186,23 @@ class Service extends CoreModel{
         };
     }
 
-    private populate(svcReg:any, metadata:any, proto:any): void {
-        this.metadataURI = svcReg.metadataURI;
-        this.tags = svcReg.tags;
-        this.metadata = metadata;
-        this.protoBuf = processProtoToArray(proto);
-        this.protoService = this.protoBuf['Service'][0];
-        
-    }
-
-
-    static getById(registry:Registry, mpe:Mpe, marketplace:Marketplace, id:string, orgId) {
-        return new Service(registry, mpe, marketplace,{id:id}, orgId);
+    /**
+     * 
+     * Initialize a new service object
+     * 
+     * @param web3 Web3 instance
+     * @param serviceId Service ID 
+     * @param organizationId Organization Id
+     * 
+     */
+    static init(web3:any, organizationId:string, serviceId:string) {
+        return new Service(web3, organizationId, {id:serviceId});
     }
 }
 
+/**
+ * The structure of service_metadata.json file
+ */
 interface ServiceMetadata {
     version: number;
     display_name: string;
@@ -203,6 +230,9 @@ interface ServiceMetadata {
     }
 }
 
+/**
+ * The list of execution state for running the job.
+ */
 enum RUN_JOB_STATE {
     start_job = 'start_job',
     available_channels = 'available_channels',
@@ -218,4 +248,11 @@ enum RUN_JOB_STATE {
     raw_response = 'raw_response'
 }
 
-export {Service, RUN_JOB_STATE}
+interface RunJobOption {
+    from?: string;
+    privateKey?: string;
+    amountInCogs?:number;
+    ocExpiration?:number;
+}
+
+export {Service, RUN_JOB_STATE, RunJobOption}

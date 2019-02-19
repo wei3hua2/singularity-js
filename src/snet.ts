@@ -1,70 +1,122 @@
 /**
- * @module Snet
+ * @module snet
+ * @preferred
+ * 
+ * Main module. To instantiate other model, please use this module.
  */
 
 import {Eth} from './eth';
-
-import {Registry} from './contracts/registry';
-import {Mpe} from './contracts/mpe';
-import {Tokens} from './contracts/tokens';
-
 import {Organization} from './organization';
-import {Service} from './service';
-
-import {Marketplace} from './marketplace';
-import {Services} from './services';
-
+import {Service, RunJobOption} from './service';
+import {Core} from './core';
 import PromiEvent from 'web3-core-promievent';
 
-class Options {
-    web3Provider: string;
-}
+/**
+ * Main class of the library. To execute a job, instance has to be instantiate with the `init` static method.
+ * 
+ * 
+ * ```typescript
+ * import {Snet} from 'singularitynet-js';
+ * 
+ * const instance = Snet.init(web3)
+ * 
+ * ```
+ */
+class Snet extends Core{
+    protected web3: any;
+    protected eth: Eth;
 
-class Snet {
-    web3: any;
-    eth: Eth;
-    contracts: {registry: Registry, mpe: Mpe, tokens: Tokens};
-    marketplace: Marketplace;
-
-    service: Services;
-
-    constructor(web3:any, options?:Options) {
-        this.eth = new Eth(web3);
-        this.contracts = {
-            tokens: new Tokens(this.eth), mpe: new Mpe(this.eth), registry: new Registry(this.eth)
-        };
-
-        this.marketplace = new Marketplace(this.eth);
-
-        this.service = new Services(this.eth, this.contracts.mpe, this.contracts.registry);
+    /**
+     * @hidden
+     */
+    private constructor(web3:any, options:InitOption={}) {
+        super(web3);
     }
 
     /**
-     * List organizations
+     * List organizations available on the blockchain.
      *
      * @remarks
-     * This method is part of the {@link core-library#Statistics | Statistics subsystem}.
+     * Only id is populated. To get the detail, call the fetch method in [[Organization]].
      *
-     * @param x - The first input number
-     * @param y - The second input number
-     * @returns The arithmetic mean of `x` and `y`
+     * @returns A list of organization.
      *
      */
     async listOrganizations(): Promise<Organization[]>{
-        const orgs = await Organization.listOrganizations(this.contracts.registry, this.contracts.mpe, this.marketplace, this.contracts.tokens);
+        const orgs = await Organization.listOrganizations(this.web3);
 
         return orgs;
     }
+
+    /**
+     * Get organization instance given an organization Id.
+     *
+     * @param Organization Id. example: snet
+     * 
+     * @returns Organization detail.
+     *
+     */
     async getOrganization(orgId:string): Promise<Organization> {
-        return await Organization.getById(this.contracts.registry, this.contracts.mpe, this.marketplace,this.contracts.tokens,orgId);
+        return await Organization.init(this.web3,orgId);
     }
+
+
+    /**
+     * Get service instance given an organization and service Id.
+     *
+     * @param orgId example: snet
+     * @param serviceId example: example-service
+     * 
+     * @returns Service detail.
+     *
+     */
     async getService(orgId:string, serviceId:string): Promise<Service> {
-        const org = await this.getOrganization(orgId);
-        const svc = await org.getService(serviceId);
-
-        return svc;
+        return Service.init(this.web3, orgId, serviceId);
     }
 
+    /**
+     * 
+     * run job
+     * 
+     * @param orgId organization Id. example: snet
+     * @param serviceId service Id. example: example-service
+     * @param method method to run. example: add
+     * @param request payload for the method: example {a:1, b:3}
+     * @param opts Options for running a job
+     * 
+     * @returns PromiEvent. This is the object used for web3.js
+     * 
+     */
+    runJob (orgId:string, serviceId:string, method:string, 
+        request:any, opts:RunJobOption= {}): PromiEvent {
+
+        const promi = Service.init(this.web3, orgId, serviceId).runJob(method, request, opts);
+
+        return promi;
+    }
+
+
+
+
+    /**
+     * 
+     * Initialize the main instance for Snet
+     * 
+     * @param web3 
+     * @param opts 
+     */
+    static init (web3, opts:InitOption={}) {
+        return new Snet(web3, opts);
+    }
+}
+
+class InitOption {
+    web3Provider?: string;
+}
+
+export {
+    Snet
+};
 
     // org -> * svc
     // svc -> * method , * channels, * types
@@ -77,111 +129,59 @@ class Snet {
 
     // case 1 : browser + metamusk
     // case 2 : node + private key
-    runService (orgId:string, serviceId:string, method:string, 
-        request:any, opts:SnetRunOptions= {}): PromiEvent {
 
-        const promi = new PromiEvent();
-        let channel, endpoint;
+// private getAvailableChannels = (from:string, orgId:string, serviceId:string) =>
+// this._marketplace.availableChannels(from, serviceId, orgId);
 
-        this.getAvailableChannelInfo(promi, orgId, serviceId, opts.from).then((channelInfo) => {
-            endpoint = channelInfo.endpoint;
+// private async getAvailableChannelInfo (promiEvent:any, orgId:string, serviceId:string, from:string) {
+// const availableChannels = (await this.getAvailableChannels(from, orgId, serviceId)).data[0]; //TODO: change to blockchain call
 
-            return this.handleChannel(promi, channelInfo, opts);
+// const recipient = availableChannels.recipient, groupId = availableChannels.groupId;
+// const channel = availableChannels.channels[0], endpoint = availableChannels.endpoint[0];
 
-        }).then((channelInfo) => {
-            channel = channelInfo;
+// promiEvent.emit('recipient', recipient);
 
-            return this.getChannelState(promi, endpoint, channel, opts);
+// return {
+//     availableChannels:availableChannels, recipient:recipient, groupId:groupId,
+//     channel:channel, endpoint:endpoint
+// };
+// }
+// private async handleChannel (promi, channelInfo:any, opts) {
+// if(!channelInfo.channel){
+//     const receipt = await this._mpe.openChannel(
+//             opts.from, channelInfo.recipient, channelInfo.groupId, opts.amountInCogs,
+//             opts.ocExpiration,{from:opts.from});
 
-        }).then((curSignedAmt) => {
+//     promi.emit('channel_receipt', receipt);
 
-            return this.executeService(promi,
-                orgId, serviceId, method, request,
-                channel, endpoint, curSignedAmt, opts);
+//     return 'TODO';
+// } else {
+//     return channelInfo.channel;
+// }
+// }
+// private async getChannelState (promi, endpoint, channel, opts) {
+// const paymentSvc = await this.service.createChannelStateService(endpoint);
+// const signedChannelId = await this.service.signChannelId(channel.channelId, opts.privateKey);
+// const channelResponse = await paymentSvc['getChannelState'](signedChannelId);
 
-        }).then((response) => {
+// const curSignedAmt = parseInt('0x' + 
+//     Buffer.from(channelResponse.currentSignedAmount).toString('hex',0,channelResponse.currentSignedAmount.length));
 
-            promi.resolve(response);
+// promi.emit('signedAmt',curSignedAmt);
 
-        }).catch((error) => {
+// return curSignedAmt;
+// }
+// private async executeService (promi,
+// orgId:string, serviceId:string, method:string, request:any,
+// channel, endpoint:string, curSignedAmt:number, opts) {
 
-            promi.reject(error);
+// const svc = await this.service.createService(
+//     orgId, serviceId, channel, endpoint, 
+//     curSignedAmt,{privateKey:opts.privateKey});
 
-        });
+// const response = await svc[method](request);
 
-        return promi;
-    }
+// promi.emit('response', response);
 
-    private getAvailableChannels = (from:string, orgId:string, serviceId:string) =>
-        this.marketplace.availableChannels(from, serviceId, orgId);
-
-    private async getAvailableChannelInfo (promiEvent:any, orgId:string, serviceId:string, from:string) {
-        const availableChannels = (await this.getAvailableChannels(from, orgId, serviceId)).data[0]; //TODO: change to blockchain call
-        
-        const recipient = availableChannels.recipient, groupId = availableChannels.groupId;
-        const channel = availableChannels.channels[0], endpoint = availableChannels.endpoint[0];
-        
-        promiEvent.emit('recipient', recipient);
-
-        return {
-            availableChannels:availableChannels, recipient:recipient, groupId:groupId,
-            channel:channel, endpoint:endpoint
-        };
-    }
-    private async handleChannel (promi, channelInfo:any, opts) {
-        if(!channelInfo.channel){
-            const receipt = await this.contracts.mpe.openChannel(
-                    opts.from, channelInfo.recipient, channelInfo.groupId, opts.amountInCogs,
-                    opts.ocExpiration,{from:opts.from});
-
-            promi.emit('channel_receipt', receipt);
-
-            return 'TODO';
-        } else {
-            return channelInfo.channel;
-        }
-    }
-    private async getChannelState (promi, endpoint, channel, opts) {
-        const paymentSvc = await this.service.createChannelStateService(endpoint);
-        const signedChannelId = await this.service.signChannelId(channel.channelId, opts.privateKey);
-        const channelResponse = await paymentSvc['getChannelState'](signedChannelId);
-
-        const curSignedAmt = parseInt('0x' + 
-            Buffer.from(channelResponse.currentSignedAmount).toString('hex',0,channelResponse.currentSignedAmount.length));
-        
-        promi.emit('signedAmt',curSignedAmt);
-
-        return curSignedAmt;
-    }
-    private async executeService (promi,
-        orgId:string, serviceId:string, method:string, request:any,
-        channel, endpoint:string, curSignedAmt:number, opts) {
-
-        const svc = await this.service.createService(
-            orgId, serviceId, channel, endpoint, 
-            curSignedAmt,{privateKey:opts.privateKey});
-
-        const response = await svc[method](request);
-
-        promi.emit('response', response);
-
-        return response;
-    }
-
-
-    static create (web3) {
-        return new Snet(web3);
-    }
-}
-
-interface SnetRunOptions {
-    from?: string;
-    privateKey?: string;
-    amountInCogs?:number;
-    ocExpiration?:number;
-}
-
-export {
-    Snet,
-    Registry, Mpe, Tokens, Marketplace, Services
-};
+// return response;
+// }

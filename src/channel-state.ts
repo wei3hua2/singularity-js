@@ -1,5 +1,5 @@
 /**
- * @module Channel
+ * @module channel
  */
 
 import {Root, Service} from 'protobufjs';
@@ -7,6 +7,9 @@ import {frameRequest, convertGrpcResponseChunk} from './utils/grpc';
 import axios from 'axios';
 import {Channel} from './channel';
 
+/**
+ * @ignore
+ */
 const SERVICE_STATE_JSON = {
     "nested": {
       "escrow": {
@@ -68,7 +71,7 @@ class ChannelState {
         this.channelStateService = this.create(endpoint);
     }
 
-    private create(endpoint:string) {
+    private create(endpoint:string): Service {
         const Svc = Root.fromJSON(SERVICE_STATE_JSON).lookup(this.SERVICENAME);
         const url = `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
 
@@ -85,7 +88,7 @@ class ChannelState {
             }, false, false);
     }
 
-    async getChannelState(opts:ChannelStateOpts = {}) {
+    async getChannelState(opts:ChannelStateOpts = {}) : Promise<ChannelStateResponse> {
         const byteschannelID = this.channel.getByteChannelId();
         const byteSig = await this.channel.signChannelId(opts.privateKey);
         const request = {"channelId":byteschannelID, "signature":byteSig};
@@ -108,6 +111,12 @@ class ChannelState {
 
 interface ChannelStateOpts {
   privateKey?: string;
+}
+
+interface ChannelStateResponse {
+  currentSignature: Buffer;
+  currentNonce: number; 
+  currentSignedAmount: number;
 }
 
 export {ChannelState}

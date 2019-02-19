@@ -1,33 +1,25 @@
 /**
- * @module Organization
+ * @module organization
  */
 
 import {Account} from './account';
 import {Service} from './service';
-import {Tokens} from './contracts/tokens';
-import {Marketplace} from './marketplace';
+import {Eth} from './eth';
 import {Repository} from './repository';
 import {Registry} from './contracts/registry';
-import {Mpe} from './contracts/mpe';
 import {SnetError} from './errors/snet-error';
 
-import {CoreModel} from './core-model';
+import {Model} from './model';
 
-class Organization extends CoreModel{
+class Organization extends Model{
     name:string;
     owner:Account;
     members:Account[];
     services: Service[];
     repositories: Repository[];
-
-    private marketplace: Marketplace;
-    private _tokens: Tokens;
     
-    constructor(registry:Registry, mpe:Mpe, tokens:Tokens, marketplace:Marketplace, fields:any){
-        super(registry, mpe, fields);
-        this.marketplace = marketplace;
-        this._tokens = tokens;
-
+    constructor(web3:any, fields:any){
+        super(web3, fields);
         this.populate(fields);
     }
 
@@ -41,13 +33,13 @@ class Organization extends CoreModel{
     private populate (fields:any) : void {
         this.name = fields.name || '';
         this.owner = fields.owner || '';
-        this.members = fields.members ? fields.members.map((memId) => new Account(this._registry,this._mpe, this._tokens,{id:memId})) : [];
-        this.services = fields.serviceIds ? fields.serviceIds.map((svcId) => new Service(this._registry,this._mpe, this.marketplace, {id:svcId}, this.id)) : [];
-        this.repositories = fields.repositoryIds ? fields.repositoryIds.map((repoId) => new Repository(this._registry,this._mpe, {id:repoId})) : [];
+        this.members = fields.members ? fields.members.map((memId) => new Account(this.web3,{id:memId})) : [];
+        this.services = fields.serviceIds ? fields.serviceIds.map((svcId) => Service.init(this.web3, this.id, svcId)) : [];
+        this.repositories = fields.repositoryIds ? fields.repositoryIds.map((repoId) => new Repository(this.web3, {id:repoId})) : [];
     }
 
     async getService (serviceId: string) : Promise<Service> {
-        const svc = new Service(this._registry, this._mpe, this.marketplace, {id:serviceId}, this.id);
+        const svc = Service.init(this.web3, this.id, serviceId);
         const ok = await svc.fetch();
 
         if(!ok) throw new SnetError('fetch_service_error');
@@ -56,19 +48,23 @@ class Organization extends CoreModel{
     }
     async getServices () : Promise<Service[]> {
         const svcIds:string[] = (await this._registry.listServicesForOrganization(this.id)).serviceIds;
-        const svcs:Service[] = svcIds.map((id) => Service.getById(this._registry, this._mpe, this.marketplace,id, this.id));
+        const svcs:Service[] = svcIds.map((id) => Service.init(this.web3, id, this.id));
 
         return svcs;
     }
 
-    static async listOrganizations(registry:Registry, mpe:Mpe, marketplace:Marketplace, tokens:Tokens) : Promise<Organization[]> {
+    static async listOrganizations(web3:any) : Promise<Organization[]> {
+        const registry = new Registry(new Eth(web3));
         const orgIds = await registry.listOrganizations();
-        return orgIds.map((orgId) => new Organization(registry, mpe,tokens, marketplace,{id:orgId}));
+
+        return orgIds.map((orgId) => new Organization(web3,{id:orgId}));
     }
-    static async getById(registry:Registry, mpe:Mpe, marketplace:Marketplace, tokens:Tokens, id:string) : Promise<Organization> {
+
+    static async init(web3:any, id:string) : Promise<Organization> {
+        const registry = new Registry(new Eth(web3));
         const regOrg = await registry.getOrganizationById(id);
         
-        return new Organization(registry, mpe, tokens, marketplace, regOrg);
+        return new Organization(web3, regOrg);
     }
 }
 

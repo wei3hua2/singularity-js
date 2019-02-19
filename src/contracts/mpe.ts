@@ -1,5 +1,5 @@
 /**
- * @module Contract
+ * @module snet
  */
 
 import {Contract} from './contract';

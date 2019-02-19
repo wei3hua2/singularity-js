@@ -9,14 +9,14 @@ import {initWeb3, getConfigInfo} from './utils';
 let PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PRIVATE_KEY, snet;
 
 m.before(() => {
-  snet = Snet.create(initWeb3());
+  snet = Snet.init(initWeb3());
   PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
   TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
   PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
   TEST_ACCOUNT_PRIVATE_KEY = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
 });
 m.after(() => {
-  snet.eth.close();
+  snet._eth.close();
 })
 
 m.describe.skip('Contract', () => {

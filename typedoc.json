@@ -6,7 +6,8 @@
     "out":"docs",
     "excludePrivate":true,
     "excludeProtected": true,
-    "excludeExternals": true,
+    "excludeExternals": false,
+    "mdHideSources": true,
     "readme": "documentation.md",
     "theme":"markdown"
 }

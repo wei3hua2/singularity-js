@@ -1,23 +1,18 @@
 /**
- * @module Account
+ * @module account
  */
 
 import {Registry} from './contracts/registry';
-import {Mpe} from './contracts/mpe';
-import {Tokens} from './contracts/tokens';
-import {SnetError} from './errors/snet-error';
-import {CoreModel} from './core-model';
-import {cogsToAgi} from './utils/conversion'
+import {Eth} from './eth';
+import {Model} from './model';
 import {ContractTxOptions} from './contracts/contract';
 
-class Account extends CoreModel{
-    private _tokens:Tokens;
+class Account extends Model{
     private _privateKey: string;
 
-    constructor(registry:Registry, mpe:Mpe, tokens:Tokens, fields:any, opts:any={}){
-        super(registry, mpe, fields);
+    constructor(web3:any, fields:any, opts:any={}){
+        super(web3, fields);
         
-        this._tokens = tokens;
         this._privateKey = opts.privateKey;
     }
 
@@ -44,12 +39,14 @@ class Account extends CoreModel{
 
 
 
-    public static create(registry:Registry, mpe:Mpe, tokens:Tokens, fields:any, opts:InitOptions={}): Account {
-        return new Account(registry, mpe, tokens, fields,opts);
+    public static create(web3:any, fields:any, opts:InitOptions={}): Account {
+        return new Account(web3, fields, opts);
     }
-    public static async getCurrentAccounts(registry:Registry, mpe:Mpe, tokens:Tokens): Promise<Account[]> {
+    public static async getCurrentAccounts(web3:any): Promise<Account[]> {
+        const registry = await new Registry(new Eth(web3));
         const ethAccts = await registry.eth.getAccounts();
-        return ethAccts.map((acct) => new Account(registry, mpe, tokens, {id:acct}));
+        
+        return ethAccts.map((acct) => new Account(web3, {id:acct}));
     }
 
     private parseOptions (opts:ContractTxOptions) : ContractTxOptions {

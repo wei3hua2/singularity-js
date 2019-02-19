@@ -1,17 +1,15 @@
 /**
- * @module Channel
+ * @module channel
  */
 
-import {Mpe} from './contracts/mpe';
-import {Eth} from './eth';
+ import { Eth } from './eth';
+ import { Mpe } from './contracts/mpe';
+import { Core } from './core';
 import { ChannelState } from './channel-state';
-import { Marketplace } from './snet';
 import { SnetError } from './errors/snet-error';
+import { Marketplace } from './marketplace';
 
-class Channel {
-    mpe:Mpe;
-    eth:Eth;
-
+class Channel extends Core {
     id:number;
 
     nonce: number;
@@ -26,9 +24,8 @@ class Channel {
     pending?: number;
     endpoint?: string;
  
-    constructor(mpe:Mpe, id: number, data?:any) {
-        this.mpe = mpe;
-        this.eth = mpe.eth;
+    constructor(web3:any, id: number, data?:any) {
+        super(web3);
         this.id = id;
 
         if(data) this.populate(data);
@@ -42,7 +39,7 @@ class Channel {
     }
 
     async fetch() {
-        const channel = await this.mpe.channels(this.id);
+        const channel = await this._mpe.channels(this.id);
         this.populate(channel);
     }
 
@@ -63,7 +60,7 @@ class Channel {
     }
 
     async signChannelId(privateKey:string = null) {
-        return this.eth.signMessage([{t: 'uint256', v: this.id}], privateKey);
+        return this._eth.signMessage([{t: 'uint256', v: this.id}], privateKey);
     }
 
     getByteChannelId() {
@@ -84,13 +81,14 @@ class Channel {
 
     static openChannel() {}
 
-    static getChannel(mpe:Mpe, channelId:number) {
-        return new Channel(mpe, channelId);
+    static getChannel(web3:any, channelId:number) {
+        return new Channel(web3, channelId);
     }
 
     static async getAvailableChannels(
-        marketplace:Marketplace, mpe:Mpe,
-        from:string, orgId:string, serviceId:string) {
+        web3:any, from:string, orgId:string, serviceId:string) {
+        const marketplace = new Marketplace(new Eth(web3));
+        const mpe = new Mpe(web3);
 
         const channelMain = (await marketplace.availableChannels(from, serviceId, orgId)).data[0];
         const channels = channelMain.channels;

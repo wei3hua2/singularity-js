@@ -1,5 +1,5 @@
 /**
- * @module Utils
+ * @module snet
  */
 
 import axios from 'axios';

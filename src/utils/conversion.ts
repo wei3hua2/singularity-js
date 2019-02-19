@@ -1,5 +1,5 @@
 /**
- * @module Utils
+ * @module snet
  */
 
 function agiToCogs(agi: any): number {

@@ -8,6 +8,7 @@
     "build": "webpack --config webpack.config.js",
     "clean": "rm -rf build dist",
     "doc-md": "cp markdown-tmpl/partials/index.hbs node_modules/typedoc-plugin-markdown/dist/theme/partials/index.hbs && typedoc --options ./typedoc.json",
+    "doc-html": "rm -rf docs-html && typedoc --options ./typedoc-html.json",
     "test-unit": "mocha -r ts-node/register test/unit/**.ts",
     "test-node": "mocha -r ts-node/register test/node/**.ts --timeout 15000",
     "test-browser": "node_modules/karma/bin/karma start karma.conf.js",
