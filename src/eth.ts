@@ -2,12 +2,11 @@
  * @hidden
  */
 
-import * as bb from 'bluebird';
-import {ContractTxOptions} from './contracts/contract';
 
-class Eth {
+class EthUtil {
     web3: any;
     isVersion1Beyond: boolean;
+
     constructor(web3: any){
         this.web3 = web3;
         this.isVersion1Beyond = !(this.getWeb3Version()[0] === '0');
@@ -25,7 +24,7 @@ class Eth {
         if(this.isVersion1Beyond)
             return this.web3.eth.net.getId();
         else
-            return new bb.Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 this.web3.version.getNetwork((err, netId) => {
                     if(err) reject(err);
                     else resolve(netId);
@@ -34,7 +33,7 @@ class Eth {
     }
 
     getBlockNumber(): Promise<number> {
-        return new bb.Promise( (resolve, reject) => {
+        return new Promise( (resolve, reject) => {
             this.web3.eth.getBlockNumber((error, result) => {
                 if(error) reject(error);
                 else resolve(result);
@@ -46,76 +45,8 @@ class Eth {
         return this.web3.eth.getAccounts();
     }
 
-    initContract(abi, address) : any {
-            return this.isVersion1Beyond ? 
-                new this.web3.eth.Contract(abi, address) :
-                this.web3.eth.contract(abi).at(address);
-    }
-
-    call(contract, method, ...params): Promise<any> {
-        return new bb.Promise((resolve, reject) => {
-            const cb = (err, result) => { 
-                if(err) reject(err);
-                else resolve(result);
-            };
-
-            if(this.isVersion1Beyond) {
-                contract.methods[method](...params).call(cb);
-            }
-            else {
-                contract[method].call(...params, cb);
-            }
-        });
-    }
-
-    async transact(contract, method, txOptions:ContractTxOptions, ...params): Promise<any> {
-            
-            if(this.isVersion1Beyond) {
-                
-                const contractMethod = contract.methods[method](...params);
-
-                if(txOptions.signTx) {
-                    const signedPayload = await this.signTx(
-                        txOptions.privateKey, txOptions.from, txOptions.contractAddress, contractMethod);
-
-                    return await this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction']);
-                    
-                } else
-                    return await contractMethod.send(txOptions);
-            }
-            else {
-                throw Error('version 1 below not implemented yet');
-                //ERROR
-                // return new bb.Promise((resolve, reject) => {
-                //     const cb = (err, result) => { 
-                //         if(err) reject(err);
-                //         else resolve(result);
-                //     };
-                //     contract[method].sendTransaction(...params, txOptions, cb);
-                // });
-            }
-        
-    }
-
-    async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
-        const nonce = await this.web3.eth.getTransactionCount(from);
-        const gas = await method.estimateGas({from:from});
-        let tx = {nonce:this.toHex(nonce), 
-            from:from, to:to, 
-            gas:this.toHex(gas), gasLimit: this.toHex(800000),
-            gasPrice: this.toHex(this.web3.utils.toWei('10', 'gwei')),
-            data: method.encodeABI()};
-
-        return this.web3.eth.accounts.signTransaction(tx, privateKey);
-    }
-
-    event(contract, method, valObj, filterObject): Promise<any> {
-        return new bb.Promise((resolve, reject) => {
-            contract[method](valObj, filterObject, (err, result) => { 
-                if(err) reject(err);
-                else resolve(result);
-            });
-        });
+    getContract(abi:any, address:string) {
+        return new this.web3.eth.Contract(abi, address);
     }
 
     fromAscii(strVal: string): any {
@@ -155,7 +86,7 @@ class Eth {
 }
 
 interface TransactOptions {
-    from: string;
+    from?: string;
     gasPrice?: string;
     gas?: number;
     value?: number;
@@ -164,4 +95,4 @@ interface SignOptions {
     privateKey?: string;
 }
 
-export {Eth, TransactOptions}
+export {EthUtil, TransactOptions}

@@ -2,10 +2,9 @@
  * @module channel
  */
 
-import {Root, Service} from 'protobufjs';
-import {frameRequest, convertGrpcResponseChunk} from './utils/grpc';
-import axios from 'axios';
+import {rpc} from 'protobufjs';
 import {Channel} from './channel';
+import { GrpcModel } from './model';
 
 /**
  * @ignore
@@ -55,40 +54,27 @@ const SERVICE_STATE_JSON = {
     }
   }
 
-class ChannelState {
+class ChannelState extends GrpcModel{
     PACKAGENAME = 'escrow';
     SERVICENAME = 'PaymentChannelStateService';
     GET_CHANNEL_STATE = 'GetChannelState';
     FULLSERVICENAME = this.PACKAGENAME + '.' + this.SERVICENAME;
 
     endpoint:string;
-    channelStateService:Service;
+    channelStateService:rpc.Service;
     channel:Channel;
+    url: string;
 
-    constructor(endpoint:string, channel:Channel){
+    constructor(web3:any, endpoint:string, channel:Channel){
+        super(web3);
         this.endpoint = endpoint;
         this.channel = channel;
-        this.channelStateService = this.create(endpoint);
-    }
 
-    private create(endpoint:string): Service {
-        const Svc = Root.fromJSON(SERVICE_STATE_JSON).lookup(this.SERVICENAME);
         const url = `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
-
-        // @ts-ignore
-        return Svc.create(
-            (method, requestObj, callback) => {
-                const headers = {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'};
-                const body = frameRequest(requestObj);    
-
-                axios.post(url, body, {headers:headers, responseType:'arraybuffer'})
-                    .then((response) => convertGrpcResponseChunk(response, callback))
-                    .catch((err) => callback(err, null));
-                    
-            }, false, false);
+        this.channelStateService = this.createService(url);
     }
 
-    async getChannelState(opts:ChannelStateOpts = {}) : Promise<ChannelStateResponse> {
+    async getState(opts:ChannelStateOpts = {}) : Promise<ChannelStateResponse> {
         const byteschannelID = this.channel.getByteChannelId();
         const byteSig = await this.channel.signChannelId(opts.privateKey);
         const request = {"channelId":byteschannelID, "signature":byteSig};
@@ -99,7 +85,6 @@ class ChannelState {
             Buffer.from(channelResponse.currentNonce).toString('hex',0,channelResponse.currentNonce.length));
         const curSignedAmt = parseInt('0x' + 
             Buffer.from(channelResponse.currentSignedAmount).toString('hex',0,channelResponse.currentSignedAmount.length));
-
 
         return {
           currentSignature: channelResponse.currentSignature, 
@@ -119,4 +104,4 @@ interface ChannelStateResponse {
   currentSignedAmount: number;
 }
 
-export {ChannelState}
+export {ChannelState, ChannelStateResponse, ChannelStateOpts}

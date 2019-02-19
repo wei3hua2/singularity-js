@@ -6,52 +6,55 @@
 
 
 import {SnetError} from './errors/snet-error';
-import {Model} from './model';
+import {Model, Fetchable, GrpcModel} from './model';
 import * as pb from 'protobufjs';
 import {Channel} from './channel';
+import {Account} from './account';
 import {Ipfs} from './ipfs';
 import axios from 'axios';
 import {PromiEvent} from 'web3-core-promievent';
-import {processProtoToArray, getServiceProto, frameRequest, convertGrpcResponseChunk} from './utils/grpc';
+//@ts-ignore
+import NETWORK from './network.json';
 
 /**
  * To run the service. The logic for execution is from here.
  */
-class Service extends Model{
-    orgId: string;
-    metadataURI: string;
+class Service extends GrpcModel implements Fetchable{
+    serviceId: string;
+    organizationId: string;
+
     metadata: ServiceMetadata;
     protoService: pb.Service;
     tags: string[];
-    private protoBuf: any;
 
     jobPromise:PromiEvent<any>;
 
-    /** @ignore*/
-    private constructor(web3, orgId:string, fields:any) {
-        super(web3, fields);
+    _fetched: boolean;
 
-        if(!orgId) throw new SnetError('org_id_svc_not_found', orgId);
-        this.orgId = orgId;
+    /** @ignore*/
+    private constructor(account:Account, organizationId:string, fields:any) {
+        super(account);
+
+        if(!organizationId) throw new SnetError('org_id_svc_not_found', organizationId);
+        if(!fields.id) throw new SnetError('service_id_not_found', fields.id);
+
+        this.organizationId = organizationId;
+        this.serviceId = fields.id;
     }
 
     /**
      * Fetch additional data and metadata from the registry and Ipfs.
      */
     public async fetch(): Promise<boolean> {
-        console.log('fetched : '+this._fetched);
-
         if(!this._fetched) {
-            const svcReg = await this._registry.getServiceRegistrationById(this.orgId, this.id);
-            const metadata = await Ipfs.cat(svcReg.metadataURI);
-            const proto = await getServiceProto(this._eth, this.orgId, this.id);
+            const svcReg = await this.getRegistry().getServiceRegistrationById(this.organizationId, this.serviceId);
+            this.metadata = await Ipfs.cat(svcReg.metadataURI);
             
-            this.metadataURI = svcReg.metadataURI;
             this.tags = svcReg.tags;
-            this.metadata = metadata;
-            this.protoBuf = processProtoToArray(proto);
-            this.protoService = this.protoBuf['Service'][0];
-            
+
+            const proto = await this.getServiceProto(this.organizationId, this.serviceId);
+            this.processProto(proto);
+
             this._fetched = true;
         }
         return this._fetched;
@@ -69,7 +72,11 @@ class Service extends Model{
 
     /**
      * 
-     * Job execution
+     * Job execution. The runner follows the steps:
+     * 1. attempt to get available channel. If no channel found, init a new channel.
+     * 2. setup protobuf service object.
+     * 3. invoke the grpc exposed by the daemon.
+     * 
      * 
      * @param method The method name to execute.
      * @param request The payload of the method.
@@ -79,8 +86,8 @@ class Service extends Model{
         this.jobPromise = new PromiEvent();
         this.jobPromise.emit(RUN_JOB_STATE.start_job, method, request);
 
-        Channel.getAvailableChannels(this.web3, 
-            opts.from, this.orgId, this.id).then(
+        Channel.getAvailableChannels(this.account, 
+            opts.from, this.organizationId, this.serviceId).then(
                 (channels) => {
                     this.jobPromise.emit(RUN_JOB_STATE.available_channels, channels);
 
@@ -88,7 +95,8 @@ class Service extends Model{
 
                     this.jobPromise.emit(RUN_JOB_STATE.selected_channel, channel);
 
-                    return this.createService(this.jobPromise, channel, {privateKey:opts.privateKey});
+                    return null;
+                    // return this.createService(this.jobPromise, channel, {privateKey:opts.privateKey});
             }).then((svc) => {
                 this.jobPromise.emit(RUN_JOB_STATE.service_created, svc);
 
@@ -104,70 +112,109 @@ class Service extends Model{
         return this.jobPromise;
     }
 
+    public openChannel(val:number, opts:any): Promise<any> {
+        return Channel.openChannel(this.account, opts.from, this.getPaymentAddress(), 
+            this.getGroupId(), val, this.getPaymentExpirationThreshold());
+    }
+
+    protected getGroupId() {
+        return this.metadata.groups[0].group_id;
+    }
+    protected getPaymentAddress() {
+        return this.metadata.groups[0].payment_address;
+    }
+    protected getPaymentExpirationThreshold() {
+        return this.metadata.payment_expiration_threshold;
+    }
+    protected getEndpoint() {
+        return this.metadata.endpoints[0].endpoint;
+    }
+
+    protected async getServiceProto(organizationId: string, serviceId: string): Promise<object> {
+        const netId = await this.getEthUtil().getNetworkId();
+        const network = NETWORK[netId].protobufjs;
+        const url = encodeURI(network + organizationId + '/' +  serviceId);
+    
+        return (await axios.get(url)).data;
+    }
+
+
+    // TODO
+    // check available channels give: from, organizationId, svcId
+    // if not found init one
+    // what is the precondition?
+    private async retrieveChannel(): Promise<Channel>{
+        return null;
+    }
+    // TODO
+    private async invokeAgentService(): Promise<any>{
+        return null;
+    }
+
     /**
      * @ignore
      */
     public toString(): string {
-        return `\n*** Service ${this.id} :`+
-        `\norgId: ${this.orgId}` +
-        `\nmetadataURI: ${this.metadataURI}` +
+        return `\n*** Service ${this.serviceId} :`+
+        `\norganizationId: ${this.organizationId}` +
+        // `\nmetadataURI: ${this.metadataURI}` +
         `\ntags: ${this.tags}` + 
-        `\nmetadata: ${JSON.stringify(this.metadata)}` + 
-        `\nproto: ${this.protoBuf}`;
+        `\nmetadata: ${JSON.stringify(this.metadata)}`;
+        // `\nproto: ${this.protoBuf}`;
     }
 
-    private async createService (promi:PromiEvent, channel:Channel, opts:any): Promise<any> {
-        const host:string = this.metadata.endpoints[0].endpoint;
-        promi.emit(RUN_JOB_STATE.host, host);
+    // private async createService (promi:PromiEvent, channel:Channel, opts:any): Promise<any> {
+    //     const host:string = this.metadata.endpoints[0].endpoint;
+    //     promi.emit(RUN_JOB_STATE.host, host);
         
-        const channelState = await(channel.initChannelState().getChannelState({privateKey:opts.privateKey}));
-        promi.emit(RUN_JOB_STATE.channel_state, channelState);
+    //     const channelState = await(channel.getChannelState({privateKey:opts.privateKey}));
+    //     promi.emit(RUN_JOB_STATE.channel_state, channelState);
 
-        const price_in_cogs = this.metadata.pricing.price_in_cogs + channelState.currentSignedAmount;
-        promi.emit(RUN_JOB_STATE.price_in_cogs, price_in_cogs);
+    //     const price_in_cogs = this.metadata.pricing.price_in_cogs + channelState.currentSignedAmount;
+    //     promi.emit(RUN_JOB_STATE.price_in_cogs, price_in_cogs);
 
-        const signed = await this.signServiceHeader(
-            channel.id, channel.nonce, price_in_cogs, opts.privateKey);
+    //     const signed = await this.signServiceHeader(
+    //         channel.id, channel.nonce, price_in_cogs, opts.privateKey);
 
-        promi.emit(RUN_JOB_STATE.signed_header, signed);
+    //     promi.emit(RUN_JOB_STATE.signed_header, signed);
 
-        const requestHeaders = await this.parseAgentRequestHeader(signed, channel, price_in_cogs);
-        promi.emit(RUN_JOB_STATE.request_header, requestHeaders);
+    //     const requestHeaders = await this.parseAgentRequestHeader(signed, channel, price_in_cogs);
+    //     promi.emit(RUN_JOB_STATE.request_header, requestHeaders);
 
-        return this.protoService.create(
-            (method, requestObject, callback) => {
-                const fullmethod = method.toString().split(' ')[1].trim().substring(1);
-                const serviceName = fullmethod.split('.')[0] + '.' + fullmethod.split('.')[1];
-                const methodName = fullmethod.split('.')[2];
+    //     return this.protoService.create(
+    //         (method, requestObject, callback) => {
+    //             const fullmethod = method.toString().split(' ')[1].trim().substring(1);
+    //             const serviceName = fullmethod.split('.')[0] + '.' + fullmethod.split('.')[1];
+    //             const methodName = fullmethod.split('.')[2];
                 
-                const headers = Object.assign({}, 
-                    {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'},
-                    requestHeaders);
+    //             const headers = Object.assign({}, 
+    //                 {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'},
+    //                 requestHeaders);
 
-                const url = `${host}/${serviceName}/${methodName}`;
-                const body = frameRequest(requestObject);
+    //             const url = `${host}/${serviceName}/${methodName}`;
+    //             const body = this.frameRequest(requestObject);
 
-                promi.emit(RUN_JOB_STATE.request_info, headers, url, body);
+    //             promi.emit(RUN_JOB_STATE.request_info, headers, url, body);
 
-                axios.post(url, body, {headers:headers,responseType:'arraybuffer'})
-                    .then((response) => {
-                        promi.emit(RUN_JOB_STATE.raw_response, response);
-                        convertGrpcResponseChunk(response, callback);
-                    }).catch((err) => { callback(err, null); });
-            }, false ,false);
-    }
+    //             axios.post(url, body, {headers:headers,responseType:'arraybuffer'})
+    //                 .then((response) => {
+    //                     promi.emit(RUN_JOB_STATE.raw_response, response);
+    //                     this.convertGrpcResponseChunk(response, callback);
+    //                 }).catch((err) => { callback(err, null); });
+    //         }, false ,false);
+    // }
 
     private async signServiceHeader (
         channelId:number, nonce:number, priceInCogs:number,
         privateKey:string) {
-        const contractAddress = await this._mpe.getNetworkAddress();
+        const contractAddress = await this.account.getMpe().getNetworkAddress();
 
-        const sha3Message: string = this._eth.soliditySha3(
+        const sha3Message: string = this.getEthUtil().soliditySha3(
             {t: 'address', v: contractAddress}, {t: 'uint256', v: channelId},
             {t: 'uint256', v: nonce}, {t: 'uint256', v: priceInCogs}
           );
       
-        const signed = (await this._eth.sign(sha3Message, {privateKey:privateKey})).signature;
+        const signed = (await this.getEthUtil().sign(sha3Message, {privateKey:privateKey})).signature;
 
         const stripped = signed.substring(2, signed.length);
         const byteSig = global.Buffer.from(stripped, 'hex');
@@ -195,8 +242,8 @@ class Service extends Model{
      * @param organizationId Organization Id
      * 
      */
-    static init(web3:any, organizationId:string, serviceId:string) {
-        return new Service(web3, organizationId, {id:serviceId});
+    static init(account:Account, organizationId:string, serviceId:string) {
+        return new Service(account, organizationId, {id:serviceId});
     }
 }
 

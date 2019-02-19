@@ -1,13 +1,13 @@
 import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3} from './utils';
-import {Eth} from '../../src/eth';
+import {EthUtil} from '../../src/eth';
 
 let web3, eth;
 
 m.before(() => {
     web3 = initWeb3();
-    eth = new Eth(web3);
+    eth = new EthUtil(web3);
 });
 m.after(() => {
     eth.close();

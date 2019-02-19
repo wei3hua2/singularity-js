@@ -3,6 +3,8 @@
  */
 
 import {Contract} from './contract';
+import {Account} from '../account';
+
 //@ts-ignore
 import RegistryNetworks from 'singularitynet-platform-contracts/networks/Registry.json';
 //@ts-ignore
@@ -11,7 +13,7 @@ import RegistryAbi from 'singularitynet-platform-contracts/abi/Registry.json';
 import {TransactOptions} from '../eth';
 
 class Registry extends Contract {
-    constructor(eth: any){ super(eth); }
+    constructor(account: Account){ super(account); }
 
     getAbi(){ return RegistryAbi; }
     getNetworkObj(){ return RegistryNetworks; }
@@ -101,24 +103,24 @@ class Registry extends Contract {
 
 
     createOrganization = (orgId:string, orgName:string, 
-        members:string[], txOpt:TransactOptions) => this.transactContract('createOrganization',txOpt,orgId,orgName,members);
-    changeOrganizationOwner = (orgId:string, newOwner:string, txOpt:TransactOptions) => this.transactContract('changeOrganizationOwner',txOpt,orgId,newOwner);
-    changeOrganizationName = (orgId:string, orgName:string, txOpt:TransactOptions) => this.transactContract('changeOrganizationName',txOpt,orgId,orgName);
-    addOrganizationMembers = (orgId:string, newMembers:string[], txOpt:TransactOptions) => this.transactContract('addOrganizationMembers',txOpt,orgId,newMembers);
-    removeOrganizationMembers = (orgId:string, existingMembers:string[], txOpt:TransactOptions) => this.transactContract('removeOrganizationMembers',txOpt,orgId,existingMembers);
-    deleteOrganization = (orgId:string, txOpt:TransactOptions) => this.transactContract('deleteOrganization',txOpt,orgId);
+        members:string[], txOpt:TransactOptions={}) => this.transactContract('createOrganization',txOpt,orgId,orgName,members);
+    changeOrganizationOwner = (orgId:string, newOwner:string, txOpt:TransactOptions={}) => this.transactContract('changeOrganizationOwner',txOpt,orgId,newOwner);
+    changeOrganizationName = (orgId:string, orgName:string, txOpt:TransactOptions={}) => this.transactContract('changeOrganizationName',txOpt,orgId,orgName);
+    addOrganizationMembers = (orgId:string, newMembers:string[], txOpt:TransactOptions={}) => this.transactContract('addOrganizationMembers',txOpt,orgId,newMembers);
+    removeOrganizationMembers = (orgId:string, existingMembers:string[], txOpt:TransactOptions={}) => this.transactContract('removeOrganizationMembers',txOpt,orgId,existingMembers);
+    deleteOrganization = (orgId:string, txOpt:TransactOptions={}) => this.transactContract('deleteOrganization',txOpt,orgId);
 
-    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, tags:string[], txOpt:TransactOptions) => this.transactContract('createServiceRegistration',txOpt,orgId,serviceId,metadataURI,tags);
-    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, txOpt:TransactOptions) => this.transactContract('updateServiceRegistration',txOpt, orgId,serviceId, metadataURI);
-    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions) => this.transactContract('addTagsToServiceRegistration',txOpt, orgId, serviceId, tags);
-    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions) => this.transactContract('removeTagsFromServiceRegistration',txOpt, orgId, serviceId, tags);
-    deleteServiceRegistration = (orgId:string, serviceId:string, txOpt:TransactOptions) => this.transactContract('deleteServiceRegistration',txOpt, orgId, serviceId);
+    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('createServiceRegistration',txOpt,orgId,serviceId,metadataURI,tags);
+    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, txOpt:TransactOptions={}) => this.transactContract('updateServiceRegistration',txOpt, orgId,serviceId, metadataURI);
+    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('addTagsToServiceRegistration',txOpt, orgId, serviceId, tags);
+    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('removeTagsFromServiceRegistration',txOpt, orgId, serviceId, tags);
+    deleteServiceRegistration = (orgId:string, serviceId:string, txOpt:TransactOptions={}) => this.transactContract('deleteServiceRegistration',txOpt, orgId, serviceId);
 
-    createTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, tags:string[], txOpt:TransactOptions) => this.transactContract('createTypeRepositoryRegistration',txOpt,orgId,repositoryId,repositoryURI,tags);
-    updateTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, txOpt:TransactOptions) => this.transactContract('updateTypeRepositoryRegistration',txOpt,orgId, repositoryId, repositoryURI);
-    addTagsToTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions) => this.transactContract('addTagsToTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
-    removeTagsFromTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions) => this.transactContract('removeTagsFromTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
-    deleteTypeRepositoryRegistration = (orgId:string, repositoryId:string, txOpt:TransactOptions) => this.transactContract('deleteTypeRepositoryRegistration',txOpt,orgId,repositoryId);
+    createTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('createTypeRepositoryRegistration',txOpt,orgId,repositoryId,repositoryURI,tags);
+    updateTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, txOpt:TransactOptions={}) => this.transactContract('updateTypeRepositoryRegistration',txOpt,orgId, repositoryId, repositoryURI);
+    addTagsToTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('addTagsToTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
+    removeTagsFromTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('removeTagsFromTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
+    deleteTypeRepositoryRegistration = (orgId:string, repositoryId:string, txOpt:TransactOptions={}) => this.transactContract('deleteTypeRepositoryRegistration',txOpt,orgId,repositoryId);
 }
 
 export {Registry}

@@ -8,10 +8,11 @@ import AGITokenNetworks from 'singularitynet-platform-contracts/networks/MultiPa
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-platform-contracts/abi/MultiPartyEscrow.json';
 
-import {ContractTxOptions} from './contract';
+import {TransactOptions} from '../eth';
+import {Account} from '../account';
 
 class Mpe extends Contract {
-    constructor(eth: any){ super(eth); }
+    constructor(account:Account){ super(account); }
 
     getAbi(){ return AGITokenAbi; }
     getNetworkObj(){ return AGITokenNetworks; }
@@ -21,21 +22,21 @@ class Mpe extends Contract {
     nextChannelId = () => this.callContract('nextChannelId');
     token = () => this.callContract('token');
 
-    deposit = (value:number, txOpt:ContractTxOptions) => this.transactContract('deposit',txOpt,value);
-    withdraw = (value:number, txOpt:ContractTxOptions) => this.transactContract('withdraw',txOpt,value);
-    transfer = (receiver:string, value:number, txOpt:ContractTxOptions) => this.transactContract('transfer',txOpt,receiver,value);
+    deposit = (value:number, txOpt:TransactOptions={}) => this.transactContract('deposit',txOpt,value);
+    withdraw = (value:number, txOpt:TransactOptions={}) => this.transactContract('withdraw',txOpt,value);
+    transfer = (receiver:string, value:number, txOpt:TransactOptions={}) => this.transactContract('transfer',txOpt,receiver,value);
     openChannel = (signer:string, recipient:string, groupId:string,
-        value:number, expiration:number,txOpt:ContractTxOptions) => this.transactContract('openChannel',txOpt, signer, recipient, groupId,value,expiration);
+        value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('openChannel',txOpt, signer, recipient, groupId,value,expiration);
     depositAndOpenChannel = (signer:string, recipient:string, groupId:string,
-        value:number, expiration:number,txOpt:ContractTxOptions) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
+        value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
     multiChannelClaim = (channelIds:number[], amounts:number[], isSendbacks:boolean[],
-        v:string, s:string, r:string,txOpt:ContractTxOptions) => this.transactContract('multiChannelClaim',txOpt,channelIds,amounts,isSendbacks,v,s,r);
+        v:string, s:string, r:string,txOpt:TransactOptions={}) => this.transactContract('multiChannelClaim',txOpt,channelIds,amounts,isSendbacks,v,s,r);
     channelClaim = (channelId:number, amount:number, isSendback:boolean,
-        v:string, s:string, r:string, txOpt:ContractTxOptions) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
-    channelExtend = (channelId:number, newExpiration:number, txOpt:ContractTxOptions) => this.transactContract('channelExtend',txOpt,channelId,newExpiration);
-    channelAddFunds = (channelId:number, amount:number, txOpt:ContractTxOptions) => this.transactContract('channelAddFunds',txOpt,channelId,amount);
-    channelExtendAndAddFunds = (channelId:number, newExpiration:number, amount:number, txOpt:ContractTxOptions) => this.transactContract('channelExtendAndAddFunds',txOpt,channelId,newExpiration,amount);
-    channelClaimTimeout = (channelId:number, txOpt:ContractTxOptions) => this.transactContract('channelClaimTimeout',txOpt,channelId);
+        v:string, s:string, r:string, txOpt:TransactOptions={}) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
+    channelExtend = (channelId:number, newExpiration:number, txOpt:TransactOptions={}) => this.transactContract('channelExtend',txOpt,channelId,newExpiration);
+    channelAddFunds = (channelId:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelAddFunds',txOpt,channelId,amount);
+    channelExtendAndAddFunds = (channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelExtendAndAddFunds',txOpt,channelId,newExpiration,amount);
+    channelClaimTimeout = (channelId:number, txOpt:TransactOptions={}) => this.transactContract('channelClaimTimeout',txOpt,channelId);
     
     ChannelOpen = () => this.eventContract('ChannelOpen');
     ChannelClaim = () => this.eventContract('ChannelClaim');

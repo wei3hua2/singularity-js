@@ -5,10 +5,9 @@
  * Main module. To instantiate other model, please use this module.
  */
 
-import {Eth} from './eth';
 import {Organization} from './organization';
+import {Account} from './account';
 import {Service, RunJobOption} from './service';
-import {Core} from './core';
 import PromiEvent from 'web3-core-promievent';
 
 /**
@@ -22,15 +21,18 @@ import PromiEvent from 'web3-core-promievent';
  * 
  * ```
  */
-class Snet extends Core{
+class Snet {
     protected web3: any;
-    protected eth: Eth;
+    protected currentAccount: Account;
 
     /**
      * @hidden
      */
-    private constructor(web3:any, options:InitOption={}) {
-        super(web3);
+    private constructor(web3:any, opts:InitOption={}) {
+        if(opts.privateKey && opts.address)
+            this.currentAccount = Account.create(web3,{address:opts.address, privateKey:opts.privateKey});
+        else
+            this.currentAccount = Account.create(web3);
     }
 
     /**
@@ -112,6 +114,8 @@ class Snet extends Core{
 
 class InitOption {
     web3Provider?: string;
+    address?: string;
+    privateKey?: string;
 }
 
 export {

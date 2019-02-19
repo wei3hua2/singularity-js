@@ -2,14 +2,14 @@
  * @module snet
  */
 
-import {Eth} from './eth';
+import {EthUtil} from './eth';
 import axios from 'axios';
 
 //@ts-ignore
 import MarketplaceNetwork from './network.json';
 
 class Marketplace {
-    eth: Eth;
+    eth: EthUtil;
     constructor(eth){
         this.eth = eth;
         // axios.interceptors.response.use(

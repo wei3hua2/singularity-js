@@ -2,14 +2,16 @@
  * @module channel
  */
 
- import { Eth } from './eth';
- import { Mpe } from './contracts/mpe';
-import { Core } from './core';
-import { ChannelState } from './channel-state';
+import {Account} from './account';
+import { Mpe } from './contracts/mpe';
+import {Model} from './model';
+import { Fetchable, GrpcModel } from './model';
+import { ChannelState, ChannelStateResponse, ChannelStateOpts } from './channel-state';
 import { SnetError } from './errors/snet-error';
 import { Marketplace } from './marketplace';
+import { TransactOptions } from './eth';
 
-class Channel extends Core {
+class Channel extends Model implements Fetchable {
     id:number;
 
     nonce: number;
@@ -23,24 +25,28 @@ class Channel extends Core {
     balance_in_cogs?: number;
     pending?: number;
     endpoint?: string;
+
+    _fetched: boolean;
  
-    constructor(web3:any, id: number, data?:any) {
-        super(web3);
+    private constructor(account:Account, id: number, data?:any) {
+        super(account);
         this.id = id;
 
         if(data) this.populate(data);
     }
 
 
-    initChannelState() : ChannelState{
+    async getChannelState(opts?:ChannelStateOpts) : Promise<ChannelStateResponse> {
         if(!this.endpoint) throw new SnetError('channel_endpoint_not_found');
         
-        return new ChannelState(this.endpoint, this);
+        const cs = new ChannelState(this.account, this.endpoint, this);
+        return await cs.getState(opts);
     }
 
-    async fetch() {
-        const channel = await this._mpe.channels(this.id);
+    async fetch(): Promise<boolean> {
+        const channel = await this.getMpe().channels(this.id);
         this.populate(channel);
+        return true;
     }
 
     private populate(contractChannel:any){
@@ -60,7 +66,7 @@ class Channel extends Core {
     }
 
     async signChannelId(privateKey:string = null) {
-        return this._eth.signMessage([{t: 'uint256', v: this.id}], privateKey);
+        return this.account.getEthUtil().signMessage([{t: 'uint256', v: this.id}], privateKey);
     }
 
     getByteChannelId() {
@@ -79,18 +85,28 @@ class Channel extends Core {
             `\nendpoint : ${this.endpoint} , expiration : ${this.expiration}`;
     }
 
-    static openChannel() {}
+    static init(account:Account, channelId:number) {
+        return new Channel(account, channelId);
+    }
 
-    static getChannel(web3:any, channelId:number) {
-        return new Channel(web3, channelId);
+    static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
+        value:number, expiration:number, opts:TransactOptions={}) {
+        const mpe = account.getMpe();
+
+        const result = await mpe.openChannel(signer, recipient, groupId, value, expiration,opts);
     }
 
     static async getAvailableChannels(
-        web3:any, from:string, orgId:string, serviceId:string) {
-        const marketplace = new Marketplace(new Eth(web3));
-        const mpe = new Mpe(web3);
+        account:Account, from:string, orgId:string, serviceId:string) {
+        const marketplace = new Marketplace(account.getEthUtil());
+        const mpe = account.getMpe();
 
-        const channelMain = (await marketplace.availableChannels(from, serviceId, orgId)).data[0];
+        const channelResponse = (await marketplace.availableChannels(from, serviceId, orgId)).data;
+        
+        if(channelResponse.length == 0) return [];
+
+        const channelMain = channelResponse[0];
+        
         const channels = channelMain.channels;
         const endpoints = channelMain.endpoint;
 
@@ -102,7 +118,7 @@ class Channel extends Core {
                 recipient: channelMain.recipient
             });
             
-            return new Channel(mpe, channel.channelId, c);
+            return new Channel(account, channel.channelId, c);
         });
     }
 }

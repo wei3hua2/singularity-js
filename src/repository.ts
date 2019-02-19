@@ -3,11 +3,12 @@
  */
 
 import {Model} from './model';
+import {Account} from './account';
 
 class Repository extends Model{
     
-    constructor(web3:any, fields:any){
-        super(web3, fields);
+    constructor(account:Account){
+        super(account);
     }
 
     async fetch(){
