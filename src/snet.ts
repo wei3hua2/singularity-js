@@ -24,15 +24,23 @@ import PromiEvent from 'web3-core-promievent';
 class Snet {
     protected web3: any;
     protected currentAccount: Account;
+    protected opts:InitOption;
 
     /**
      * @hidden
      */
     private constructor(web3:any, opts:InitOption={}) {
-        if(opts.privateKey && opts.address)
-            this.currentAccount = Account.create(web3,{address:opts.address, privateKey:opts.privateKey});
+        this.web3 = web3;
+        this.opts = opts;
+    }
+
+    async init():Promise<boolean> {
+        if(this.opts.privateKey && this.opts.address)
+            this.currentAccount = await Account.create(this.web3,{address:this.opts.address, privateKey:this.opts.privateKey});
         else
-            this.currentAccount = Account.create(web3);
+            this.currentAccount = await Account.create(this.web3);
+        
+        return true;
     }
 
     /**
@@ -107,8 +115,11 @@ class Snet {
      * @param web3 
      * @param opts 
      */
-    static init (web3, opts:InitOption={}) {
-        return new Snet(web3, opts);
+    static async init (web3, opts:InitOption={}): Promise<Snet> {
+        const snet = new Snet(web3, opts);
+        await snet.init();
+        
+        return snet;
     }
 }
 

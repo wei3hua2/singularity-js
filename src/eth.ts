@@ -21,24 +21,11 @@ class EthUtil {
     }
 
     getNetworkId(): Promise<any> {
-        if(this.isVersion1Beyond)
-            return this.web3.eth.net.getId();
-        else
-            return new Promise((resolve, reject) => {
-                this.web3.version.getNetwork((err, netId) => {
-                    if(err) reject(err);
-                    else resolve(netId);
-                });
-            });
+        return this.web3.eth.net.getId();
     }
 
     getBlockNumber(): Promise<number> {
-        return new Promise( (resolve, reject) => {
-            this.web3.eth.getBlockNumber((error, result) => {
-                if(error) reject(error);
-                else resolve(result);
-            });
-        });
+        return this.web3.eth.getBlockNumber();
     }
 
     getAccounts(): Promise<string[]> {
@@ -67,6 +54,16 @@ class EthUtil {
         else
             return this.web3.toHex(strVal);
     }
+    hexToBytes(hex:string):any[] {
+        return this.web3.utils.hexToBytes(hex);
+    }
+    base64ToHex(base64String:string):string {
+        var byteSig = Buffer.from(base64String, 'base64');
+        let buff = new Buffer(byteSig);
+        let hexString = "0x"+buff.toString('hex');
+
+        return hexString;
+    }
 
     soliditySha3(...params) {
         return this.web3.utils.soliditySha3(...params);
@@ -94,5 +91,13 @@ interface TransactOptions {
 interface SignOptions {
     privateKey?: string;
 }
+interface EventOptions {
+    filter?: Object;
+    fromBlock?: string|number;
+    topics?:any[]
+}
+interface AllEventsOptions extends EventOptions{
+    toBlock?: string|number;
+}
 
-export {EthUtil, TransactOptions}
+export {EthUtil, TransactOptions, EventOptions, AllEventsOptions}

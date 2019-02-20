@@ -2,12 +2,13 @@
  * @module account
  */
 
-import {EthUtil, TransactOptions} from './eth';
+import {EthUtil, TransactOptions, EventOptions, AllEventsOptions} from './eth';
 import {Registry} from './contracts/registry';
 import {Tokens} from './contracts/tokens';
 import {Mpe} from './contracts/mpe';
 import {Marketplace} from './marketplace';
 import {PromiEvent} from 'web3-core-promievent';
+import { EventEmitter } from 'events';
 
 class Account {
     private privateKey: string;
@@ -17,9 +18,10 @@ class Account {
     protected _registry:Registry;
     protected _mpe:Mpe;
     protected _tokens:Tokens;
-    protected _eth:EthUtil;
     protected _marketplace:Marketplace;
     protected web3:any;
+
+    public _eth:EthUtil;
 
     constructor(web3:any, opts:InitOptions={}){
         this.web3 = web3;
@@ -30,25 +32,26 @@ class Account {
 
         this._tokens = new Tokens(this);
         this._mpe = new Mpe(this);
-        this._registry = new Registry(this)
+        this._registry = new Registry(this);
         this._marketplace = new Marketplace(this._eth);
         
 
         this.isVersion1Beyond = !(this.getWeb3Version()[0] === '0');
     }
 
-    public getEthUtil(): EthUtil {
-        return this._eth;
+    async init(): Promise<boolean> {
+        const tokenSuccess = await this._tokens.init();
+        const mpeSuccess = await this._mpe.init();
+        const regSuccess = await this._registry.init();
+
+        return tokenSuccess && mpeSuccess && regSuccess;
     }
-    public getRegistry(): Registry {
-        return this._registry;
-    }
-    public getMpe(): Mpe {
-        return this._mpe;
-    }
-    public getTokens(): Tokens {
-        return this._tokens;
-    }
+
+    public getEthUtil = ():EthUtil => this._eth;
+    public getRegistry = (): Registry => this._registry;
+    public getMpe = (): Mpe => this._mpe;
+    public getTokens = (): Tokens => this._tokens;
+    
 
     getWeb3Version():string {
         return this.web3.version.api ? this.web3.version.api : this.web3.version;
@@ -83,17 +86,31 @@ class Account {
         return this.web3.eth.accounts.signTransaction(tx, privateKey);
     }
 
-    event(contract, method, valObj, filterObject): Promise<any> {
+    once(contract, method, opts:EventOptions={}): Promise<any> {
         return new Promise((resolve, reject) => {
-            contract[method](valObj, filterObject, (err, result) => { 
+            contract.once(method,opts, (err, evt) => {
                 if(err) reject(err);
-                else resolve(result);
+                else resolve(evt);
+            });
+        });
+    }
+    event(contract, method, opts:EventOptions={}): EventEmitter {
+        return contract.events[method](opts);
+    }
+    pastEvents(contract, method, opts:AllEventsOptions={}): Promise<any> {
+        return contract.getPastEvents(method, opts);
+    }
+    allEvents(contract, opts:AllEventsOptions={}): Promise<any> {
+        return new Promise((resolve, reject) => {
+            contract.events.allEvents(opts, (err, evts) => {
+                if(err) reject(err);
+                else resolve(evts);
             });
         });
     }
 
 
-
+    ///////// call
 
     public async getAgiTokens(): Promise<number> {
         const result = await this._tokens.balanceOf(this.address);
@@ -103,12 +120,13 @@ class Account {
         return await this._mpe.balances(this.address);
     }
 
+    ///////// transact
+
     public async transfer(to:string|Account, amount:number,opts:TransactOptions={}): Promise<any> {
         const toStr = to instanceof Account ? to.address : to;
         opts.from = this.address;
         return await this._tokens.transfer(toStr, amount, opts);
     }
-
     public async depositToEscrow(amount:number, opts:TransactOptions={}): Promise<any> {
         opts.from = this.address;
         return await this._mpe.deposit(amount, opts);
@@ -118,19 +136,34 @@ class Account {
         return await this._mpe.withdraw(amount, opts);
     }
 
+    public async openChannel(){}
+    public async depositAndOpenChannel(){}
+    public async extendChannel(){}
+    public async extendChannelExpiration(){}
+    public async transferEscrow(){}
+    public async addFundsToChannel(){}
+    public async extendsAndAddFundsToChannel(){}
 
 
-    public static create(web3:any, opts:InitOptions={}): Account {
-        return new Account(web3, opts);
+    ///////// event
+
+    // listenChannelOpen
+    // listenChannelExtend
+    // listenChannelAddFunds
+    // listenChannelDeposit
+    // listenChannelWithdraw
+    // listenChannelTransfer
+
+    // listenTransfer
+
+
+    public static async create(web3:any, opts:InitOptions={}): Promise<Account> {
+        const acct = new Account(web3, opts);
+        await acct.init();
+        
+        return acct;
     }
 
-    // private parseOptions (opts:ContractTxOptions) : TransactOptions {
-    //     const tx = !!this._privateKey || !!opts.privateKey;
-    //     const pk = opts.privateKey || this._privateKey;
-    //     const from = this.id;
-
-    //     return {from: from, privateKey: pk, signTx:tx};
-    // }
 }
 
 interface InitOptions {

@@ -113,20 +113,22 @@ class Service extends GrpcModel implements Fetchable{
     }
 
     public openChannel(val:number, opts:any): Promise<any> {
-        return Channel.openChannel(this.account, opts.from, this.getPaymentAddress(), 
+        return Channel.openChannel(
+            this.account, opts.from, this.getPaymentAddress(), 
             this.getGroupId(), val, this.getPaymentExpirationThreshold());
     }
 
-    protected getGroupId() {
-        return this.metadata.groups[0].group_id;
+    public getGroupId():number[] {
+        const hex = this.account._eth.base64ToHex(this.metadata.groups[0].group_id);
+        return this.account._eth.hexToBytes(hex);
     }
-    protected getPaymentAddress() {
+    public getPaymentAddress() {
         return this.metadata.groups[0].payment_address;
     }
-    protected getPaymentExpirationThreshold() {
+    public getPaymentExpirationThreshold() {
         return this.metadata.payment_expiration_threshold;
     }
-    protected getEndpoint() {
+    public getEndpoint() {
         return this.metadata.endpoints[0].endpoint;
     }
 
@@ -207,7 +209,7 @@ class Service extends GrpcModel implements Fetchable{
     private async signServiceHeader (
         channelId:number, nonce:number, priceInCogs:number,
         privateKey:string) {
-        const contractAddress = await this.account.getMpe().getNetworkAddress();
+        const contractAddress = this.account.getMpe().address
 
         const sha3Message: string = this.getEthUtil().soliditySha3(
             {t: 'address', v: contractAddress}, {t: 'uint256', v: channelId},

@@ -9,7 +9,8 @@ import { Fetchable, GrpcModel } from './model';
 import { ChannelState, ChannelStateResponse, ChannelStateOpts } from './channel-state';
 import { SnetError } from './errors/snet-error';
 import { Marketplace } from './marketplace';
-import { TransactOptions } from './eth';
+import { TransactOptions, EventOptions, AllEventsOptions } from './eth';
+import { EventEmitter } from 'events';
 
 class Channel extends Model implements Fetchable {
     id:number;
@@ -89,11 +90,29 @@ class Channel extends Model implements Fetchable {
         return new Channel(account, channelId);
     }
 
-    static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
-        value:number, expiration:number, opts:TransactOptions={}) {
+    static async openChannel(account:Account,signer:string, recipient:string, groupId:number[], 
+        value:number, expiration:number, opts:TransactOptions={}):Promise<any> {
         const mpe = account.getMpe();
 
         const result = await mpe.openChannel(signer, recipient, groupId, value, expiration,opts);
+        return result;
+    }
+    static listenOpenChannel(account:Account, opts:EventOptions):EventEmitter {
+        const mpe = account.getMpe();
+        return mpe.ChannelOpen(opts);
+    }
+    static listenOpenChannelOnce(account:Account, opts:EventOptions={}):Promise<any> {
+        const mpe = account.getMpe();
+        return mpe.ChannelOpenOnce(opts);
+    }
+    static PastOpenChannel(account:Account, opts:AllEventsOptions={}):Promise<any> {
+        const mpe = account.getMpe();
+        return mpe.PastChannelOpen(opts);
+    }
+
+    static getAllEvents(account:Account, opts:AllEventsOptions={}):Promise<any> {
+        const mpe = account.getMpe();
+        return mpe.allEvents(opts);
     }
 
     static async getAvailableChannels(

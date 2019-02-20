@@ -8,9 +8,9 @@ import {initWeb3, getConfigInfo} from './utils';
 
 let PERSONAL_ACCOUNT, web3, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PRIVATE_KEY, snet;
 
-m.before(() => {
+m.before(async () => {
   web3 = initWeb3();
-  snet = Snet.init(web3);
+  snet = await Snet.init(web3);
   PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
   TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
   PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];

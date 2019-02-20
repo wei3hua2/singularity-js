@@ -12,6 +12,7 @@ import {SnetError} from './errors/snet-error';
 import {Model, Fetchable} from './model';
 
 class Organization extends Model implements Fetchable{
+    id:string;
     name:string;
     owner:Account;
     members:Account[];
@@ -22,6 +23,7 @@ class Organization extends Model implements Fetchable{
 
     constructor(account:Account, fields:any){
         super(account);
+        this.id = fields.id;
         this.populate(fields);
     }
 

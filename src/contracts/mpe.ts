@@ -8,7 +8,7 @@ import AGITokenNetworks from 'singularitynet-platform-contracts/networks/MultiPa
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-platform-contracts/abi/MultiPartyEscrow.json';
 
-import {TransactOptions} from '../eth';
+import {TransactOptions, EventOptions, AllEventsOptions} from '../eth';
 import {Account} from '../account';
 
 class Mpe extends Contract {
@@ -25,7 +25,7 @@ class Mpe extends Contract {
     deposit = (value:number, txOpt:TransactOptions={}) => this.transactContract('deposit',txOpt,value);
     withdraw = (value:number, txOpt:TransactOptions={}) => this.transactContract('withdraw',txOpt,value);
     transfer = (receiver:string, value:number, txOpt:TransactOptions={}) => this.transactContract('transfer',txOpt,receiver,value);
-    openChannel = (signer:string, recipient:string, groupId:string,
+    openChannel = (signer:string, recipient:string, groupId:number[],
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('openChannel',txOpt, signer, recipient, groupId,value,expiration);
     depositAndOpenChannel = (signer:string, recipient:string, groupId:string,
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
@@ -38,14 +38,18 @@ class Mpe extends Contract {
     channelExtendAndAddFunds = (channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelExtendAndAddFunds',txOpt,channelId,newExpiration,amount);
     channelClaimTimeout = (channelId:number, txOpt:TransactOptions={}) => this.transactContract('channelClaimTimeout',txOpt,channelId);
     
-    ChannelOpen = () => this.eventContract('ChannelOpen');
-    ChannelClaim = () => this.eventContract('ChannelClaim');
-    ChannelSenderClaim = () => this.eventContract('ChannelSenderClaim');
-    ChannelExtend = () => this.eventContract('ChannelExtend');
-    ChannelAddFunds = () => this.eventContract('ChannelAddFunds');
-    DepositFunds = () => this.eventContract('DepositFunds');
-    WithdrawFunds = () => this.eventContract('WithdrawFunds');
-    TransferFunds = () => this.eventContract('TransferFunds');
+    ChannelOpen = (opt:EventOptions={}) => this.eventContract('ChannelOpen',opt);
+    ChannelClaim = (opt:EventOptions={}) => this.eventContract('ChannelClaim',opt);
+    ChannelSenderClaim = (opt:EventOptions={}) => this.eventContract('ChannelSenderClaim',opt);
+    ChannelExtend = (opt:EventOptions={}) => this.eventContract('ChannelExtend',opt);
+    ChannelAddFunds = (opt:EventOptions={}) => this.eventContract('ChannelAddFunds',opt);
+    DepositFunds = (opt:EventOptions={}) => this.eventContract('DepositFunds',opt);
+    WithdrawFunds = (opt:EventOptions={}) => this.eventContract('WithdrawFunds',opt);
+    TransferFunds = (opt:EventOptions={}) => this.eventContract('TransferFunds',opt);
+
+    ChannelOpenOnce = (opt:EventOptions={}) => this.onceContract('ChannelOpen',opt);
+    PastChannelOpen = (opt:AllEventsOptions={}) => this.pastEventsContract('ChannelOpen',opt);
+
 }
 
 export {Mpe}
