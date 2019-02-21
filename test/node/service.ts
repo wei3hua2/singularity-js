@@ -12,13 +12,11 @@ let web3;
 //   web3.currentProvider.connection.close();
 // });
 
-m.describe('Service', () => {
+m.describe.skip('Service', () => {
   m.it('should list available methods', async function() {
     const svc = await Service.init(web3, 'snet', 'example-service');
     const methods = await svc.listMethods();
 
     console.log(methods);
   });
-
-  // m.it('should')
 })

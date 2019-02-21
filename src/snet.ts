@@ -43,6 +43,10 @@ class Snet {
         return true;
     }
 
+    getCurrentAccount(): Account {
+        return this.currentAccount;
+    }
+
     /**
      * List organizations available on the blockchain.
      *
