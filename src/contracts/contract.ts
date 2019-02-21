@@ -4,7 +4,9 @@
 
 import {TransactOptions, EventOptions, AllEventsOptions} from '../eth';
 import {Account} from '../account';
-import { EventEmitter } from 'events';
+// import EventEmitter from 'eventemitter3';
+import {EventEmitter} from 'events';
+import {EthUtil} from '../eth';
 
 abstract class Contract {
     account: Account;
@@ -13,51 +15,55 @@ abstract class Contract {
 
     contract: any;
     address: string;
+    eth: EthUtil;
 
     constructor(currentAccount: Account){
         this.account = currentAccount;
+        this.eth = currentAccount.getEthUtil();
     }
 
     abstract getAbi(): any[];
     abstract getNetworkObj(): any;
 
     async init():Promise<boolean> {
-        const netId = await this.account.getEthUtil().getNetworkId();
+        const netId = await this.eth.getNetworkId();
         
         const contractInfo = this.getNetworkObj()[netId];
         this.address = contractInfo.address;
         const abi = this.getAbi();
 
-        this.contract = this.account.getEthUtil().getContract(abi, this.address);
+        this.contract = this.eth.getContract(abi, this.address);
 
         return true;
     }
     
     protected callContract(method: string, ...params: any[]): Promise<any> {
-        return this.account.call(this.contract, method, ...params);
+        return this.eth.call(this.contract, method, ...params);
     }
     protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): Promise<any> {
-        return this.account.transact(this.contract, method, this.address, txOptions, ...params);
+        return this.eth.transact(
+            this.account.getPrivateKey(),
+            this.contract, method, this.address, txOptions, ...params);
     }
 
     protected eventContract(method: string, opts:EventOptions={}): EventEmitter {
-        return this.account.event(this.contract, method, opts);
+        return this.eth.event(this.contract, method, opts);
     }
     protected onceContract(method: string, opts:EventOptions={}): Promise<any> {
-        return this.account.once(this.contract, method, opts);
+        return this.eth.once(this.contract, method, opts);
     }
     protected pastEventsContract(method: string, opts:EventOptions={}): Promise<any> {
-        return this.account.pastEvents(this.contract, method, opts);
+        return this.eth.pastEvents(this.contract, method, opts);
     }
     
-    public allEvents = (opt:AllEventsOptions={}) => this.account.allEvents(this.contract, opt);
+    public allEvents = (opt:AllEventsOptions={}) => this.eth.allEvents(this.contract, opt);
 
 
     protected fromAscii(strVal: string) : any {
-        return this.account.getEthUtil().fromAscii(strVal);
+        return this.eth.fromAscii(strVal);
     }
     protected toUtf8(strVal: string) : any {
-        return this.account.getEthUtil().toUtf8(strVal);
+        return this.eth.toUtf8(strVal);
     }
 }
 

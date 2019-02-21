@@ -7,18 +7,19 @@ import {PromiEvent} from 'web3-core-promievent';
 
 let web3, eth, marketplace, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
 
-m.before(() => {
-    web3 = initWeb3();
-    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-    PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-});
-m.after(() => {
-    web3.currentProvider.connection.close();
-})
+// m.before(() => {
+//   console.log('will snet before be called?');
+//     web3 = initWeb3();
+//     PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
+//     PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
+// });
+// m.after(() => {
+//     web3.currentProvider.connection.close();
+// })
 
 m.describe('Snet', () => {
   m.xit('should get list organizations', async function () {
-    const snet = Snet.init(web3);
+    const snet = await Snet.init(web3);
     const orgs = await snet.listOrganizations();
   });
 
@@ -36,7 +37,7 @@ m.describe('Snet', () => {
   });
 
   m.it('should run job snet.example_service', async function () {
-    const snet = Snet.init(web3);
+    const snet = await Snet.init(web3);
 
     const svc = await snet.getService('snet','example-service');
     const result = await svc.fetch();
@@ -61,7 +62,7 @@ m.describe('Snet', () => {
 
 
   m.xit('should snet', async function() {
-    const snet = Snet.init(web3);
+    const snet = await Snet.init(web3);
 
     const result = await snet.runJob('snet','example-service', 
       'add', {a:3, b:5}, 

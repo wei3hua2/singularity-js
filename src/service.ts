@@ -219,8 +219,8 @@ class Service extends GrpcModel implements Fetchable{
         const signed = (await this.getEthUtil().sign(sha3Message, {privateKey:privateKey})).signature;
 
         const stripped = signed.substring(2, signed.length);
-        const byteSig = global.Buffer.from(stripped, 'hex');
-        const buff = new global.Buffer(byteSig);
+        const byteSig = Buffer.from(stripped, 'hex');
+        const buff = new Buffer(byteSig);
 
         return buff.toString('base64');
     }

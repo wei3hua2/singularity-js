@@ -52,10 +52,8 @@ class Snet {
      * @returns A list of organization.
      *
      */
-    async listOrganizations(): Promise<Organization[]>{
-        const orgs = await Organization.listOrganizations(this.web3);
-
-        return orgs;
+    listOrganizations(): Promise<Organization[]>{
+        return Organization.listOrganizations(this.web3);
     }
 
     /**
@@ -66,8 +64,8 @@ class Snet {
      * @returns Organization detail.
      *
      */
-    async getOrganization(orgId:string): Promise<Organization> {
-        return await Organization.init(this.web3,orgId);
+    getOrganization(orgId:string): Promise<Organization> {
+        return Organization.init(this.web3,orgId);
     }
 
 

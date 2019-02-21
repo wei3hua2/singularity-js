@@ -2,6 +2,8 @@
  * @hidden
  */
 
+import { EventEmitter } from 'events';
+import {PromiEvent} from 'web3-core-promievent';
 
 class EthUtil {
     web3: any;
@@ -16,8 +18,59 @@ class EthUtil {
         return this.web3.currentProvider.connection.close();
     }
 
+    call(contract, method, ...params): Promise<any> {
+        return contract.methods[method](...params).call();
+    }
+
+    async transact(privateKey:string, contract, method:string, toAddress:string, txOptions:TransactOptions, ...params): Promise<any> {
+        const contractMethod = contract.methods[method](...params);
+
+        if(privateKey) {
+            const signedPayload = await this.signTx(privateKey, txOptions.from, toAddress, contractMethod);
+            
+            return await this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction']);
+        } else
+            return await contractMethod.send(txOptions);
+        
+    }
+
+    async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
+        const nonce = await this.web3.eth.getTransactionCount(from);
+        const gas = await method.estimateGas({from:from});
+        let tx = {nonce:this.toHex(nonce), 
+            from:from, to:to, 
+            gas:this.toHex(gas), gasLimit: this.toHex(800000),
+            gasPrice: this.toHex(this.web3.utils.toWei('10', 'gwei')),
+            data: method.encodeABI()};
+
+        return this.web3.eth.accounts.signTransaction(tx, privateKey);
+    }
+
     getWeb3Version():string {
         return this.web3.version.api ? this.web3.version.api : this.web3.version;
+    }
+
+    once(contract, method, opts:EventOptions={}): Promise<any> {
+        return new Promise((resolve, reject) => {
+            contract.once(method,opts, (err, evt) => {
+                if(err) reject(err);
+                else resolve(evt);
+            });
+        });
+    }
+    event(contract, method, opts:EventOptions={}): EventEmitter {
+        return contract.events[method](opts);
+    }
+    pastEvents(contract, method, opts:AllEventsOptions={}): Promise<any> {
+        return contract.getPastEvents(method, opts);
+    }
+    allEvents(contract, opts:AllEventsOptions={}): Promise<any> {
+        return new Promise((resolve, reject) => {
+            contract.events.allEvents(opts, (err, evts) => {
+                if(err) reject(err);
+                else resolve(evts);
+            });
+        });
     }
 
     getNetworkId(): Promise<any> {

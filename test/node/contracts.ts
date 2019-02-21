@@ -8,17 +8,17 @@ import {initWeb3, getConfigInfo} from './utils';
 
 let PERSONAL_ACCOUNT, web3, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PRIVATE_KEY, snet;
 
-m.before(async () => {
-  web3 = initWeb3();
-  snet = await Snet.init(web3);
-  PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-  TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-  PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-  TEST_ACCOUNT_PRIVATE_KEY = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
-});
-m.after(() => {
-  web3.currentProvider.connection.close();
-})
+// m.before(async () => {
+//   web3 = initWeb3();
+//   snet = await Snet.init(web3);
+//   PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
+//   TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
+//   PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
+//   TEST_ACCOUNT_PRIVATE_KEY = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
+// });
+// m.after(() => {
+//   web3.currentProvider.connection.close();
+// })
 
 m.describe.skip('Contract', () => {
   m.xit('should work for Tokens call functions', async function() {

@@ -15,10 +15,10 @@ m.before(async () => {
     await account.init();
 });
 m.after(() => {
-    // web3.currentProvider.connection.close();
+    web3.currentProvider.connection.close();
 })
 
-m.describe.only('Channels', () => {
+m.describe('Channels', () => {
     m.xit('should get channel information', async function () {
         const channel = Channel.init(account, 1109);
         await channel.fetch();
@@ -30,7 +30,7 @@ m.describe.only('Channels', () => {
         const aChannel = await Channel.getAvailableChannels(account, PERSONAL_ACCOUNT, 'snet', 'example-service');
         console.log(aChannel);
     });
-    m.it('should listen to open channel', async function (done) {
+    m.xit('should listen to open channel', async function (done) {
         const blockNo = await account._eth.getBlockNumber();
         const emitter = Channel.listenOpenChannel(account, 
             {filter:{sender:PERSONAL_ACCOUNT}, fromBlock:blockNo-10000});
@@ -67,7 +67,7 @@ m.describe.only('Channels', () => {
         
     }).timeout(500000);
 
-    m.xit('should open channel', async function () {
+    m.it('should open channel', async function () {
         const exampleSvc = await Service.init(account, 'snet','example-service');
         await exampleSvc.fetch();
         console.log(exampleSvc.toString());
