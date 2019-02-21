@@ -23,16 +23,27 @@ class EthUtil {
         return contract.methods[method](...params).call();
     }
 
-    async transact(privateKey:string, contract, method:string, toAddress:string, txOptions:TransactOptions, ...params): Promise<any> {
+    transact(privateKey:string, contract, method:string, toAddress:string, 
+                   txOptions:TransactOptions, ...params): PromiEvent {
+        
         const contractMethod = contract.methods[method](...params);
 
         if(privateKey) {
-            const signedPayload = await this.signTx(privateKey, txOptions.from, toAddress, contractMethod);
-            
-            return await this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction']);
+            const promi = new PromiEvent();
+
+            this.signTx(privateKey, txOptions.from, toAddress, contractMethod).then((signedPayload) => {
+                promi.emit('signed', signedPayload);
+                this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction'])
+                    .on('receipt', (receipt)=>promi.emit('receipt', receipt))
+                    .on('transactionHash', (receipt)=>promi.emit('transactionHash', receipt))
+                    .on('confirmation', (receipt)=>promi.emit('confirmation', receipt))
+                    .then((receipt)=>promi.resolve(receipt))
+                    .catch((err)=>promi.reject(err));
+            });
+
+            return promi;
         } else
-            return await contractMethod.send(txOptions);
-        
+            return contractMethod.send(txOptions);
     }
 
     async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
@@ -60,7 +71,7 @@ class EthUtil {
         });
     }
     event(contract, method, opts:EventOptions={}): EventEmitter {
-        return contract.events[method](opts);
+        return contract.events[method](opts, (error, event) => {});
     }
     pastEvents(contract, method, opts:AllEventsOptions={}): Promise<any> {
         return contract.getPastEvents(method, opts);

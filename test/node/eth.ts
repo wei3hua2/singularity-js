@@ -38,7 +38,7 @@ m.describe.only('Eth', () => {
     console.log('blockNo  : ' + blockNo);
 
     c.expect(version).to.have.string('1.0.0');
-    c.expect(netId).to.equal(42);
+    c.expect(netId).to.equal(3);
     c.expect(typeof accounts).to.equal('object');
     c.expect(blockNo).to.be.greaterThan(1000000);
   });
@@ -91,44 +91,98 @@ m.describe.only('Eth', () => {
     c.expect(signed).to.have.keys(['signature','message','messageHash','v','r','s']);
 
     
-    console.log('utf8-hex  :' + utf8Hex + ' : ' + hexUtf8);
-    console.log('ascii-hex : ' + asciiHex + ' : ' + hexAscii);
-    console.log('number-hex : ' + numHex + ' : ' + hexNum);
-    console.log('hex-bytes : ' + hexBytes + ' : ' + bytesHex);
-    console.log('base64-ascii : ' + base64Ascii + ' : ' + asciiBase64);
-    console.log('number-bytes : ' + numBytes + ' : ' + bytesNum);
+    // console.log('utf8-hex  :' + utf8Hex + ' : ' + hexUtf8);
+    // console.log('ascii-hex : ' + asciiHex + ' : ' + hexAscii);
+    // console.log('number-hex : ' + numHex + ' : ' + hexNum);
+    // console.log('hex-bytes : ' + hexBytes + ' : ' + bytesHex);
+    // console.log('base64-ascii : ' + base64Ascii + ' : ' + asciiBase64);
+    // console.log('number-bytes : ' + numBytes + ' : ' + bytesNum);
   });
 
   m.it('should call token contract to get available tokens', async function () {
     const symbol = await eth.call(contract, 'symbol');
     c.expect(symbol).to.be.equal('AGI');
 
-    const balance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+    const balance = (await eth.call(contract, 'balanceOf', PERSONAL_ACCOUNT)).balance;
+    c.expect(parseInt(balance)).to.be.greaterThan(0);
+
+    const balanceTest = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
     c.expect(parseInt(balance)).to.be.greaterThan(0);
 
     console.log('Address : '+TEST_ACCOUNT);
     console.log('Symbol : '+symbol);
-    console.log('Balance : '+balance);
+    console.log('Balance (Personal): '+balance);
+    console.log('Balance (Test): '+balanceTest);
   });
 
-  m.it('should transfer 1 cog to TEST_ACCOUNT', async function () {
-    const testAcctBalance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+  m.xit('should transfer 1 cog to TEST_ACCOUNT', function (done) {
+    // let testAcctBalance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+    let testAcctBalance;
 
-    const receipt = await eth.transact(PERSONAL_ACCOUNT_PK, 
-                contract, 'transfer', AGITokenNetworks[CHAINID].address, 
-                {from: PERSONAL_ACCOUNT}, TEST_ACCOUNT, 1);
-    const log = receipt.logs[receipt.logs.length-1];
+    
 
-    c.expect(receipt).to.have.keys(['gas','nonce','transactionIndex','transactionHash','to','status',
-      'root','logsBloom','logs','gasUsed','from','cumulativeGasUsed','contractAddress','blockNumber','blockHash']);
+    eth.call(contract, 'balanceOf', TEST_ACCOUNT).then((resp) => {
+      testAcctBalance = resp.balance;
+      const promi = eth.transact(PERSONAL_ACCOUNT_PK, 
+                                 contract, 'transfer', AGITokenNetworks[CHAINID].address, 
+                                 {from: PERSONAL_ACCOUNT}, TEST_ACCOUNT, 1);
 
-    c.expect(log).to.have.keys(['type','transactionLogIndex','transactionIndex','transactionHash',
-      'topics','removed','logIndex','data','blockNumber','blockHash','address']);
+      promi.on('signed', (signedPl) => {
+        c.expect(signedPl).to.contain.keys(['rawTransaction']);
+      });
+      promi.on('receipt', (receipt) => {
+        console.log('receipt received');
+      });
+      promi.on('transactionHash', (txHash) => {
+        console.log('txHash = ' + txHash);
+        c.expect(txHash).to.have.string('0x');
+      });
+      promi.on('confirmation', (confNo, receipt) => {
+        console.log('confirm number ' + confNo + ' received');
+        c.expect(confNo).to.be.greaterThan(-1);
+      });
 
-    const testAcctBalanceAfter = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+      return promi;
+    }).then((receipt) => {
+      const log = receipt.logs[receipt.logs.length-1];
 
-    console.log('cogs : '+testAcctBalance+ ' => '+testAcctBalanceAfter);
+      c.expect(receipt).to.contain.keys(['gas','nonce','transactionIndex','transactionHash','to','status',
+        'logsBloom','logs','gasUsed','from','cumulativeGasUsed','contractAddress','blockNumber','blockHash']);
+  
+      c.expect(log).to.contain.keys(['transactionIndex','transactionHash',
+        'topics','removed','logIndex','data','blockNumber','blockHash','address']);
+      
+      return eth.call(contract, 'balanceOf', TEST_ACCOUNT);
 
-    c.expect(parseInt(testAcctBalance) + 1).to.be.equal(parseInt(testAcctBalanceAfter));
-  }).timeout(50000);
+    }).then((resp) => {
+        const testAcctBalanceAfter = resp.balance;
+        c.expect(parseInt(testAcctBalance) + 1).to.be.equal(parseInt(testAcctBalanceAfter));
+
+        console.log('address '+TEST_ACCOUNT+' cogs increase from '+testAcctBalance+ ' to '+testAcctBalanceAfter);
+
+        done();
+    }).catch((err) => {
+      console.error(err);
+      throw new Error(err);
+    });
+
+  }).timeout(10 * 60 * 1000);
+
+  m.it('should get past transfer for PERSONAL_ACCOUNT for past 100000 blocks', async function () {
+    const blockNo = await eth.getBlockNumber();
+    c.expect(blockNo).to.be.greaterThan(100000);
+
+    const pastEvents = await eth.pastEvents(contract,'Transfer',
+      {fromBlock:blockNo - 1000000,toBlock:'latest', filter:{from:PERSONAL_ACCOUNT}});
+
+    
+    c.expect(pastEvents.length).to.be.greaterThan(0);
+
+    c.expect(pastEvents[0]).to.contain.keys(['raw','signature','event',
+            'id','blockNumber','blockHash','address','logIndex','removed','returnValues']);
+
+    c.expect(pastEvents[0].returnValues).to.contain.keys(['from','to','value']);
+
+
+  }).timeout(10 * 60 * 1000);
 })
