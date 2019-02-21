@@ -2,6 +2,7 @@
  * @module channel
  */
 
+import { EventEmitter } from 'events';
 import {Account} from './account';
 import { Mpe } from './contracts/mpe';
 import {Model} from './model';
@@ -10,7 +11,7 @@ import { ChannelState, ChannelStateResponse, ChannelStateOpts } from './channel-
 import { SnetError } from './errors/snet-error';
 import { Marketplace } from './marketplace';
 import { TransactOptions, EventOptions, AllEventsOptions } from './eth';
-import { EventEmitter } from 'events';
+import {EthUtil} from './eth';
 
 class Channel extends Model implements Fetchable {
     id:number;
@@ -28,10 +29,13 @@ class Channel extends Model implements Fetchable {
     endpoint?: string;
 
     _fetched: boolean;
+
+    _eth: EthUtil;
  
     private constructor(account:Account, id: number, data?:any) {
         super(account);
         this.id = id;
+        this._eth = account._eth;
 
         if(data) this.populate(data);
     }
@@ -66,15 +70,17 @@ class Channel extends Model implements Fetchable {
             parseInt(contractChannel.pending) : this.pending;
     }
 
-    async signChannelId(privateKey:string = null) {
-        return this.account.getEthUtil().signMessage([{t: 'uint256', v: this.id}], privateKey);
+    async signChannelId(privateKey:string = null): Promise<Uint8Array> {
+        const sha3Message: string = this._eth.soliditySha3({t: 'uint256', v: this.id});
+
+        const signed = (await this._eth.sign(sha3Message, {privateKey:privateKey})).signature;
+        const stripped = signed.substring(2, signed.length);
+
+        return new Uint8Array(stripped.match(/[\da-f]{2}/gi).map((h) => parseInt(h, 16)));
     }
 
-    getByteChannelId() {
-        const byteschannelID = Buffer.alloc(4);
-        byteschannelID.writeUInt32BE(this.id, 0);
-
-        return byteschannelID;
+    getByteChannelId(): Uint8Array {
+        return this._eth.numberToBytes(this.id, 4);
     }
 
     public toString(): string {
@@ -90,7 +96,7 @@ class Channel extends Model implements Fetchable {
         return new Channel(account, channelId);
     }
 
-    static async openChannel(account:Account,signer:string, recipient:string, groupId:number[], 
+    static async openChannel(account:Account,signer:string, recipient:string, groupId:Uint8Array, 
         value:number, expiration:number, opts:TransactOptions={}):Promise<any> {
         const mpe = account.getMpe();
 

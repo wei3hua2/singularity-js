@@ -4,6 +4,7 @@
 
 import { EventEmitter } from 'events';
 import {PromiEvent} from 'web3-core-promievent';
+import {Base64} from 'js-base64';
 
 class EthUtil {
     web3: any;
@@ -37,17 +38,14 @@ class EthUtil {
     async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
         const nonce = await this.web3.eth.getTransactionCount(from);
         const gas = await method.estimateGas({from:from});
-        let tx = {nonce:this.toHex(nonce), 
+
+        let tx = {nonce:this.numberToHex(nonce), 
             from:from, to:to, 
-            gas:this.toHex(gas), gasLimit: this.toHex(800000),
-            gasPrice: this.toHex(this.web3.utils.toWei('10', 'gwei')),
+            gas:this.numberToHex(gas), gasLimit: this.numberToHex(800000),
+            gasPrice: this.numberToHex(this.web3.utils.toWei('10', 'gwei')),
             data: method.encodeABI()};
 
         return this.web3.eth.accounts.signTransaction(tx, privateKey);
-    }
-
-    getWeb3Version():string {
-        return this.web3.version.api ? this.web3.version.api : this.web3.version;
     }
 
     once(contract, method, opts:EventOptions={}): Promise<any> {
@@ -73,6 +71,14 @@ class EthUtil {
         });
     }
 
+    getWeb3Version():string {
+        return this.web3.version.api ? this.web3.version.api : this.web3.version;
+    }
+
+    getContract(abi:any, address:string) {
+        return new this.web3.eth.Contract(abi, address);
+    }
+
     getNetworkId(): Promise<any> {
         return this.web3.eth.net.getId();
     }
@@ -85,54 +91,49 @@ class EthUtil {
         return this.web3.eth.getAccounts();
     }
 
-    getContract(abi:any, address:string) {
-        return new this.web3.eth.Contract(abi, address);
-    }
+    hexToAscii(strVal: string): string { return this.web3.utils.hexToAscii(strVal); }
+    asciiToHex(strVal: string): any { return this.web3.utils.asciiToHex(strVal); }
 
-    fromAscii(strVal: string): any {
-        if(this.isVersion1Beyond)
-            return this.web3.utils.fromAscii(strVal);
+    hexToUtf8(strVal: string): string { return this.web3.utils.toUtf8(strVal); }
+    utf8ToHex(strVal: string): any { return this.web3.utils.fromUtf8(strVal); }
+
+    hexToBytes(hex:string):Uint8Array { return new Uint8Array(this.web3.utils.hexToBytes(hex)); }
+    bytesToHex(bytes: Uint8Array): string { return this.web3.utils.bytesToHex(bytes); }
+
+    hexToNumber(hex:string):number { return this.web3.utils.hexToNumber(hex); }
+    numberToHex(num: number): string { return this.web3.utils.numberToHex(num); }
+
+    bytesToNumber(bytes:Uint8Array):number { return this.hexToNumber(this.bytesToHex(bytes)); }
+    numberToBytes(num: number, allocSize?:number): Uint8Array { 
+        const hexBytes = this.hexToBytes(this.numberToHex(num));
+
+        if(allocSize){
+            const paddings:number[] = new Array(allocSize - hexBytes.length).fill(0,0);
+            const newArray = paddings.concat([...hexBytes]);
+            
+            return new Uint8Array(newArray);
+        }
         else
-            return this.web3.fromAscii(strVal);
+            return hexBytes;
     }
-    toUtf8(strVal: string): any {
-        if(this.isVersion1Beyond)
-            return this.web3.utils.toUtf8(strVal);
-        else
-            return this.web3.toUtf8(strVal);
-    }
-    toHex(strVal: string|number): any {
-        if(this.isVersion1Beyond)
-            return this.web3.utils.toHex(strVal);
-        else
-            return this.web3.toHex(strVal);
-    }
-    hexToBytes(hex:string):any[] {
-        return this.web3.utils.hexToBytes(hex);
-    }
+    
+    soliditySha3(...params) { return this.web3.utils.soliditySha3(...params); }
+    
+    base64ToUtf8(base64Str: string) { return Base64.decode(base64Str); }
+    utf8ToBase64(strVal: string) { return Base64.encode(strVal); }
+
     base64ToHex(base64String:string):string {
-        var byteSig = Buffer.from(base64String, 'base64');
-        let buff = new Buffer(byteSig);
-        let hexString = "0x"+buff.toString('hex');
-
-        return hexString;
+        return this.asciiToHex(this.base64ToUtf8(base64String));
     }
-
-    soliditySha3(...params) {
-        return this.web3.utils.soliditySha3(...params);
+    hexToBase64(hex:string):string {
+        return this.utf8ToBase64(this.hexToUtf8(hex));
     }
+    
     sign(sha3Message:string, opts:SignOptions = {}) {
         if(opts.privateKey) return this.web3.eth.accounts.sign(sha3Message, opts.privateKey);
         else throw new Error('No approach to signing');
     }
 
-    async signMessage(message:any, privateKey:string = null) : Promise<Buffer>{
-        const sha3Message: string = this.soliditySha3(...message);
-        const signed = (await this.sign(sha3Message, {privateKey:privateKey})).signature;
-        const stripped = signed.substring(2, signed.length);
-        
-        return new Buffer(Buffer.from(stripped, 'hex'));
-    }
 }
 
 interface TransactOptions {

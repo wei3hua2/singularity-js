@@ -118,7 +118,7 @@ class Service extends GrpcModel implements Fetchable{
             this.getGroupId(), val, this.getPaymentExpirationThreshold());
     }
 
-    public getGroupId():number[] {
+    public getGroupId():Uint8Array {
         const hex = this.account._eth.base64ToHex(this.metadata.groups[0].group_id);
         return this.account._eth.hexToBytes(hex);
     }
@@ -217,12 +217,10 @@ class Service extends GrpcModel implements Fetchable{
           );
       
         const signed = (await this.getEthUtil().sign(sha3Message, {privateKey:privateKey})).signature;
+        
+        const hexs = this.getEthUtil().bytesToHex(signed);
 
-        const stripped = signed.substring(2, signed.length);
-        const byteSig = Buffer.from(stripped, 'hex');
-        const buff = new Buffer(byteSig);
-
-        return buff.toString('base64');
+        return this.getEthUtil().hexToBase64(hexs);
     }
     private parseAgentRequestHeader(signed:string, channel:Channel, priceInCogs:number) {
     

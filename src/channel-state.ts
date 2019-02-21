@@ -2,9 +2,10 @@
  * @module channel
  */
 
-import {rpc} from 'protobufjs';
 import {Channel} from './channel';
+import {rpc} from 'protobufjs';
 import { GrpcModel } from './model';
+import { EthUtil } from './eth';
 
 /**
  * @ignore
@@ -65,10 +66,13 @@ class ChannelState extends GrpcModel{
     channel:Channel;
     url: string;
 
+    _eth: EthUtil;
+
     constructor(web3:any, endpoint:string, channel:Channel){
         super(web3);
         this.endpoint = endpoint;
         this.channel = channel;
+        this._eth = this.channel._eth;
 
         const url = `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
         this.channelStateService = this.createService(url);
@@ -76,15 +80,13 @@ class ChannelState extends GrpcModel{
 
     async getState(opts:ChannelStateOpts = {}) : Promise<ChannelStateResponse> {
         const byteschannelID = this.channel.getByteChannelId();
-        const byteSig = await this.channel.signChannelId(opts.privateKey);
+        const byteSig:Uint8Array = await this.channel.signChannelId(opts.privateKey);
         const request = {"channelId":byteschannelID, "signature":byteSig};
 
         const channelResponse = await this.channelStateService['getChannelState'](request);
 
-        const curNonce = parseInt('0x' + 
-            Buffer.from(channelResponse.currentNonce).toString('hex',0,channelResponse.currentNonce.length));
-        const curSignedAmt = parseInt('0x' + 
-            Buffer.from(channelResponse.currentSignedAmount).toString('hex',0,channelResponse.currentSignedAmount.length));
+        const curNonce = parseInt(this._eth.bytesToHex(channelResponse.currentNonce));
+        const curSignedAmt = parseInt(this._eth.bytesToHex(channelResponse.currentSignedAmount));
 
         return {
           currentSignature: channelResponse.currentSignature, 
@@ -99,7 +101,7 @@ interface ChannelStateOpts {
 }
 
 interface ChannelStateResponse {
-  currentSignature: Buffer;
+  currentSignature: Uint8Array;
   currentNonce: number; 
   currentSignedAmount: number;
 }
