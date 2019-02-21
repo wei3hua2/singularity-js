@@ -60,10 +60,10 @@ abstract class Contract {
 
 
     protected fromAscii(strVal: string) : any {
-        return this.eth.fromAscii(strVal);
+        return this.eth.asciiToHex(strVal);
     }
     protected toUtf8(strVal: string) : any {
-        return this.eth.toUtf8(strVal);
+        return this.eth.hexToUtf8(strVal);
     }
 }
 

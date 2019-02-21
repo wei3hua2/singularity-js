@@ -39,11 +39,14 @@ class EthUtil {
         const nonce = await this.web3.eth.getTransactionCount(from);
         const gas = await method.estimateGas({from:from});
 
-        let tx = {nonce:this.numberToHex(nonce), 
-            from:from, to:to, 
-            gas:this.numberToHex(gas), gasLimit: this.numberToHex(800000),
+        let tx = {
+            from:from, to:to,
+            nonce:this.numberToHex(nonce),
+            gas:this.numberToHex(gas),
+            gasLimit: this.numberToHex(800000),
             gasPrice: this.numberToHex(this.web3.utils.toWei('10', 'gwei')),
-            data: method.encodeABI()};
+            data: method.encodeABI()
+        };
 
         return this.web3.eth.accounts.signTransaction(tx, privateKey);
     }

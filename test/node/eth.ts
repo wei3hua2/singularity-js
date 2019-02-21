@@ -3,14 +3,23 @@ import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
 import {EthUtil} from '../../src/eth';
 
-let web3, eth, TEST_ACCOUNT, TEST_ACCOUNT_PK;
+//@ts-ignore
+import AGITokenNetworks from 'singularitynet-token-contracts/networks/SingularityNetToken.json';
+//@ts-ignore
+import AGITokenAbi from 'singularitynet-token-contracts/abi/SingularityNetToken.json';
+
+let web3, eth, contract, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK, TEST_ACCOUNT, TEST_ACCOUNT_PK, CHAINID;
 
 m.before(() => {
     web3 = initWeb3();
     eth = new EthUtil(web3);
 
+    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
+    PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
     TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-    TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
+    // TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
+    CHAINID = getConfigInfo()['CHAINID'];
+    contract = eth.getContract(AGITokenAbi, AGITokenNetworks[CHAINID].address);
 });
 m.after(() => {
     eth.close();
@@ -76,7 +85,7 @@ m.describe.only('Eth', () => {
 
 
     const sha3Message: string = eth.soliditySha3({t: 'uint256', v: 120});
-    const signed = await eth.sign(sha3Message, {privateKey:TEST_ACCOUNT_PK});
+    const signed = await eth.sign(sha3Message, {privateKey:PERSONAL_ACCOUNT_PK});
 
     c.expect(sha3Message).to.have.string('0x');
     c.expect(signed).to.have.keys(['signature','message','messageHash','v','r','s']);
@@ -88,6 +97,38 @@ m.describe.only('Eth', () => {
     console.log('hex-bytes : ' + hexBytes + ' : ' + bytesHex);
     console.log('base64-ascii : ' + base64Ascii + ' : ' + asciiBase64);
     console.log('number-bytes : ' + numBytes + ' : ' + bytesNum);
-
   });
+
+  m.it('should call token contract to get available tokens', async function () {
+    const symbol = await eth.call(contract, 'symbol');
+    c.expect(symbol).to.be.equal('AGI');
+
+    const balance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+    c.expect(parseInt(balance)).to.be.greaterThan(0);
+
+    console.log('Address : '+TEST_ACCOUNT);
+    console.log('Symbol : '+symbol);
+    console.log('Balance : '+balance);
+  });
+
+  m.it('should transfer 1 cog to TEST_ACCOUNT', async function () {
+    const testAcctBalance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+
+    const receipt = await eth.transact(PERSONAL_ACCOUNT_PK, 
+                contract, 'transfer', AGITokenNetworks[CHAINID].address, 
+                {from: PERSONAL_ACCOUNT}, TEST_ACCOUNT, 1);
+    const log = receipt.logs[receipt.logs.length-1];
+
+    c.expect(receipt).to.have.keys(['gas','nonce','transactionIndex','transactionHash','to','status',
+      'root','logsBloom','logs','gasUsed','from','cumulativeGasUsed','contractAddress','blockNumber','blockHash']);
+
+    c.expect(log).to.have.keys(['type','transactionLogIndex','transactionIndex','transactionHash',
+      'topics','removed','logIndex','data','blockNumber','blockHash','address']);
+
+    const testAcctBalanceAfter = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+
+    console.log('cogs : '+testAcctBalance+ ' => '+testAcctBalanceAfter);
+
+    c.expect(parseInt(testAcctBalance) + 1).to.be.equal(parseInt(testAcctBalanceAfter));
+  }).timeout(50000);
 })
