@@ -17,10 +17,16 @@ class Mpe extends Contract {
     getAbi(){ return AGITokenAbi; }
     getNetworkObj(){ return AGITokenNetworks; }
 
-    balances = (address: string) => this.callContract('balances', address);
-    channels = (channelId: number) => this.callContract('channels', channelId);
-    nextChannelId = () => this.callContract('nextChannelId');
+    balances = (address: string) => this.callContract('balances', address).then(parseInt);
+    nextChannelId = () => this.callContract('nextChannelId').then(parseInt);
     token = () => this.callContract('token');
+    channels = (channelId: number) => this.callContract('channels', channelId).then(
+        (channel)=> ({
+            nonce: parseInt(channel.nonce), value: parseInt(channel.value),
+            expiration: parseInt(channel.expiration),
+            groupId: channel.groupId, recipient: channel.recipient,
+            sender: channel.sender, signer: channel.signer
+        }));
 
     deposit = (value:number, txOpt:TransactOptions={}) => this.transactContract('deposit',txOpt,value);
     withdraw = (value:number, txOpt:TransactOptions={}) => this.transactContract('withdraw',txOpt,value);

@@ -4,7 +4,7 @@
 
 import {TransactOptions, EventOptions, AllEventsOptions} from '../eth';
 import {Account} from '../account';
-// import EventEmitter from 'eventemitter3';
+import {PromiEvent} from 'web3-core-promievent';
 import {EventEmitter} from 'events';
 import {EthUtil} from '../eth';
 
@@ -40,7 +40,7 @@ abstract class Contract {
     protected callContract(method: string, ...params: any[]): Promise<any> {
         return this.eth.call(this.contract, method, ...params);
     }
-    protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): Promise<any> {
+    protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): PromiEvent<any> {
         return this.eth.transact(
             this.account.getPrivateKey(),
             this.contract, method, this.address, txOptions, ...params);
@@ -65,6 +65,7 @@ abstract class Contract {
     protected toUtf8(strVal: string) : any {
         return this.eth.hexToUtf8(strVal);
     }
+
 }
 
 

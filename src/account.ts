@@ -21,7 +21,7 @@ class Account {
 
     public _eth:EthUtil;
 
-    constructor(web3:any, opts:InitOptions={}){
+    private constructor(web3:any, opts:InitOptions={}){
         this.web3 = web3;
         this.privateKey = opts.privateKey;
         this.address = opts.address;
@@ -33,6 +33,7 @@ class Account {
         this._registry = new Registry(this);
         this._marketplace = new Marketplace(this._eth);
     }
+
 
     async init(): Promise<boolean> {
         const tokenSuccess = await this._tokens.init();

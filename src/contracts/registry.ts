@@ -32,49 +32,52 @@ class Registry extends Contract {
     /******* Call *******/
 
     listOrganizations = () => {
-        const that = this;
         return this.callContract('listOrganizations').then(
-            (val) => val.map.call(val, (v) => that.toUtf8(v)));
+            (orgAddresses) => {
+                const orgs = Array.from(orgAddresses.orgIds);
+                return orgs.map((org:string) => this.eth.hexToUtf8(org));
+            });
     }
     getOrganizationById = (orgId: string) => {
-        const that = this;
-        return this.callContract('getOrganizationById', this.fromAscii(orgId)).then(
+        return this.callContract('getOrganizationById', this.eth.asciiToBytes(orgId)).then(
             (org) => {
-                org.id = that.toUtf8(org.id);
-                org.serviceIds = org.serviceIds.map.call(org.serviceIds, (s) => that.toUtf8(s));
-                org.repositoryIds = org.repositoryIds.map.call(org.repositoryIds, (s) => that.toUtf8(s));
-
+                const svcIds = Array.from(org.serviceIds), repoIds = Array.from(org.repositoryIds);
+                
+                org.id = this.eth.hexToUtf8(org.id),
+                org.serviceIds = svcIds.map((svcId:string) => this.eth.hexToUtf8(svcId)),
+                org.repositoryIds = repoIds.map((repoId:string) => this.eth.hexToUtf8(repoId))
+                
                 return org;
             }
         );
     }
     listServicesForOrganization = (orgId: string) => {
-        const that = this;
-        return this.callContract('listServicesForOrganization', this.fromAscii(orgId)).then(
+        return this.callContract('listServicesForOrganization', this.eth.asciiToBytes(orgId)).then(
             (svcs) => {
-                svcs.serviceIds = svcs.serviceIds.map.call(svcs.serviceIds, (s) => that.toUtf8(s));
+                const svcIds = Array.from(svcs.serviceIds);
+                svcs.serviceIds = svcIds.map((s:string) => this.eth.hexToUtf8(s));
+
                 return svcs;
             }
         );
     }
     getServiceRegistrationById = (orgId: string, serviceId: string) => {
-        const that = this;
-        return this.callContract('getServiceRegistrationById', this.fromAscii(orgId), this.fromAscii(serviceId)).then(
+        return this.callContract('getServiceRegistrationById', this.eth.asciiToBytes(orgId), this.eth.asciiToBytes(serviceId)).then(
             (svcReg) => {
-                svcReg.id = that.toUtf8(svcReg.id);
-                svcReg.metadataURI = that.toUtf8(svcReg.metadataURI);
-                svcReg.tags = svcReg.tags.map.call(svcReg.tags, (t) => that.toUtf8(t));
+                const tags = Array.from(svcReg.tags);
+                svcReg.id = this.eth.hexToUtf8(svcReg.id);
+                svcReg.metadataURI = svcReg.metadataURI ?  this.eth.hexToUtf8(svcReg.metadataURI) : svcReg.metadataURI;
+                svcReg.tags = tags.map((t:string) => this.eth.hexToUtf8(t));
 
                 return svcReg;
             }
         );
     }
     listTypeRepositoriesForOrganization = (orgId: string) => {
-        const that = this;
-        return this.callContract('listTypeRepositoriesForOrganization', this.fromAscii(orgId)).then(
+        return this.callContract('listTypeRepositoriesForOrganization', this.eth.asciiToBytes(orgId)).then(
             (typeRepos) => {
-                typeRepos.repositoryIds = 
-                    typeRepos.repositoryIds.map.call(typeRepos.repositoryIds, (t) => that.toUtf8(t));
+                const repoIds = Array.from(typeRepos.repositoryIds)
+                typeRepos.repositoryIds = repoIds.map((r:string) => this.eth.hexToUtf8(r));
 
                 return typeRepos;
             }
@@ -84,16 +87,17 @@ class Registry extends Contract {
     //TODO
     getTypeRepositoryById = (orgId: string, repositoryId: string) => this.callContract('getTypeRepositoryById', this.fromAscii(orgId), this.fromAscii(repositoryId));
 
-    listServiceTags = () => this.callContract('listServiceTags').then((tags) => {
-        const that = this;
-        return tags.map.call(tags, (t) => that.toUtf8(t));
+    listServiceTags = () => this.callContract('listServiceTags').then((svcTags) => {
+        return {tags: Array.from(svcTags.tags).map((t:string) => this.eth.hexToUtf8(t))};
     });
     listServicesForTag = (tag: string) => {
-        const that = this;
-        return this.callContract('listServicesForTag', this.fromAscii(tag)).then(
+        return this.callContract('listServicesForTag', this.eth.asciiToBytes(tag)).then(
             (svcs) => {
-                svcs.orgIds = svcs.orgIds.map.call(svcs.orgIds, (o) => that.toUtf8(o));
-                svcs.serviceIds = svcs.serviceIds.map.call(svcs.serviceIds, (o) => that.toUtf8(o));
+                const orgIds = Array.from(svcs.orgIds);
+                const serviceIds = Array.from(svcs.serviceIds);
+                svcs.orgIds = orgIds.map((o:string) => this.eth.bytesToAscii(o));
+                svcs.serviceIds = serviceIds.map((s:string) => this.eth.bytesToAscii(s));
+
                 return svcs;
             });
     }

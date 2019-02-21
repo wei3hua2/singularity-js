@@ -111,6 +111,9 @@ class EthUtil {
     hexToUtf8(strVal: string): string { return this.web3.utils.toUtf8(strVal); }
     utf8ToHex(strVal: string): any { return this.web3.utils.fromUtf8(strVal); }
 
+    asciiToBytes(ascii:string) { return this.web3.utils.fromAscii(ascii); }
+    bytesToAscii(ascii:string) { return this.web3.utils.toAscii(ascii); }
+
     hexToBytes(hex:string):Uint8Array { return new Uint8Array(this.web3.utils.hexToBytes(hex)); }
     bytesToHex(bytes: Uint8Array): string { return this.web3.utils.bytesToHex(bytes); }
 
