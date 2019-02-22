@@ -1,10 +1,9 @@
 import * as c from 'chai';
 import * as m from 'mocha';
 
-import {Snet} from '../../src/snet';
-
 import {initWeb3, getConfigInfo} from './utils';
 import { Account } from '../../src/account';
+import {Registry} from '../../src/contracts/registry';
 
 
 let web3, acct;
@@ -114,8 +113,146 @@ m.describe.only('Contract', () => {
     
   }).timeout(10 * 60 * 1000);
 
-  m.it('Registry: should  ', async function () {
-  }).timeout(10 * 60 * 1000);
+  m.it('Registry: should perform basic CRUD for organization and service', async function () {
+    const registry:Registry = acct.getRegistry();
+    const ORG_ID = 'snet-js-test', ORG_NAME = 'Snet Js Test';
+    const SVC_ID = 'snet-js-test-svc', METADATAURI = 'fake_metadata_uri', TAGS = [];
+    let org, svcReg;
+
+    // **** 1. create organization
+    await registry.createOrganization(ORG_ID);
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.found).to.be.true;
+    c.expect(org.id).to.be.equal(ORG_ID);
+    c.expect(org.name).to.be.empty;
+    c.expect(org.owner).to.be.equal(PERSONAL_ACCOUNT);
+    c.expect(org.members).to.be.empty;
+    c.expect(org.serviceIds).to.be.empty;
+    
+    console.log('1. Org id created => '+ORG_ID);
+
+    // **** 2. change organization name
+    await registry.changeOrganizationName(ORG_ID, ORG_NAME);
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.found).to.be.true;
+    c.expect(org.id).to.be.equal(ORG_ID);
+    c.expect(org.name).to.be.equal(ORG_NAME);
+    c.expect(org.owner).to.be.equal(PERSONAL_ACCOUNT);
+    c.expect(org.members).to.be.empty;
+    c.expect(org.serviceIds).to.be.empty;
+
+    console.log('2. Org name changed => '+org.name);
+
+    // **** 3. add member
+    await registry.addOrganizationMembers(ORG_ID, [TEST_ACCOUNT]);
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.found).to.be.true;
+    c.expect(org.id).to.be.equal(ORG_ID);
+    c.expect(org.name).to.be.equal(ORG_NAME);
+    c.expect(org.owner).to.be.equal(PERSONAL_ACCOUNT);
+    c.expect(org.members).to.be.deep.equal([TEST_ACCOUNT]);
+    c.expect(org.serviceIds).to.be.empty;
+
+    console.log('3. Org member created => '+org.members);
+
+    // **** 4. remove member
+    await registry.removeOrganizationMembers(ORG_ID, [TEST_ACCOUNT]);
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.found).to.be.true;
+    c.expect(org.id).to.be.equal(ORG_ID);
+    c.expect(org.name).to.be.equal(ORG_NAME);
+    c.expect(org.owner).to.be.equal(PERSONAL_ACCOUNT);
+    c.expect(org.members).to.be.empty
+    c.expect(org.serviceIds).to.be.empty;
+
+    console.log('4. Org member removed => '+[TEST_ACCOUNT]);
+
+    // **** 5. create service registration
+    await registry.createServiceRegistration(ORG_ID, SVC_ID);
+
+    svcReg = await registry.getServiceRegistrationById(ORG_ID, SVC_ID);
+
+    c.expect(svcReg.found).to.be.true;
+    c.expect(svcReg.id).to.be.equal(SVC_ID);
+    c.expect(svcReg.metadataURI).to.be.empty;
+    c.expect(svcReg.tags).to.be.empty;
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.serviceIds).to.be.deep.equal([SVC_ID]);
+
+    console.log('5. Svc created => '+SVC_ID);
+
+
+    // **** 6. update service registration
+    await registry.updateServiceRegistration(ORG_ID, SVC_ID, METADATAURI+'_updated');
+
+    svcReg = await registry.getServiceRegistrationById(ORG_ID, SVC_ID);
+
+    c.expect(svcReg.found).to.be.true;
+    c.expect(svcReg.id).to.be.equal(SVC_ID);
+    c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
+    c.expect(svcReg.tags).to.be.empty;
+
+    console.log('6. Svc updated => '+SVC_ID);
+
+
+    const UPDATED_TAGS = ['snet-js-tag1','snet-js-tag2'];
+
+    // **** 7. add tags to service registration
+    await registry.addTagsToServiceRegistration(ORG_ID, SVC_ID, UPDATED_TAGS);
+
+    svcReg = await registry.getServiceRegistrationById(ORG_ID, SVC_ID);
+
+    c.expect(svcReg.found).to.be.true;
+    c.expect(svcReg.id).to.be.equal(SVC_ID);
+    c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
+    c.expect(svcReg.tags).to.be.deep.equal(UPDATED_TAGS);
+
+    console.log('7. Svc tag created => '+svcReg.tags);
+
+
+    // **** 8. remove tags from service registration
+    await registry.removeTagsFromServiceRegistration(ORG_ID, SVC_ID, UPDATED_TAGS);
+
+    svcReg = await registry.getServiceRegistrationById(ORG_ID, SVC_ID);
+
+    c.expect(svcReg.found).to.be.true;
+    c.expect(svcReg.id).to.be.equal(SVC_ID);
+    c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
+    c.expect(svcReg.tags).to.be.empty;
+
+    console.log('8. Svc tag removed => '+UPDATED_TAGS);
+
+
+    // **** 9. delete service registration
+    await registry.deleteServiceRegistration(ORG_ID, SVC_ID);
+
+    svcReg = await registry.getServiceRegistrationById(ORG_ID, SVC_ID);
+
+    c.expect(svcReg.found).to.be.false;
+
+    console.log('9. Svc registration removed => '+SVC_ID);
+
+
+    // **** 10. delete organization
+    await registry.deleteOrganization(ORG_ID);
+
+    org = await registry.getOrganizationById(ORG_ID);
+
+    c.expect(org.found).to.be.false;
+
+    console.log('10. Org removed => '+!org.found);
+
+  }).timeout(10 * 10 * 60 * 1000);
 
 
     

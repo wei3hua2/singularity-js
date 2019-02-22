@@ -105,19 +105,68 @@ class Registry extends Contract {
     supportsInterface = (interfaceId: string) => this.callContract('supportsInterface', interfaceId); //TODO
     getTypeRepositoryById = (orgId: string, repositoryId: string) => this.callContract('getTypeRepositoryById', this.fromAscii(orgId), this.fromAscii(repositoryId)); //TODO
 
-    createOrganization = (orgId:string, orgName:string, 
-        members:string[], txOpt:TransactOptions={}) => this.transactContract('createOrganization',txOpt,orgId,orgName,members);
-    changeOrganizationOwner = (orgId:string, newOwner:string, txOpt:TransactOptions={}) => this.transactContract('changeOrganizationOwner',txOpt,orgId,newOwner);
-    changeOrganizationName = (orgId:string, orgName:string, txOpt:TransactOptions={}) => this.transactContract('changeOrganizationName',txOpt,orgId,orgName);
-    addOrganizationMembers = (orgId:string, newMembers:string[], txOpt:TransactOptions={}) => this.transactContract('addOrganizationMembers',txOpt,orgId,newMembers);
-    removeOrganizationMembers = (orgId:string, existingMembers:string[], txOpt:TransactOptions={}) => this.transactContract('removeOrganizationMembers',txOpt,orgId,existingMembers);
-    deleteOrganization = (orgId:string, txOpt:TransactOptions={}) => this.transactContract('deleteOrganization',txOpt,orgId);
 
-    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('createServiceRegistration',txOpt,orgId,serviceId,metadataURI,tags);
-    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string, txOpt:TransactOptions={}) => this.transactContract('updateServiceRegistration',txOpt, orgId,serviceId, metadataURI);
-    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('addTagsToServiceRegistration',txOpt, orgId, serviceId, tags);
-    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('removeTagsFromServiceRegistration',txOpt, orgId, serviceId, tags);
-    deleteServiceRegistration = (orgId:string, serviceId:string, txOpt:TransactOptions={}) => this.transactContract('deleteServiceRegistration',txOpt, orgId, serviceId);
+    // transact
+
+    createOrganization = (orgId:string, orgName:string='', members:string[]=[], txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('createOrganization',txOpt,oId, orgName, members);
+    }
+
+    changeOrganizationOwner = (orgId:string, newOwner:string, txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('changeOrganizationOwner',txOpt,oId,newOwner);
+    }
+    changeOrganizationName = (orgId:string, orgName:string, txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('changeOrganizationName',txOpt,oId,orgName);
+    }
+    addOrganizationMembers = (orgId:string, newMembers:string[], txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('addOrganizationMembers',txOpt,oId,newMembers);
+    }
+    removeOrganizationMembers = (orgId:string, existingMembers:string[], txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('removeOrganizationMembers',txOpt,oId,existingMembers);
+    }
+    deleteOrganization = (orgId:string, txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId);
+        return this.transactContract('deleteOrganization',txOpt,oId);
+    }
+
+    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='', tags:string[]=[], txOpt:TransactOptions={}) => {
+        const that = this;
+        const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
+        const mdURI = this.eth.asciiToBytes(metadataURI);
+        const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
+
+        return this.transactContract('createServiceRegistration',txOpt, oId, sId, mdURI, ts);
+    }
+    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='', txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
+        const mdURI = this.eth.asciiToBytes(metadataURI);
+
+        return this.transactContract('updateServiceRegistration',txOpt, oId, sId, mdURI);
+    }
+    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[], txOpt:TransactOptions={}) => {
+        const that = this;
+        const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
+        const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
+
+        return this.transactContract('addTagsToServiceRegistration',txOpt, oId, sId, ts);
+    }
+    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[], txOpt:TransactOptions={}) => {
+        const that = this;
+        const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
+        const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
+
+        return this.transactContract('removeTagsFromServiceRegistration',txOpt, oId, sId, ts);
+    }
+    deleteServiceRegistration = (orgId:string, serviceId:string, txOpt:TransactOptions={}) => {
+        const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
+
+        return this.transactContract('deleteServiceRegistration',txOpt, oId, sId);
+    }
 
     createTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('createTypeRepositoryRegistration',txOpt,orgId,repositoryId,repositoryURI,tags);
     updateTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, txOpt:TransactOptions={}) => this.transactContract('updateTypeRepositoryRegistration',txOpt,orgId, repositoryId, repositoryURI);
