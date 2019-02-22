@@ -28,6 +28,7 @@ class Tokens extends Contract {
     symbol = () => this.callContract('symbol');
     allowance = (owner: string, sender: string) => this.callContract('allowance', owner, sender).then(parseInt);
 
+    transfer = (to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transfer', txOpt, to, value);
     approve = (spender: string, value: number, txOpt:TransactOptions={}) => this.transactContract('approve', txOpt, spender, value);
     transferOwnership = (newOwner: string, txOpt:TransactOptions={}) => this.transactContract('transferOwnership',txOpt, newOwner);
     increaseApproval = (spender: string, addedValue: number, txOpt:TransactOptions={}) => this.transactContract('increaseApproval',txOpt, spender, addedValue);
@@ -35,16 +36,16 @@ class Tokens extends Contract {
     unpause = (txOpt:TransactOptions={}) => this.transactContract('unpause', txOpt);
     pause = (txOpt:TransactOptions={}) => this.transactContract('pause', txOpt);
     burn = (value: number, txOpt:TransactOptions={}) => this.transactContract('burn', txOpt, value);
-    transfer = (to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transfer', txOpt, to, value);
     transferFrom = (from: string, to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transferFrom', txOpt, from, to, value);
     transferTokens = (beneficiary: string, amount: number, txOpt:TransactOptions={}) => this.transactContract('transferTokens', txOpt, beneficiary, amount);
 
+    Transfer = () => this.eventContract('Transfer');
+    
     Burn = () => this.eventContract('Burn');
     Pause = () => this.eventContract('Pause');
     Unpause = () => this.eventContract('Unpause');
     OwnershipTransferred = () => this.eventContract('OwnershipTransferred');
     Approval = () => this.eventContract('Approval');
-    Transfer = () => this.eventContract('Transfer');
 }
 
 export {Tokens}

@@ -116,11 +116,8 @@ m.describe('Eth', () => {
   });
 
   m.xit('should transfer 1 cog to TEST_ACCOUNT', function (done) {
-    // let testAcctBalance = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
     let testAcctBalance;
-
     
-
     eth.call(contract, 'balanceOf', TEST_ACCOUNT).then((resp) => {
       testAcctBalance = resp.balance;
       const promi = eth.transact(PERSONAL_ACCOUNT_PK, 

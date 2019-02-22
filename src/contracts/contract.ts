@@ -41,9 +41,12 @@ abstract class Contract {
         return this.eth.call(this.contract, method, ...params);
     }
     protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): PromiEvent<any> {
-        return this.eth.transact(
-            this.account.getPrivateKey(),
-            this.contract, method, this.address, txOptions, ...params);
+        
+        txOptions.from = txOptions.from || this.account.address;
+
+        return this.eth.transact(this.account.getPrivateKey(),
+            this.contract, method, this.address,
+            txOptions, ...params);
     }
 
     protected eventContract(method: string, opts:EventOptions={}): EventEmitter {

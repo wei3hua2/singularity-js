@@ -17,7 +17,7 @@ m.before(async () => {
   PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
   TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
 
-  acct = await Account.create(web3);
+  acct = await Account.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
 });
 m.after(() => {
   web3.currentProvider.connection.close();
@@ -96,39 +96,28 @@ m.describe.only('Contract', () => {
   });
 
 
-  m.xit('should perform transaction for Tokens functions', async function () {
-    const tokens = acct.getTokens();
-    const TRANSFER_VALUE = 1;
+  m.it('Tokens: should transfer 1 cog from one account to another ', async function () {
+    const tokens = acct.getTokens(), TRANSFER_VALUE = 1;
 
-    const balanceOf = await tokens.balanceOf(PERSONAL_ACCOUNT);
-    const balanceOfTestAcct = await tokens.balanceOf(TEST_ACCOUNT);
-    console.log(balanceOf);
-    console.log(balanceOfTestAcct);
+    const balanceOfB4 = await tokens.balanceOf(TEST_ACCOUNT);
 
-    const receipt = await tokens.transfer(TEST_ACCOUNT, TRANSFER_VALUE, {
-      signTx: true,
-      from: PERSONAL_ACCOUNT, fromPrivateKey: PERSONAL_PRIVATE_KEY
-    });
-    console.log(receipt);
+    const receipt = await tokens.transfer(TEST_ACCOUNT, TRANSFER_VALUE);
 
-    c.expect(receipt.status).to.be.true;
-    c.expect(receipt).to.contain.keys(['status','blockHash','blockNumber',
-      'transactionHash','transactionIndex']);
+    c.expect(receipt).to.contain.keys(['status','blockHash','blockNumber', 'transactionHash','transactionIndex']);
+    c.expect(receipt.status).to.be.equal('0x1');
+
+      const balanceOfAfter = await tokens.balanceOf(TEST_ACCOUNT);
+
+      c.expect(balanceOfB4 + 1).to.be.equal(parseInt(balanceOfAfter));
+
+      console.log('address '+TEST_ACCOUNT+' cogs increase from '+balanceOfB4+ ' to '+balanceOfAfter);
     
+  }).timeout(10 * 60 * 1000);
 
-  }).timeout(30000);
+  m.it('Registry: should  ', async function () {
+  }).timeout(10 * 60 * 1000);
 
 
-// [ 'yolov3-object-detection','example-service','cntk-image-recon','i3d-video-action-recognition',
-    //  'translation','semantic-similarity-binary','network-analytics-robustness','cntk-next-day-trend','cntk-lstm-forecast',
-    //  'brand-mgmt-service-consumer','example-image-conversion-service','cntk-language-understanding','zeta36-chess-alpha-zero',
-    //  'opennmt-romance-translator','s2vt-video-captioning','news-summary','semantic-segmentation','face-identity',
-    //  'face-detect','face-landmarks','face-align','sentiment-analysis','emotion-recognition-service',
-    //  'named-entity-recognition','network-analytics-bipartite','holistic-edge-detection-service','dev-TSAD',
-    //  'moses-service','annotation-service','super-resolution','opencog-vqa','speech-recognition','speech-synthesis',
-    //  'question-answering-long-seq','question-answering-short-seq','time-series-anomaly-discovery' ];
-
-  m.xit('FOR TEMP TESTING ONLY', async function () {
     
     // const registry = acct.getRegistry();
 
@@ -140,5 +129,4 @@ m.describe.only('Contract', () => {
     // const tmp = await registry.listServicesForTag('Recognition');
 
     // console.log(tmp)
-  });
 })

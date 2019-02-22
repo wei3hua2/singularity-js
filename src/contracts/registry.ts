@@ -84,9 +84,7 @@ class Registry extends Contract {
         )
     }
 
-    //TODO
-    getTypeRepositoryById = (orgId: string, repositoryId: string) => this.callContract('getTypeRepositoryById', this.fromAscii(orgId), this.fromAscii(repositoryId));
-
+    
     listServiceTags = () => this.callContract('listServiceTags').then((svcTags) => {
         return {tags: Array.from(svcTags.tags).map((t:string) => this.eth.hexToUtf8(t))};
     });
@@ -101,10 +99,11 @@ class Registry extends Contract {
                 return svcs;
             });
     }
+
     listTypeRepositoryTags = () => this.callContract('listTypeRepositoryTags'); //TODO
     listTypeRepositoriesForTag = (tag: string) => this.callContract('listTypeRepositoriesForTag', this.fromAscii(tag)); //TODO
     supportsInterface = (interfaceId: string) => this.callContract('supportsInterface', interfaceId); //TODO
-
+    getTypeRepositoryById = (orgId: string, repositoryId: string) => this.callContract('getTypeRepositoryById', this.fromAscii(orgId), this.fromAscii(repositoryId)); //TODO
 
     createOrganization = (orgId:string, orgName:string, 
         members:string[], txOpt:TransactOptions={}) => this.transactContract('createOrganization',txOpt,orgId,orgName,members);

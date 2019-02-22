@@ -7,7 +7,7 @@ import {Registry} from './contracts/registry';
 import {Tokens} from './contracts/tokens';
 import {Mpe} from './contracts/mpe';
 import {Marketplace} from './marketplace';
-
+import {PromiEvent} from 'web3-core-promievent';
 
 class Account {
     private privateKey: string;
@@ -52,28 +52,24 @@ class Account {
 
     ///////// call
 
-    public async getAgiTokens(): Promise<number> {
-        const result = await this._tokens.balanceOf(this.address);
-        return result;
-    }
-    public async getEscrowBalances(): Promise<number> {
-        return await this._mpe.balances(this.address);
-    }
+    public getAgiTokens = ():Promise<number> => this._tokens.balanceOf(this.address);
+    public getEscrowBalances = ():Promise<number> => this._mpe.balances(this.address);
+    
 
     ///////// transact
 
-    public async transfer(to:string|Account, amount:number,opts:TransactOptions={}): Promise<any> {
+    public transfer(to:string|Account, amount:number,opts:TransactOptions={}): PromiEvent<any> {
         const toStr = to instanceof Account ? to.address : to;
         opts.from = this.address;
-        return await this._tokens.transfer(toStr, amount, opts);
+        return this._tokens.transfer(toStr, amount, opts);
     }
-    public async depositToEscrow(amount:number, opts:TransactOptions={}): Promise<any> {
+    public depositToEscrow(amount:number, opts:TransactOptions={}): PromiEvent<any> {
         opts.from = this.address;
-        return await this._mpe.deposit(amount, opts);
+        return this._mpe.deposit(amount, opts);
     }
-    public async withdrawFromEscrow(amount:number, opts:TransactOptions={}): Promise<any> {
+    public withdrawFromEscrow(amount:number, opts:TransactOptions={}): PromiEvent<any> {
         opts.from = this.address;
-        return await this._mpe.withdraw(amount, opts);
+        return this._mpe.withdraw(amount, opts);
     }
 
     public async openChannel(){}
