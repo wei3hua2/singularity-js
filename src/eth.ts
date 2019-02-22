@@ -6,6 +6,9 @@ import { EventEmitter } from 'events';
 import {PromiEvent} from 'web3-core-promievent';
 import {Base64} from 'js-base64';
 
+// @ts-ignore
+import CONFIG from './config.json';
+
 class EthUtil {
     web3: any;
     isVersion1Beyond: boolean;
@@ -49,13 +52,15 @@ class EthUtil {
     async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
         const nonce = await this.web3.eth.getTransactionCount(from);
         const gas = await method.estimateGas({from:from});
+        const gas_price = parseInt(await this.web3.eth.getGasPrice());
+        
 
         let tx = {
             from:from, to:to,
             nonce:this.numberToHex(nonce),
             gas:this.numberToHex(gas),
-            gasLimit: this.numberToHex(800000),
-            gasPrice: this.numberToHex(this.web3.utils.toWei('10', 'gwei')),
+            gasLimit: this.numberToHex(CONFIG['GAS_LIMIT']),
+            gasPrice: this.numberToHex(gas_price),
             data: method.encodeABI()
         };
 

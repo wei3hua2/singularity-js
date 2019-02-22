@@ -31,6 +31,7 @@ class Mpe extends Contract {
     deposit = (value:number, txOpt:TransactOptions={}) => this.transactContract('deposit',txOpt,value);
     withdraw = (value:number, txOpt:TransactOptions={}) => this.transactContract('withdraw',txOpt,value);
     transfer = (receiver:string, value:number, txOpt:TransactOptions={}) => this.transactContract('transfer',txOpt,receiver,value);
+    
     openChannel = (signer:string, recipient:string, groupId:Uint8Array,
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('openChannel',txOpt, signer, recipient, groupId,value,expiration);
     depositAndOpenChannel = (signer:string, recipient:string, groupId:string,

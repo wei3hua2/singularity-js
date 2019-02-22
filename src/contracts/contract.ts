@@ -45,8 +45,7 @@ abstract class Contract {
         txOptions.from = txOptions.from || this.account.address;
 
         return this.eth.transact(this.account.getPrivateKey(),
-            this.contract, method, this.address,
-            txOptions, ...params);
+            this.contract, method, this.address, txOptions, ...params);
     }
 
     protected eventContract(method: string, opts:EventOptions={}): EventEmitter {

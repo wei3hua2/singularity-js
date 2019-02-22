@@ -4,6 +4,8 @@ import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
 import { Account } from '../../src/account';
 import {Registry} from '../../src/contracts/registry';
+import {Mpe} from '../../src/contracts/mpe';
+import {Tokens} from '../../src/contracts/tokens';
 
 
 let web3, acct;
@@ -95,7 +97,8 @@ m.describe.only('Contract', () => {
   });
 
 
-  m.it('Tokens: should transfer 1 cog from one account to another ', async function () {
+
+  m.xit('Tokens: should transfer 1 cog from one account to another ', async function () {
     const tokens = acct.getTokens(), TRANSFER_VALUE = 1;
 
     const balanceOfB4 = await tokens.balanceOf(TEST_ACCOUNT);
@@ -113,7 +116,7 @@ m.describe.only('Contract', () => {
     
   }).timeout(10 * 60 * 1000);
 
-  m.it('Registry: should perform basic CRUD for organization and service', async function () {
+  m.xit('Registry: should perform basic CRUD for organization and service', async function () {
     const registry:Registry = acct.getRegistry();
     const ORG_ID = 'snet-js-test', ORG_NAME = 'Snet Js Test';
     const SVC_ID = 'snet-js-test-svc', METADATAURI = 'fake_metadata_uri', TAGS = [];
@@ -254,16 +257,68 @@ m.describe.only('Contract', () => {
 
   }).timeout(10 * 10 * 60 * 1000);
 
+  m.it('Mpe: should perform basic transfer of funds', async function () {
+    const mpe:Mpe = acct.getMpe(), token:Tokens = acct.getTokens();
 
+    const initBalance = await mpe.balances(PERSONAL_ACCOUNT);
+    const initAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
+
+    const initTestBalance = await mpe.balances(TEST_ACCOUNT);
+
+    let allowance = await token.allowance(PERSONAL_ACCOUNT, mpe.address);
     
-    // const registry = acct.getRegistry();
+    if(allowance < 100) 
+      await token.approve(mpe.address, 100);
+    
+    allowance = await token.allowance(PERSONAL_ACCOUNT, mpe.address);
 
-    // const tmp = await registry.listOrganizations();
-    // const tmp = await registry.getOrganizationById('snet');
-    // const tmp = await registry.listServicesForOrganization('jameschong');
-    // const tmp = await registry.getServiceRegistrationById('snet', 'example-service');
-    // const tmp = await registry.listServiceTags();
-    // const tmp = await registry.listServicesForTag('Recognition');
+    console.log('init balance       : '+initBalance);
+    console.log('init AGI balance   : '+initAgiBalance);
+    console.log('init test balance  : '+initTestBalance);
+    console.log('allowance          : '+allowance);
+    console.log();
+    
 
-    // console.log(tmp)
+    await mpe.deposit(100);
+    
+    const depositBalance = await mpe.balances(PERSONAL_ACCOUNT);
+    const depositAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
+
+    c.expect(initBalance).to.be.equal(depositBalance - 100);
+    c.expect(initAgiBalance).to.be.equal(depositAgiBalance + 100);
+
+    console.log('deposit balance       : '+depositBalance);
+    console.log('deposit AGI balance   : '+depositAgiBalance);
+    console.log();
+
+
+    await mpe.transfer(TEST_ACCOUNT, 50);
+
+    const depositTestBalance = await mpe.balances(TEST_ACCOUNT);
+
+    c.expect(depositTestBalance).to.be.equal(initTestBalance + 50);
+
+    console.log('init transferred test balance   : '+initTestBalance);
+    console.log('final transferred test balance  : '+depositTestBalance);
+    console.log();
+
+
+    await mpe.withdraw(50);
+    const finalBalance = await mpe.balances(PERSONAL_ACCOUNT);
+    const finalAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
+
+    console.log('final balance       : '+finalBalance);
+    console.log('final AGI balance   : '+finalAgiBalance);
+    console.log();
+
+    c.expect(initBalance).to.be.equal(finalBalance);
+    c.expect(initAgiBalance).to.be.equal(finalAgiBalance + 50);
+
+
+  }).timeout(3 * 10 * 60 * 1000);
+
+  m.xit('Mpe: should perform operation on channel', async function () {
+
+  }).timeout(10 * 60 * 1000);
+
 })
