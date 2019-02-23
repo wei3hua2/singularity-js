@@ -327,20 +327,23 @@ m.describe.only('Contract', () => {
     const group = metadata.groups[0];
     const groupId = group['group_id'];
     const recipient = group['payment_address'];
-    // const expiration_threshold = metadata['payment_expiration_threshold'];
-    const expiration_threshold = 0;
 
+    // 1. open channel if not found
     let openedChannel = await mpe.PastChannelOpen(
       {filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:groupId}});
 
+    console.log('last available channel  :');
+    console.log(openedChannel[openedChannel.length-1] ? openedChannel[openedChannel.length-1].returnValues : 'not found');
+    console.log();
+
     if(openedChannel.length===0) {
-      console.log('open new channel');
-      const receipt = await mpe.openChannel(
-        PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 0, expiration_threshold);
+      const receipt = await mpe.openChannel(PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 0, 0);
 
       openedChannel = await mpe.PastChannelOpen({filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:groupId}});
     }
     
+    // 2. extend expiry and top up funds
+
     const channelId = openedChannel[openedChannel.length - 1].returnValues.channelId;
     const initChannel = await mpe.channels(channelId);
 
@@ -348,13 +351,28 @@ m.describe.only('Contract', () => {
 
     const topupChannel = await mpe.channels(channelId);
 
+    console.log('topup channel value       :'+topupChannel.value);
+    console.log('topup channel expiration  :'+topupChannel.expiration);
+    console.log();
+
     c.expect(initChannel.value).to.be.equal(topupChannel.value - 10);
     c.expect(initChannel.expiration).to.be.equal(topupChannel.expiration - 10);
 
 
-    // await mpe.channelClaim(channelId, amount, isSendback,v,s,r)
+    // 3. claim channel
 
-    // multiChannelClaim
+    const fundedBalance =  await mpe.balances(PERSONAL_ACCOUNT);
+
+    await mpe.channelClaimTimeout(channelId);
+    
+    const finalBalance =  await mpe.balances(PERSONAL_ACCOUNT);
+
+
+    console.log('funded balance   :' + fundedBalance);
+    console.log('final balance    :' + finalBalance);
+    console.log();
+
+    c.expect(finalBalance).to.be.greaterThan(fundedBalance);
 
   }).timeout(10 * 60 * 1000);
 
