@@ -49,7 +49,10 @@ class Mpe extends Contract {
     channelExtendAndAddFunds = (channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelExtendAndAddFunds',txOpt,channelId,newExpiration,amount);
     channelClaimTimeout = (channelId:number, txOpt:TransactOptions={}) => this.transactContract('channelClaimTimeout',txOpt,channelId);
     
-    ChannelOpen = (opt:EventOptions={}) => this.eventContract('ChannelOpen',opt);
+    ChannelOpen = (opt:EventOptions={}) => {
+        if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
+        return this.eventContract('ChannelOpen',opt);
+    }
     ChannelClaim = (opt:EventOptions={}) => this.eventContract('ChannelClaim',opt);
     ChannelSenderClaim = (opt:EventOptions={}) => this.eventContract('ChannelSenderClaim',opt);
     ChannelExtend = (opt:EventOptions={}) => this.eventContract('ChannelExtend',opt);
@@ -59,7 +62,20 @@ class Mpe extends Contract {
     TransferFunds = (opt:EventOptions={}) => this.eventContract('TransferFunds',opt);
 
     ChannelOpenOnce = (opt:EventOptions={}) => this.onceContract('ChannelOpen',opt);
-    PastChannelOpen = (opt:EventOptions={}) => this.pastEventsContract('ChannelOpen',opt);
+    PastChannelOpen = async (opt:EventOptions={}) => {
+        if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
+
+        const events = await this.pastEventsContract('ChannelOpen',opt);
+        
+        return events.map((evt) => {
+            evt.returnValues.channelId = parseInt(evt.returnValues.channelId);
+            evt.returnValues.nonce = parseInt(evt.returnValues.nonce);
+            evt.returnValues.amount = parseInt(evt.returnValues.amount);
+            evt.returnValues.expiration = parseInt(evt.returnValues.expiration);
+
+            return evt;
+        });
+    }
 
 
     base64ToBytes(b64Val:string): string {

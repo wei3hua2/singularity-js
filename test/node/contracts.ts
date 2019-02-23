@@ -327,26 +327,33 @@ m.describe.only('Contract', () => {
     const group = metadata.groups[0];
     const groupId = group['group_id'];
     const recipient = group['payment_address'];
-    const expiration_threshold = metadata['payment_expiration_threshold'] - 100;
+    // const expiration_threshold = metadata['payment_expiration_threshold'];
+    const expiration_threshold = 0;
 
-    // const receipt = await mpe.openChannel(PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 1, expiration_threshold);
-    // const blockNo = receipt.blockNumber;
+    let openedChannel = await mpe.PastChannelOpen(
+      {filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:groupId}});
+
+    if(openedChannel.length===0) {
+      console.log('open new channel');
+      const receipt = await mpe.openChannel(
+        PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 0, expiration_threshold);
+
+      openedChannel = await mpe.PastChannelOpen({filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:groupId}});
+    }
     
-    const gId = mpe.base64ToBytes(groupId);
+    const channelId = openedChannel[openedChannel.length - 1].returnValues.channelId;
+    const initChannel = await mpe.channels(channelId);
 
-    const openedChannel = await mpe.PastChannelOpen(
-      {filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:gId}});
+    await mpe.channelExtendAndAddFunds(channelId, initChannel.expiration + 10, 10);
 
-    console.log(openedChannel[1]);
-    console.log(openedChannel.length);
+    const topupChannel = await mpe.channels(channelId);
 
-    // await mpe.channelExtendAndAddFunds(channelId, expiration_threshold +100, 10);
+    c.expect(initChannel.value).to.be.equal(topupChannel.value - 10);
+    c.expect(initChannel.expiration).to.be.equal(topupChannel.expiration - 10);
+
 
     // await mpe.channelClaim(channelId, amount, isSendback,v,s,r)
 
-
-    // depositAndOpenChannel
-    // channelExtendAndAddFunds
     // multiChannelClaim
 
   }).timeout(10 * 60 * 1000);
