@@ -6,6 +6,7 @@ import { Account } from '../../src/account';
 import {Registry} from '../../src/contracts/registry';
 import {Mpe} from '../../src/contracts/mpe';
 import {Tokens} from '../../src/contracts/tokens';
+import {Ipfs} from '../../src/ipfs';
 
 
 let web3, acct;
@@ -257,7 +258,7 @@ m.describe.only('Contract', () => {
 
   }).timeout(10 * 10 * 60 * 1000);
 
-  m.it('Mpe: should perform basic transfer of funds', async function () {
+  m.xit('Mpe: should perform basic transfer of funds', async function () {
     const mpe:Mpe = acct.getMpe(), token:Tokens = acct.getTokens();
 
     const initBalance = await mpe.balances(PERSONAL_ACCOUNT);
@@ -317,7 +318,36 @@ m.describe.only('Contract', () => {
 
   }).timeout(3 * 10 * 60 * 1000);
 
-  m.xit('Mpe: should perform operation on channel', async function () {
+  m.it('Mpe: should perform operation on channel', async function () {
+    const mpe = acct.getMpe();
+    const registry = acct.getRegistry();
+
+    const exampleSvcReg = await registry.getServiceRegistrationById('snet','example-service');
+    const metadata = await Ipfs.cat(exampleSvcReg.metadataURI);
+    const group = metadata.groups[0];
+    const groupId = group['group_id'];
+    const recipient = group['payment_address'];
+    const expiration_threshold = metadata['payment_expiration_threshold'] - 100;
+
+    // const receipt = await mpe.openChannel(PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 1, expiration_threshold);
+    // const blockNo = receipt.blockNumber;
+    
+    const gId = mpe.base64ToBytes(groupId);
+
+    const openedChannel = await mpe.PastChannelOpen(
+      {filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:gId}});
+
+    console.log(openedChannel[1]);
+    console.log(openedChannel.length);
+
+    // await mpe.channelExtendAndAddFunds(channelId, expiration_threshold +100, 10);
+
+    // await mpe.channelClaim(channelId, amount, isSendback,v,s,r)
+
+
+    // depositAndOpenChannel
+    // channelExtendAndAddFunds
+    // multiChannelClaim
 
   }).timeout(10 * 60 * 1000);
 

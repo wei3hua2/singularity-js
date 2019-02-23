@@ -8,7 +8,7 @@ import AGITokenNetworks from 'singularitynet-platform-contracts/networks/MultiPa
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-platform-contracts/abi/MultiPartyEscrow.json';
 
-import {TransactOptions, EventOptions, AllEventsOptions} from '../eth';
+import {TransactOptions, EventOptions} from '../eth';
 import {Account} from '../account';
 
 class Mpe extends Contract {
@@ -32,9 +32,13 @@ class Mpe extends Contract {
     withdraw = (value:number, txOpt:TransactOptions={}) => this.transactContract('withdraw',txOpt,value);
     transfer = (receiver:string, value:number, txOpt:TransactOptions={}) => this.transactContract('transfer',txOpt,receiver,value);
     
-    openChannel = (signer:string, recipient:string, groupId:Uint8Array,
-        value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('openChannel',txOpt, signer, recipient, groupId,value,expiration);
-    depositAndOpenChannel = (signer:string, recipient:string, groupId:string,
+    openChannel = (signer:string, recipient:string, groupId:string, value:number, expiration:number,
+        txOpt:TransactOptions={}) => {
+            const gId = this.eth.asciiToBytes(this.eth.atob(groupId));
+            return this.transactContract('openChannel',txOpt, signer, recipient, gId, value, expiration);
+        }
+
+    depositAndOpenChannel = (signer:string, recipient:string, groupId:Uint8Array,
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
     multiChannelClaim = (channelIds:number[], amounts:number[], isSendbacks:boolean[],
         v:string, s:string, r:string,txOpt:TransactOptions={}) => this.transactContract('multiChannelClaim',txOpt,channelIds,amounts,isSendbacks,v,s,r);
@@ -55,8 +59,12 @@ class Mpe extends Contract {
     TransferFunds = (opt:EventOptions={}) => this.eventContract('TransferFunds',opt);
 
     ChannelOpenOnce = (opt:EventOptions={}) => this.onceContract('ChannelOpen',opt);
-    PastChannelOpen = (opt:AllEventsOptions={}) => this.pastEventsContract('ChannelOpen',opt);
+    PastChannelOpen = (opt:EventOptions={}) => this.pastEventsContract('ChannelOpen',opt);
 
+
+    base64ToBytes(b64Val:string): string {
+        return this.eth.asciiToBytes(this.eth.atob(b64Val));
+    }
 }
 
 export {Mpe}

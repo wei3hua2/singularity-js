@@ -2,7 +2,7 @@
  * @ignore
  */
 
-import {TransactOptions, EventOptions, AllEventsOptions} from '../eth';
+import {TransactOptions, EventOptions} from '../eth';
 import {Account} from '../account';
 import {PromiEvent} from 'web3-core-promievent';
 import {EventEmitter} from 'events';
@@ -52,13 +52,19 @@ abstract class Contract {
         return this.eth.event(this.contract, method, opts);
     }
     protected onceContract(method: string, opts:EventOptions={}): Promise<any> {
+        if(!opts.fromBlock) opts.fromBlock = 'latest';
+        if(!opts.toBlock) opts.toBlock = 'latest';
+        
         return this.eth.once(this.contract, method, opts);
     }
     protected pastEventsContract(method: string, opts:EventOptions={}): Promise<any> {
+        if(!opts.fromBlock) opts.fromBlock = 0;
+        if(!opts.toBlock) opts.toBlock = 'latest';
+
         return this.eth.pastEvents(this.contract, method, opts);
     }
     
-    public allEvents = (opt:AllEventsOptions={}) => this.eth.allEvents(this.contract, opt);
+    public allEvents = (opt:EventOptions={}) => this.eth.allEvents(this.contract, opt);
 
 
     protected fromAscii(strVal: string) : any {

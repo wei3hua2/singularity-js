@@ -78,10 +78,10 @@ class EthUtil {
     event(contract, method, opts:EventOptions={}): EventEmitter {
         return contract.events[method](opts, (error, event) => {});
     }
-    pastEvents(contract, method, opts:AllEventsOptions={}): Promise<any> {
+    pastEvents(contract, method, opts:EventOptions={}): Promise<any> {
         return contract.getPastEvents(method, opts);
     }
-    allEvents(contract, opts:AllEventsOptions={}): Promise<any> {
+    allEvents(contract, opts:EventOptions={}): Promise<any> {
         return new Promise((resolve, reject) => {
             contract.events.allEvents(opts, (err, evts) => {
                 if(err) reject(err);
@@ -119,7 +119,7 @@ class EthUtil {
     asciiToBytes(ascii:string) { return this.web3.utils.fromAscii(ascii); }
     bytesToAscii(ascii:string) { return this.web3.utils.toAscii(ascii); }
 
-    hexToBytes(hex:string):Uint8Array { return new Uint8Array(this.web3.utils.hexToBytes(hex)); }
+    hexToBytes(hex:string):Uint8Array { return this.web3.utils.hexToBytes(hex); }
     bytesToHex(bytes: Uint8Array): string { return this.web3.utils.bytesToHex(bytes); }
 
     hexToNumber(hex:string):number { return this.web3.utils.hexToNumber(hex); }
@@ -141,6 +141,7 @@ class EthUtil {
     
     soliditySha3(...params) { return this.web3.utils.soliditySha3(...params); }
     
+    atob(base64Str: string) { return Base64.atob(base64Str); }
     base64ToUtf8(base64Str: string) { return Base64.decode(base64Str); }
     utf8ToBase64(strVal: string) { return Base64.encode(strVal); }
 
@@ -170,10 +171,8 @@ interface SignOptions {
 interface EventOptions {
     filter?: Object;
     fromBlock?: string|number;
+    toBlock?: string|number;
     topics?:any[]
 }
-interface AllEventsOptions extends EventOptions{
-    toBlock?: string|number;
-}
 
-export {EthUtil, TransactOptions, EventOptions, AllEventsOptions}
+export {EthUtil, TransactOptions, EventOptions}
