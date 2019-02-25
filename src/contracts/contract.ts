@@ -17,6 +17,8 @@ abstract class Contract {
     address: string;
     eth: EthUtil;
 
+    isInit: boolean;
+
     constructor(currentAccount: Account){
         this.account = currentAccount;
         this.eth = currentAccount.getEthUtil();
@@ -34,7 +36,9 @@ abstract class Contract {
 
         this.contract = this.eth.getContract(abi, this.address);
 
-        return true;
+        this.isInit = true;
+
+        return this.isInit;
     }
     
     protected callContract(method: string, ...params: any[]): Promise<any> {

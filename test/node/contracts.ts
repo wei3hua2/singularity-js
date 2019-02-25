@@ -25,7 +25,7 @@ m.after(() => {
   web3.currentProvider.connection.close();
 })
 
-m.describe.only('Contract', () => {
+m.describe('Contract', () => {
   m.it('should work for Tokens call functions', async function() {
     const tokens = acct.getTokens();
 

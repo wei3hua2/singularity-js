@@ -21,6 +21,8 @@ class Account {
 
     public _eth:EthUtil;
 
+    public isInit:boolean;
+
     private constructor(web3:any, opts:InitOptions={}){
         this.web3 = web3;
         this.privateKey = opts.privateKey;
@@ -40,7 +42,8 @@ class Account {
         const mpeSuccess = await this._mpe.init();
         const regSuccess = await this._registry.init();
 
-        return tokenSuccess && mpeSuccess && regSuccess;
+        this.isInit = tokenSuccess && mpeSuccess && regSuccess;
+        return this.isInit;
     }
 
     public getEthUtil = ():EthUtil => this._eth;

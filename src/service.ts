@@ -24,29 +24,28 @@ class Service extends GrpcModel implements Fetchable{
     organizationId: string;
 
     metadata: ServiceMetadata;
-    protoService: pb.Service;
     tags: string[];
 
     jobPromise:PromiEvent<any>;
 
-    _fetched: boolean;
+    isInit: boolean = false;
 
     /** @ignore*/
-    private constructor(account:Account, organizationId:string, fields:any) {
+    private constructor(account:Account, organizationId:string, serviceId:string, fields?:any) {
         super(account);
 
         if(!organizationId) throw new SnetError('org_id_svc_not_found', organizationId);
-        if(!fields.id) throw new SnetError('service_id_not_found', fields.id);
+        if(!serviceId) throw new SnetError('service_id_not_found', serviceId);
 
         this.organizationId = organizationId;
-        this.serviceId = fields.id;
+        this.serviceId = serviceId;
     }
 
     /**
      * Fetch additional data and metadata from the registry and Ipfs.
      */
     public async fetch(): Promise<boolean> {
-        if(!this._fetched) {
+        if(!this.isInit) {
             const svcReg = await this.getRegistry().getServiceRegistrationById(this.organizationId, this.serviceId);
             this.metadata = await Ipfs.cat(svcReg.metadataURI);
             
@@ -55,9 +54,9 @@ class Service extends GrpcModel implements Fetchable{
             const proto = await this.getServiceProto(this.organizationId, this.serviceId);
             this.processProto(proto);
 
-            this._fetched = true;
+            this.isInit = true;
         }
-        return this._fetched;
+        return this.isInit;
     }
 
     /**
@@ -65,9 +64,57 @@ class Service extends GrpcModel implements Fetchable{
      * 
      */
     public async listMethods(): Promise<{[method:string]:pb.Method}> {
-        if(!this._fetched) await this.fetch();
+        if(!this.isInit) await this.fetch();
+        return this.ServiceProto.methods;
+    }
+    public async listTypes(): Promise<{[type:string]:pb.Type}> {
+        if(!this.isInit) await this.fetch();
 
-        return this.protoService.methods;
+        return this.protoModelArray['Type'].reduce( (result, t) => {
+            result[t['name']] = t;
+            return result;
+        },{});
+    }
+
+    public async serviceInfo(opt:{pbField:boolean}={pbField:false}): Promise<ServiceInfo>{
+        const methods = await this.listMethods();
+        const types = await this.listTypes();
+        
+        const m = Object.entries(methods).reduce((accum, entry)=> {
+            const methodName = entry[0], method = entry[1];
+            accum[methodName] = {
+                request: {
+                    name: method.requestType,
+                    fields: this.parseTypeFields(types, method.requestType, opt.pbField)
+                },
+                response: {
+                    name: method.responseType,
+                    fields: this.parseTypeFields(types, method.responseType, opt.pbField)
+                }
+            };
+            return accum;
+        },{});
+
+        return {
+            name: this.ServiceProto.name,
+            methods: m
+        };
+    }
+
+    public async defaultRequest(method: string,opts:pb.IConversionOptions={defaults:true}) {
+        const list = await this.listTypes();
+        const type = list[this.ServiceProto.methods[method].requestType];
+
+        return type.toObject(type.fromObject({}), opts);
+    }
+
+    private parseTypeFields (typeList:any, typeName:string, pbField:boolean): ServiceFieldInfo {
+        return Object.entries(typeList[typeName].fields).reduce((accum, entry:any) => {
+            const name = entry[0];
+            accum[name] = pbField ? 
+                entry[1] : {type: entry[1].type, required: entry[1].required, optional: entry[1].optional};
+            return accum;
+        }, {});
     }
 
     /**
@@ -111,13 +158,11 @@ class Service extends GrpcModel implements Fetchable{
 
         return this.jobPromise;
     }
-
     public openChannel(val:number, opts:any): Promise<any> {
         return Channel.openChannel(
             this.account, opts.from, this.getPaymentAddress(), 
             this.getGroupId(), val, this.getPaymentExpirationThreshold());
     }
-
     public getGroupId():Uint8Array {
         const hex = this.account._eth.base64ToHex(this.metadata.groups[0].group_id);
         return this.account._eth.hexToBytes(hex);
@@ -161,50 +206,10 @@ class Service extends GrpcModel implements Fetchable{
         `\norganizationId: ${this.organizationId}` +
         // `\nmetadataURI: ${this.metadataURI}` +
         `\ntags: ${this.tags}` + 
-        `\nmetadata: ${JSON.stringify(this.metadata)}`;
-        // `\nproto: ${this.protoBuf}`;
+        `\nmetadata: ${JSON.stringify(this.metadata)}` + 
+        `\ninit: ${this.isInit}`;
     }
 
-    // private async createService (promi:PromiEvent, channel:Channel, opts:any): Promise<any> {
-    //     const host:string = this.metadata.endpoints[0].endpoint;
-    //     promi.emit(RUN_JOB_STATE.host, host);
-        
-    //     const channelState = await(channel.getChannelState({privateKey:opts.privateKey}));
-    //     promi.emit(RUN_JOB_STATE.channel_state, channelState);
-
-    //     const price_in_cogs = this.metadata.pricing.price_in_cogs + channelState.currentSignedAmount;
-    //     promi.emit(RUN_JOB_STATE.price_in_cogs, price_in_cogs);
-
-    //     const signed = await this.signServiceHeader(
-    //         channel.id, channel.nonce, price_in_cogs, opts.privateKey);
-
-    //     promi.emit(RUN_JOB_STATE.signed_header, signed);
-
-    //     const requestHeaders = await this.parseAgentRequestHeader(signed, channel, price_in_cogs);
-    //     promi.emit(RUN_JOB_STATE.request_header, requestHeaders);
-
-    //     return this.protoService.create(
-    //         (method, requestObject, callback) => {
-    //             const fullmethod = method.toString().split(' ')[1].trim().substring(1);
-    //             const serviceName = fullmethod.split('.')[0] + '.' + fullmethod.split('.')[1];
-    //             const methodName = fullmethod.split('.')[2];
-                
-    //             const headers = Object.assign({}, 
-    //                 {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'},
-    //                 requestHeaders);
-
-    //             const url = `${host}/${serviceName}/${methodName}`;
-    //             const body = this.frameRequest(requestObject);
-
-    //             promi.emit(RUN_JOB_STATE.request_info, headers, url, body);
-
-    //             axios.post(url, body, {headers:headers,responseType:'arraybuffer'})
-    //                 .then((response) => {
-    //                     promi.emit(RUN_JOB_STATE.raw_response, response);
-    //                     this.convertGrpcResponseChunk(response, callback);
-    //                 }).catch((err) => { callback(err, null); });
-    //         }, false ,false);
-    // }
 
     private async signServiceHeader (
         channelId:number, nonce:number, priceInCogs:number,
@@ -242,9 +247,16 @@ class Service extends GrpcModel implements Fetchable{
      * @param organizationId Organization Id
      * 
      */
-    static init(account:Account, organizationId:string, serviceId:string) {
-        return new Service(account, organizationId, {id:serviceId});
+    static async init(account:Account, organizationId:string, serviceId:string, opts:InitOption={}) {
+        const svc = new Service(account, organizationId,serviceId);
+        if(opts.init) await svc.fetch();
+
+        return svc;
     }
+}
+
+class InitOption {
+    init?: boolean;
 }
 
 /**
@@ -302,4 +314,71 @@ interface RunJobOption {
     ocExpiration?:number;
 }
 
-export {Service, RUN_JOB_STATE, RunJobOption}
+interface ServiceFieldInfo {
+    [name:string]: {
+        type:string;
+        required: boolean;
+        optional: boolean;
+    } | pb.Field;
+}
+
+interface ServiceInfo {
+    name: string;
+    methods: {
+        [method:string]: {
+            request: {
+                name: string;
+                fields: ServiceFieldInfo
+            }
+            response: {
+                name: string;
+                fields: ServiceFieldInfo
+            }
+        }
+    }
+}
+
+export {Service, RUN_JOB_STATE, RunJobOption, InitOption, ServiceInfo}
+
+
+
+    // private async createService (promi:PromiEvent, channel:Channel, opts:any): Promise<any> {
+    //     const host:string = this.metadata.endpoints[0].endpoint;
+    //     promi.emit(RUN_JOB_STATE.host, host);
+        
+    //     const channelState = await(channel.getChannelState({privateKey:opts.privateKey}));
+    //     promi.emit(RUN_JOB_STATE.channel_state, channelState);
+
+    //     const price_in_cogs = this.metadata.pricing.price_in_cogs + channelState.currentSignedAmount;
+    //     promi.emit(RUN_JOB_STATE.price_in_cogs, price_in_cogs);
+
+    //     const signed = await this.signServiceHeader(
+    //         channel.id, channel.nonce, price_in_cogs, opts.privateKey);
+
+    //     promi.emit(RUN_JOB_STATE.signed_header, signed);
+
+    //     const requestHeaders = await this.parseAgentRequestHeader(signed, channel, price_in_cogs);
+    //     promi.emit(RUN_JOB_STATE.request_header, requestHeaders);
+
+    //     return this.protoService.create(
+    //         (method, requestObject, callback) => {
+    //             const fullmethod = method.toString().split(' ')[1].trim().substring(1);
+    //             const serviceName = fullmethod.split('.')[0] + '.' + fullmethod.split('.')[1];
+    //             const methodName = fullmethod.split('.')[2];
+                
+    //             const headers = Object.assign({}, 
+    //                 {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'},
+    //                 requestHeaders);
+
+    //             const url = `${host}/${serviceName}/${methodName}`;
+    //             const body = this.frameRequest(requestObject);
+
+    //             promi.emit(RUN_JOB_STATE.request_info, headers, url, body);
+
+    //             axios.post(url, body, {headers:headers,responseType:'arraybuffer'})
+    //                 .then((response) => {
+    //                     promi.emit(RUN_JOB_STATE.raw_response, response);
+    //                     this.convertGrpcResponseChunk(response, callback);
+    //                 }).catch((err) => { callback(err, null); });
+    //         }, false ,false);
+    // }

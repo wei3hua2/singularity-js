@@ -40,31 +40,30 @@ class Mpe extends Contract {
 
     depositAndOpenChannel = (signer:string, recipient:string, groupId:Uint8Array,
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
-    multiChannelClaim = (channelIds:number[], amounts:number[], isSendbacks:boolean[],
-        v:string, s:string, r:string,txOpt:TransactOptions={}) => this.transactContract('multiChannelClaim',txOpt,channelIds,amounts,isSendbacks,v,s,r);
-    channelClaim = (channelId:number, amount:number, isSendback:boolean,
-        v:string, s:string, r:string, txOpt:TransactOptions={}) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
     channelExtend = (channelId:number, newExpiration:number, txOpt:TransactOptions={}) => this.transactContract('channelExtend',txOpt,channelId,newExpiration);
     channelAddFunds = (channelId:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelAddFunds',txOpt,channelId,amount);
     channelExtendAndAddFunds = (channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelExtendAndAddFunds',txOpt,channelId,newExpiration,amount);
     channelClaimTimeout = (channelId:number, txOpt:TransactOptions={}) => this.transactContract('channelClaimTimeout',txOpt,channelId);
+    // multiChannelClaim = (channelIds:number[], amounts:number[], isSendbacks:boolean[],
+    //     v:string, s:string, r:string,txOpt:TransactOptions={}) => this.transactContract('multiChannelClaim',txOpt,channelIds,amounts,isSendbacks,v,s,r);
+    // channelClaim = (channelId:number, amount:number, isSendback:boolean,
+    //     v:string, s:string, r:string, txOpt:TransactOptions={}) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
     
     ChannelOpen = (opt:EventOptions={}) => {
         if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
         return this.eventContract('ChannelOpen',opt);
     }
-    ChannelClaim = (opt:EventOptions={}) => this.eventContract('ChannelClaim',opt);
     ChannelSenderClaim = (opt:EventOptions={}) => this.eventContract('ChannelSenderClaim',opt);
     ChannelExtend = (opt:EventOptions={}) => this.eventContract('ChannelExtend',opt);
     ChannelAddFunds = (opt:EventOptions={}) => this.eventContract('ChannelAddFunds',opt);
     DepositFunds = (opt:EventOptions={}) => this.eventContract('DepositFunds',opt);
     WithdrawFunds = (opt:EventOptions={}) => this.eventContract('WithdrawFunds',opt);
     TransferFunds = (opt:EventOptions={}) => this.eventContract('TransferFunds',opt);
+    // ChannelClaim = (opt:EventOptions={}) => this.eventContract('ChannelClaim',opt);
 
     ChannelOpenOnce = (opt:EventOptions={}) => this.onceContract('ChannelOpen',opt);
     PastChannelOpen = async (opt:EventOptions={}) => {
         if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
-
         const events = await this.pastEventsContract('ChannelOpen',opt);
         
         return events.map((evt) => {

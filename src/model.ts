@@ -22,9 +22,6 @@ abstract class Model {
 
     constructor(account:Account) {
         this.account = account;
-
-        // if(!fields.id) throw new SnetError('id_not_found');
-        // this.id = fields.id;
     }
 
     getTokens = ()=>this.account.getTokens();
@@ -35,10 +32,9 @@ abstract class Model {
 }
 
 abstract class GrpcModel extends Model {
-
     private rootProtoBuf:NamespaceBase;
-    private protoModelArray: {[k:string]:NamespaceBase};
-    protected ServiceProto: Service;
+    protected protoModelArray: {[k:string]:NamespaceBase[]};
+    public ServiceProto: Service;
 
     constructor(account:Account) {
         super(account);
@@ -47,7 +43,7 @@ abstract class GrpcModel extends Model {
     processProto(protoJson:Object) : void {
         this.rootProtoBuf = this.processRootNamespace(Root.fromJSON(protoJson[0]));
         this.protoModelArray = this.processProtoToArray(this.rootProtoBuf);
-        this.ServiceProto = this.protoModelArray['Service'][0];
+        this.ServiceProto = <Service>this.protoModelArray['Service'][0];
 
         if(!this.ServiceProto) throw new SnetError('proto_svc_not_found');
     }
@@ -65,7 +61,7 @@ abstract class GrpcModel extends Model {
             }, false, false);
     }
 
-    private processProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase} {
+    private processProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase[]} {
         const proto = root['nestedArray'].reduce( (accumulator, ele) => {
             const type = ele.toString().split(' ')[0];
     
@@ -128,7 +124,7 @@ abstract class GrpcModel extends Model {
 }
 
 interface Fetchable {
-    _fetched: boolean;
+    isInit: boolean;
     fetch(): Promise<boolean>;
 }
 

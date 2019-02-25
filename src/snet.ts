@@ -56,8 +56,9 @@ class Snet {
      * @returns A list of organization.
      *
      */
-    listOrganizations(): Promise<Organization[]>{
-        return Organization.listOrganizations(this.web3);
+    listOrganizations(opts:{init:boolean} = {init:false}): Promise<Organization[]>{
+
+        return Organization.listOrganizations(this.currentAccount, opts);
     }
 
     /**
@@ -68,8 +69,8 @@ class Snet {
      * @returns Organization detail.
      *
      */
-    getOrganization(orgId:string): Promise<Organization> {
-        return Organization.init(this.web3,orgId);
+    getOrganization(orgId:string, opts:{init:boolean} = {init:true}): Promise<Organization> {
+        return Organization.init(this.currentAccount, orgId);
     }
 
 
@@ -82,8 +83,8 @@ class Snet {
      * @returns Service detail.
      *
      */
-    async getService(orgId:string, serviceId:string): Promise<Service> {
-        return Service.init(this.web3, orgId, serviceId);
+    async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<Service> {
+        return Service.init(this.currentAccount, orgId, serviceId, opts);
     }
 
     /**
@@ -102,8 +103,11 @@ class Snet {
     runJob (orgId:string, serviceId:string, method:string, 
         request:any, opts:RunJobOption= {}): PromiEvent {
 
-        const promi = Service.init(this.web3, orgId, serviceId).runJob(method, request, opts);
-
+        let promi;
+        Service.init(this.currentAccount, orgId, serviceId).then((svc) => {
+            promi = svc.runJob(method, request, opts);
+        });
+        
         return promi;
     }
 
