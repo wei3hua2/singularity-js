@@ -3,7 +3,7 @@
  */
 
 import {Channel} from './channel';
-import {rpc} from 'protobufjs';
+import {rpc, Method} from 'protobufjs';
 import { GrpcModel } from './model';
 import { EthUtil } from './eth';
 
@@ -74,18 +74,23 @@ class ChannelState extends GrpcModel{
         this.channel = channel;
         this._eth = this.channel._eth;
 
-        const url = `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
-        this.channelStateService = this.createService(url);
+        this.processProto(SERVICE_STATE_JSON);
+        
+        this.channelStateService = this.createService();
     }
 
-    async getState(opts:ChannelStateOpts = {}) : Promise<ChannelStateResponse> {
-        const byteschannelID = this.channel.getByteChannelId();
-        const byteSig:Uint8Array = await this.channel.signChannelId(opts.privateKey);
+    protected serviceUrl(method: Method): string {
+      return `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
+    }
+
+    async getState() : Promise<ChannelStateResponse> {
+        const byteschannelID = this.getByteChannelId();
+        const byteSig:Uint8Array = await this.signChannelId();
         const request = {"channelId":byteschannelID, "signature":byteSig};
 
         const channelResponse = await this.channelStateService['getChannelState'](request);
 
-        const curNonce = parseInt(this._eth.bytesToHex(channelResponse.currentNonce));
+        const curNonce = this._eth.bytesToNumber(channelResponse.currentNonce);
         const curSignedAmt = parseInt(this._eth.bytesToHex(channelResponse.currentSignedAmount));
 
         return {
@@ -94,6 +99,23 @@ class ChannelState extends GrpcModel{
           currentSignedAmount: curSignedAmt
         };
     }
+
+  async signChannelId(): Promise<Uint8Array> {
+      const sha3Message: string = this._eth.soliditySha3({t: 'uint256', v: this.channel.id});
+      const privateKey: string = this.account.getPrivateKey();
+      const signedPayload = await this._eth.sign(sha3Message, {privateKey:privateKey});
+
+      const signed = signedPayload.signature;
+      const stripped = signed.substring(2, signed.length);
+
+      return new Uint8Array(stripped.match(/[\da-f]{2}/gi).map((h) => parseInt(h, 16)));
+  }
+
+  getByteChannelId(): Uint8Array {
+      const channelBytes = this._eth.numberToBytes(this.channel.id, 4);
+      
+      return channelBytes;
+  }
 }
 
 interface ChannelStateOpts {

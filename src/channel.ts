@@ -10,7 +10,7 @@ import { Fetchable, GrpcModel } from './model';
 import { ChannelState, ChannelStateResponse, ChannelStateOpts } from './channel-state';
 import { SnetError } from './errors/snet-error';
 import { Marketplace } from './marketplace';
-import { TransactOptions, EventOptions, AllEventsOptions } from './eth';
+import { TransactOptions, EventOptions } from './eth';
 import {EthUtil} from './eth';
 
 class Channel extends Model implements Fetchable {
@@ -28,7 +28,7 @@ class Channel extends Model implements Fetchable {
     pending?: number;
     endpoint?: string;
 
-    _fetched: boolean;
+    isInit: boolean;
 
     _eth: EthUtil;
  
@@ -41,17 +41,25 @@ class Channel extends Model implements Fetchable {
     }
 
 
-    async getChannelState(opts?:ChannelStateOpts) : Promise<ChannelStateResponse> {
+    async getChannelState() : Promise<ChannelStateResponse> {
         if(!this.endpoint) throw new SnetError('channel_endpoint_not_found');
         
         const cs = new ChannelState(this.account, this.endpoint, this);
-        return await cs.getState(opts);
+        return await cs.getState();
     }
 
     async fetch(): Promise<boolean> {
         const channel = await this.getMpe().channels(this.id);
         this.populate(channel);
         return true;
+    }
+
+    async extendAndAddFunds(newExpiration:number, amount:number):Promise<any> {
+        return await this.getMpe().channelExtendAndAddFunds(this.id, newExpiration, amount);
+    }
+
+    async claimTimeout(): Promise<any> {
+        return await this.getMpe().channelClaimTimeout(this.id);
     }
 
     private populate(contractChannel:any){
@@ -70,19 +78,6 @@ class Channel extends Model implements Fetchable {
             parseInt(contractChannel.pending) : this.pending;
     }
 
-    async signChannelId(privateKey:string = null): Promise<Uint8Array> {
-        const sha3Message: string = this._eth.soliditySha3({t: 'uint256', v: this.id});
-
-        const signed = (await this._eth.sign(sha3Message, {privateKey:privateKey})).signature;
-        const stripped = signed.substring(2, signed.length);
-
-        return new Uint8Array(stripped.match(/[\da-f]{2}/gi).map((h) => parseInt(h, 16)));
-    }
-
-    getByteChannelId(): Uint8Array {
-        return this._eth.numberToBytes(this.id, 4);
-    }
-
     public toString(): string {
         return `*** Channel : ${this.id}` +
             `\nnonce : ${this.nonce} , value : ${this.value}` +
@@ -96,7 +91,7 @@ class Channel extends Model implements Fetchable {
         return new Channel(account, channelId);
     }
 
-    static async openChannel(account:Account,signer:string, recipient:string, groupId:Uint8Array, 
+    static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
         value:number, expiration:number, opts:TransactOptions={}):Promise<any> {
         const mpe = account.getMpe();
 
@@ -111,12 +106,12 @@ class Channel extends Model implements Fetchable {
         const mpe = account.getMpe();
         return mpe.ChannelOpenOnce(opts);
     }
-    static PastOpenChannel(account:Account, opts:AllEventsOptions={}):Promise<any> {
+    static PastOpenChannel(account:Account, opts:EventOptions={}):Promise<any> {
         const mpe = account.getMpe();
         return mpe.PastChannelOpen(opts);
     }
 
-    static getAllEvents(account:Account, opts:AllEventsOptions={}):Promise<any> {
+    static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {
         const mpe = account.getMpe();
         return mpe.allEvents(opts);
     }
@@ -146,6 +141,7 @@ class Channel extends Model implements Fetchable {
             return new Channel(account, channel.channelId, c);
         });
     }
+    
 }
 
 export {Channel}

@@ -11,7 +11,9 @@ m.before(async () => {
     web3 = initWeb3();
     PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
     PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-    account = new Account(web3,{address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
+    // PERSONAL_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
+    // PERSONAL_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
+    account = await Account.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_ACCOUNT_PK});
     await account.init();
 });
 m.after(() => {
@@ -19,17 +21,25 @@ m.after(() => {
 })
 
 m.describe('Channels', () => {
-    m.xit('should get channel information', async function () {
-        const channel = Channel.init(account, 1109);
-        await channel.fetch();
-
-        c.expect(channel.signer).to.be.equals(PERSONAL_ACCOUNT);
-    });
-
     m.xit('should get available channels for account', async function () {
-        const aChannel = await Channel.getAvailableChannels(account, PERSONAL_ACCOUNT, 'snet', 'example-service');
-        console.log(aChannel);
-    });
+        const aChannel:Channel[] = await Channel.getAvailableChannels(account, PERSONAL_ACCOUNT, 'snet', 'example-service');
+        const channels = Array.from(aChannel);  // channels.forEach((c)=>console.log(c.toString()));
+        const lastChannel = channels[channels.length - 1];   // console.log(lastChannel.toString());
+
+        for(var i=0;i<channels.length;i++) {
+            const channel = channels[i];
+            // if(channel.id <1221) continue;
+            // if(channel.id === 1228) await channel.extendAndAddFunds(2);
+
+            console.log(channel.toString());
+            const reply = await channel.getChannelState();
+            console.log(reply);
+            console.log();
+        }
+        console.log('Channel Length : '+channels.length);
+        
+    }).timeout(10 * 60 * 1000);
+
     m.xit('should listen to open channel', async function (done) {
         const blockNo = await account._eth.getBlockNumber();
         const emitter = Channel.listenOpenChannel(account, 
@@ -51,12 +61,6 @@ m.describe('Channels', () => {
 
     }).timeout(500000);
 
-    m.xit('should listen to open channel once', async function () {
-        const once = Channel.listenOpenChannelOnce(account);
-        console.log(once);
-        console.log(await once);
-    }).timeout(500000);
-
     m.xit('get past events', async function () {
         const blockNo = await account._eth.getBlockNumber();
         const past = await Channel.PastOpenChannel(account,
@@ -67,17 +71,25 @@ m.describe('Channels', () => {
         
     }).timeout(500000);
 
-    m.it('should open channel', async function () {
+    m.xit('should open channel on snet, example-service', async function () {
         const exampleSvc = await Service.init(account, 'snet','example-service');
         await exampleSvc.fetch();
-        console.log(exampleSvc.toString());
+        
+        // const channels:Channel[] = await exampleSvc.getChannels();
+        // channels.forEach((c) => {
+        //     console.log(c.toString());
+        // });
 
-        try {
-            const receipt = await exampleSvc.openChannel(1, {from:PERSONAL_ACCOUNT, privateKey:PERSONAL_ACCOUNT_PK});
-            console.log(receipt);
-        }catch(err){
-            console.log('Och.......');
-            console.error(err);
-        }
-    }).timeout(50000);
+        // const channel = channels.find((c)=> c.id === 1133);
+        // await channel.claimTimeout();
+
+        const c = Channel.init(account, 1133);
+        await c.fetch();
+        console.log(c.toString());
+
+
+        // const receipt = await exampleSvc.openChannel(20, {from:PERSONAL_ACCOUNT, privateKey:PERSONAL_ACCOUNT_PK});
+        // console.log(receipt);
+        
+    }).timeout(10 * 60 * 1000);
 })

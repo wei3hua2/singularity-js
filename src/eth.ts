@@ -144,6 +144,7 @@ class EthUtil {
     atob(base64Str: string) { return Base64.atob(base64Str); }
     base64ToUtf8(base64Str: string) { return Base64.decode(base64Str); }
     utf8ToBase64(strVal: string) { return Base64.encode(strVal); }
+    encodeBase64(val: any) { return Base64.encode(val); }
 
     base64ToHex(base64String:string):string {
         return this.asciiToHex(this.base64ToUtf8(base64String));

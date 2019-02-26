@@ -67,13 +67,8 @@ class Service extends GrpcModel implements Fetchable{
         if(!this.isInit) await this.fetch();
         return this.ServiceProto.methods;
     }
-    public async listTypes(): Promise<{[type:string]:pb.Type}> {
-        if(!this.isInit) await this.fetch();
-
-        return this.protoModelArray['Type'].reduce( (result, t) => {
-            result[t['name']] = t;
-            return result;
-        },{});
+    public listTypes(): {[type:string]:pb.Type} {
+        return this.TypesProto;
     }
 
     public async serviceInfo(opt:{pbField:boolean}={pbField:false}): Promise<ServiceInfo>{
@@ -101,8 +96,8 @@ class Service extends GrpcModel implements Fetchable{
         };
     }
 
-    public async defaultRequest(method: string,opts:pb.IConversionOptions={defaults:true}) {
-        const list = await this.listTypes();
+    public defaultRequest(method: string,opts:pb.IConversionOptions={defaults:true}) {
+        const list = this.listTypes();
         const type = list[this.ServiceProto.methods[method].requestType];
 
         return type.toObject(type.fromObject({}), opts);
@@ -133,49 +128,35 @@ class Service extends GrpcModel implements Fetchable{
         this.jobPromise = new PromiEvent();
         this.jobPromise.emit(RUN_JOB_STATE.start_job, method, request);
 
-        Channel.getAvailableChannels(this.account, 
-            opts.from, this.organizationId, this.serviceId).then(
-                (channels) => {
-                    this.jobPromise.emit(RUN_JOB_STATE.available_channels, channels);
+        this.retrieveChannel(this.jobPromise, {from:this.account.address}).then((channel) => {
 
-                    const channel = channels[0];
+            return this.invokeAgentService(this.jobPromise, channel, method, request);
 
-                    this.jobPromise.emit(RUN_JOB_STATE.selected_channel, channel);
-
-                    return null;
-                    // return this.createService(this.jobPromise, channel, {privateKey:opts.privateKey});
-            }).then((svc) => {
-                this.jobPromise.emit(RUN_JOB_STATE.service_created, svc);
-
-                this.jobPromise.emit(RUN_JOB_STATE.before_execution, method);
-
-                return svc[method](request);
-            }).then((response) => {
-                this.jobPromise.resolve(response);
-            }).catch((err) => {
-                this.jobPromise.reject(err);
-            });
+        }).then((response) => {this.jobPromise.resolve(response);})
+        .catch((err) => { this.jobPromise.reject(err); });
 
         return this.jobPromise;
     }
-    public openChannel(val:number, opts:any): Promise<any> {
-        return Channel.openChannel(
+    public async openChannel(val:number, opts:any): Promise<any> {
+        const blockNo = await this.getEthUtil().getBlockNumber();
+
+        return await Channel.openChannel(
             this.account, opts.from, this.getPaymentAddress(), 
-            this.getGroupId(), val, this.getPaymentExpirationThreshold());
+            this.getGroupId(), val,
+            blockNo + this.getPaymentExpirationThreshold());
     }
-    public getGroupId():Uint8Array {
-        const hex = this.account._eth.base64ToHex(this.metadata.groups[0].group_id);
-        return this.account._eth.hexToBytes(hex);
+
+    public async getChannels(filter:{id?:number}={}): Promise<Channel[]> {
+        return Array.from(await Channel.getAvailableChannels(this.account, this.account.address, 
+            this.organizationId, this.serviceId));
     }
-    public getPaymentAddress() {
-        return this.metadata.groups[0].payment_address;
-    }
-    public getPaymentExpirationThreshold() {
-        return this.metadata.payment_expiration_threshold;
-    }
-    public getEndpoint() {
-        return this.metadata.endpoints[0].endpoint;
-    }
+
+
+    public getGroupId = ():string => this.metadata.groups[0].group_id
+    public getPaymentAddress = ():string => this.metadata.groups[0].payment_address;
+    public getPaymentExpirationThreshold = () => this.metadata.payment_expiration_threshold;
+    public getEndpoint = () => this.metadata.endpoints[0].endpoint;
+    
 
     protected async getServiceProto(organizationId: string, serviceId: string): Promise<object> {
         const netId = await this.getEthUtil().getNetworkId();
@@ -186,16 +167,42 @@ class Service extends GrpcModel implements Fetchable{
     }
 
 
-    // TODO
-    // check available channels give: from, organizationId, svcId
-    // if not found init one
-    // what is the precondition?
-    private async retrieveChannel(): Promise<Channel>{
-        return null;
+    private async retrieveChannel(jobPromi:PromiEvent, opts:any={}): Promise<Channel>{
+        const channels = await Channel.getAvailableChannels(
+            this.account, opts.from, this.organizationId, this.serviceId);
+
+        const channel = channels[channels.length -1];
+        // const channel:any = Array.from(channels).find((c:Channel) => c.id === 1228);
+
+        jobPromi.emit(RUN_JOB_STATE.available_channels, channels);
+        jobPromi.emit(RUN_JOB_STATE.selected_channel, channel);
+
+        return channel;
     }
-    // TODO
-    private async invokeAgentService(): Promise<any>{
-        return null;
+    
+    private async invokeAgentService(promi:PromiEvent, channel:Channel, method:string, request:any): Promise<any>{
+        const state = await channel.getChannelState();
+        // console.log('state : '+JSON.stringify(state));
+        const price_in_cogs = this.metadata.pricing.price_in_cogs + (state.currentSignedAmount || 0);
+
+        return this.signServiceHeader(channel.id, channel.nonce, price_in_cogs, this.account.getPrivateKey())
+            .then((sign) => {
+                const header = this.parseAgentRequestHeader(sign, channel, price_in_cogs);
+
+                promi.emit(RUN_JOB_STATE.signed_header, header);
+                
+                return this.createService(header);
+            }).then((svc) => {
+                promi.emit(RUN_JOB_STATE.service_created, svc);
+                promi.emit(RUN_JOB_STATE.before_execution, method);
+
+                return svc[method](request);
+            });
+    }
+
+    protected serviceUrl(method: pb.Method): string {
+        const serviceName = this.ServiceProto.parent.name+'.'+this.ServiceProto.name;
+        return `${this.getEndpoint()}/${serviceName}/${method.name}`;
     }
 
     /**
@@ -223,9 +230,15 @@ class Service extends GrpcModel implements Fetchable{
       
         const signed = (await this.getEthUtil().sign(sha3Message, {privateKey:privateKey})).signature;
         
-        const hexs = this.getEthUtil().bytesToHex(signed);
+        // const byts = this.getEthUtil().hexToBytes(signed);
+        // const b64 = this.getEthUtil().encodeBase64(byts);
 
-        return this.getEthUtil().hexToBase64(hexs);
+        var stripped = signed.substring(2, signed.length)
+        var byteSig = Buffer.from(stripped, 'hex');
+        let buff = new Buffer(byteSig);
+        let base64data = buff.toString('base64');
+
+        return base64data;
     }
     private parseAgentRequestHeader(signed:string, channel:Channel, priceInCogs:number) {
     

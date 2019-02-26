@@ -56,9 +56,9 @@ class Snet {
      * @returns A list of organization.
      *
      */
-    listOrganizations(opts:{init:boolean} = {init:false}): Promise<Organization[]>{
+    async listOrganizations(opts:{init:boolean} = {init:false}): Promise<Organization[]>{
 
-        return Organization.listOrganizations(this.currentAccount, opts);
+        return Array.from(await Organization.listOrganizations(this.currentAccount, opts));
     }
 
     /**

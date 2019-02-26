@@ -139,7 +139,7 @@ m.describe.only('Snet', () => {
     c.expect(snet.getCurrentAccount().address).to.be.equal(PERSONAL_ACCOUNT);
   });
 
-  m.it('should retrieve information for organizations and services', async function () {
+  m.xit('should retrieve information for organizations and services', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
 
     // organizations
@@ -192,7 +192,7 @@ m.describe.only('Snet', () => {
     const svcMethods = await exampleSvc.listMethods();
     c.expect(svcMethods).to.have.keys(['add','sub','mul','div']);
 
-    const svcTypes = await exampleSvc.listTypes();
+    const svcTypes = exampleSvc.listTypes();
     c.expect(svcTypes['Result']).to.exist;
     c.expect(svcTypes['Numbers']).to.exist;
 
@@ -204,14 +204,57 @@ m.describe.only('Snet', () => {
     
   }).timeout(30000);
 
-  m.it('should run addition job from snet, example-service', async function () {
-    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
-    const svc = await snet.getService('snet','example-service');
-    
-    const addRequest = await svc.defaultRequest('add');
-    console.log(addRequest);
+  m.xit('should run addition job from snet, example-service', function (done) {
+    let service;
 
-    // const info = await svc.serviceInfo();
-    // console.log(JSON.stringify(info, null, 1));
+    Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY})
+    .then((snet) => snet.getService('snet','example-service'))
+    .then((svc) => {
+      service = svc;
+      const addRequest = svc.defaultRequest('add');
+
+      c.expect(addRequest).to.have.keys(['a','b']);
+
+      addRequest['a'] = 3, addRequest['b'] = 4;
+
+      console.log('addRequest : '+JSON.stringify(addRequest));
+
+      return addRequest;
+
+    }).then((req) => {
+      const job = service.runJob('add', req);
+
+      job.on('signed_header', console.log);
+      job.on('selected_channel', console.log);
+      job.then((response) => {console.log(response); done();});
+      job.catch((err) => {console.error(err); done(err);});
+
+    }).catch((err) => {
+      console.error(err);
+      done(err);
+    })
   });
+
+  m.xit('FOR INFO PURPOSE ONLY', async function () {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    const result = {};
+
+    const orgs = await snet.listOrganizations({init:false});
+
+    for(var i=0;i<orgs.length;i++) {
+      const org = orgs[i];
+      result[org.id] = [];
+      const svcs = await org.getServices({init:true});
+      
+      for(var j=0;j<svcs.length;j++) {
+        const info = await svcs[j].serviceInfo();
+        result[org.id].push(info);
+      }
+    }
+
+    var fs = require('fs');
+    console.log(result);
+    fs.writeFileSync('services.json', JSON.stringify(result,null,3));
+    
+  }).timeout(50000);
 })
