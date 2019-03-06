@@ -6,16 +6,26 @@ import { EventEmitter } from 'events';
 import {PromiEvent} from 'web3-core-promievent';
 import {Base64} from 'js-base64';
 
-// @ts-ignore
-import CONFIG from './config.json';
+
+import {CONFIG} from '../configs/config';
+import {NETWORK} from '../configs/network';
 
 class EthUtil {
     web3: any;
+    ethereum: any;
     isVersion1Beyond: boolean;
 
-    constructor(web3: any){
+    constructor(web3: any, ethereum: any = null){
         this.web3 = web3;
+        this.ethereum = ethereum;
         this.isVersion1Beyond = !(this.getWeb3Version()[0] === '0');
+    }
+
+    async init() {
+        let init = true;
+        if(this.ethereum) init = await this.ethereum.enable();
+        
+        return init;
     }
 
     close(): any {
@@ -101,7 +111,10 @@ class EthUtil {
     getNetworkId(): Promise<any> {
         return this.web3.eth.net.getId();
     }
-
+    getNetwork(): Promise<string> {
+        return this.web3.eth.net.getId().then((id) => NETWORK[id].name);
+    }
+ 
     getBlockNumber(): Promise<number> {
         return this.web3.eth.getBlockNumber();
     }
@@ -155,6 +168,9 @@ class EthUtil {
     
     sign(sha3Message:string, opts:SignOptions = {}) {
         if(opts.privateKey) return this.web3.eth.accounts.sign(sha3Message, opts.privateKey);
+        else if(opts.address){
+            return this.web3.eth.personal.sign(sha3Message, opts.address, '');
+        }
         else throw new Error('No approach to signing');
     }
 
@@ -168,6 +184,7 @@ interface TransactOptions {
 }
 interface SignOptions {
     privateKey?: string;
+    address?: string;
 }
 interface EventOptions {
     filter?: Object;

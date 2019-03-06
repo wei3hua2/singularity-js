@@ -2,11 +2,11 @@ import * as c from 'chai';
 import * as m from 'mocha';
 
 import {initWeb3, getConfigInfo} from './utils';
-import { Account } from '../../src/account';
+import { AccountSvc } from '../../src/impls/account';
 import {Registry} from '../../src/contracts/registry';
 import {Mpe} from '../../src/contracts/mpe';
 import {Tokens} from '../../src/contracts/tokens';
-import {Ipfs} from '../../src/ipfs';
+import {Ipfs} from '../../src/utils/ipfs';
 
 
 let web3, acct;
@@ -19,7 +19,7 @@ m.before(async () => {
   PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
   TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
 
-  acct = await Account.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
+  acct = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
 });
 m.after(() => {
   web3.currentProvider.connection.close();
@@ -27,7 +27,7 @@ m.after(() => {
 
 m.describe('Contract', () => {
   m.it('should work for Tokens call functions', async function() {
-    const tokens = acct.getTokens();
+    const tokens = acct.tokens;
 
     const name = await tokens.name();
     const totalSupply = await tokens.totalSupply();
@@ -54,7 +54,7 @@ m.describe('Contract', () => {
   });
 
   m.it('should work for MultiPartyEscrow call functions', async function () {
-    const mpe = acct.getMpe();
+    const mpe = acct.mpe;
 
     const balances = await mpe.balances(PERSONAL_ACCOUNT);
     const channel = await mpe.channels(1);
@@ -75,7 +75,7 @@ m.describe('Contract', () => {
   });
 
   m.it('should work for Registry call functions', async function () {
-    const registry = acct.getRegistry();
+    const registry = acct.registry;
 
     const listOrganizations = await registry.listOrganizations();
     const getOrganizationById = await registry.getOrganizationById('snet');
@@ -118,7 +118,7 @@ m.describe('Contract', () => {
   }).timeout(10 * 60 * 1000);
 
   m.xit('Registry: should perform basic CRUD for organization and service', async function () {
-    const registry:Registry = acct.getRegistry();
+    const registry:Registry = acct.registry;
     const ORG_ID = 'snet-js-test', ORG_NAME = 'Snet Js Test';
     const SVC_ID = 'snet-js-test-svc', METADATAURI = 'fake_metadata_uri', TAGS = [];
     let org, svcReg;
@@ -259,7 +259,7 @@ m.describe('Contract', () => {
   }).timeout(10 * 10 * 60 * 1000);
 
   m.xit('Mpe: should perform basic transfer of funds', async function () {
-    const mpe:Mpe = acct.getMpe(), token:Tokens = acct.getTokens();
+    const mpe:Mpe = acct.mpe, token:Tokens = acct.tokens;
 
     const initBalance = await mpe.balances(PERSONAL_ACCOUNT);
     const initAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
@@ -318,9 +318,9 @@ m.describe('Contract', () => {
 
   }).timeout(3 * 10 * 60 * 1000);
 
-  m.it('Mpe: should perform operation on channel', async function () {
-    const mpe = acct.getMpe();
-    const registry = acct.getRegistry();
+  m.xit('Mpe: should perform operation on channel', async function () {
+    const mpe = acct.mpe;
+    const registry = acct.registry;
 
     const exampleSvcReg = await registry.getServiceRegistrationById('snet','example-service');
     const metadata = await Ipfs.cat(exampleSvcReg.metadataURI);

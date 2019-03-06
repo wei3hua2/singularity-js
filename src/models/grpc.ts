@@ -2,7 +2,7 @@
  * @ignore
  */
 
-import {SnetError} from './errors/snet-error';
+import {SnetError} from '../errors/snet-error';
 import {Account} from './account';
 import { Root, NamespaceBase, Service, rpc, Type, Method } from 'protobufjs';
 import axios from 'axios';
@@ -10,29 +10,17 @@ import axios from 'axios';
 const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
 
 
-abstract class Model {
-    public account:Account;
-
-    constructor(account:Account) {
-        this.account = account;
-    }
-
-    getTokens = ()=>this.account.getTokens();
-    getMpe = ()=>this.account.getMpe();
-    getRegistry = ()=>this.account.getRegistry();
-    getEthUtil = ()=>this.account.getEthUtil();
-    
-}
-
-abstract class GrpcModel extends Model {
+abstract class Grpc {
     private rootProtoBuf:NamespaceBase;
     protected protoModelArray: {[k:string]:NamespaceBase[]};
 
     public ServiceProto: Service;
     public TypesProto: {[type:string]:Type};
 
+    public account: Account;
+
     constructor(account:Account) {
-        super(account);
+        this.account = account;
     }
 
     processProto(protoJson:Object) : void {
@@ -52,7 +40,6 @@ abstract class GrpcModel extends Model {
         return this.ServiceProto.create(
             (method:Method, requestObj, callback) => {
                 const fullurl = this.serviceUrl(method);
-                console.log('full url : '+fullurl);
 
                 const headers = Object.assign(
                     {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1'},
@@ -137,9 +124,4 @@ abstract class GrpcModel extends Model {
 
 }
 
-interface Fetchable {
-    isInit: boolean;
-    fetch(): Promise<boolean>;
-}
-
-export {Model, GrpcModel, Fetchable}
+export {Grpc}

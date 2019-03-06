@@ -5,8 +5,8 @@
 import {EthUtil} from './eth';
 import axios from 'axios';
 
-//@ts-ignore
-import MarketplaceNetwork from './network.json';
+
+import {NETWORK} from '../configs/network';
 
 class Marketplace {
     eth: EthUtil;
@@ -57,7 +57,7 @@ class Marketplace {
 
     private async getMarketplaceInfo (): Promise<any> {
         const netId = await this.eth.getNetworkId();
-        const network = MarketplaceNetwork[netId];
+        const network = NETWORK[netId];
         network.id = netId;
 
         return network;

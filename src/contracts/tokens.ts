@@ -9,8 +9,8 @@ import AGITokenNetworks from 'singularitynet-token-contracts/networks/Singularit
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-token-contracts/abi/SingularityNetToken.json';
 
-import {Account} from '../account';
-import { TransactOptions } from '../eth';
+import {Account} from '../models/account';
+import { TransactOptions, EventOptions } from '../utils/eth';
 
 class Tokens extends Contract {
     constructor(account:Account){ super(account); }
@@ -39,13 +39,13 @@ class Tokens extends Contract {
     transferFrom = (from: string, to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transferFrom', txOpt, from, to, value);
     transferTokens = (beneficiary: string, amount: number, txOpt:TransactOptions={}) => this.transactContract('transferTokens', txOpt, beneficiary, amount);
 
-    Transfer = () => this.eventContract('Transfer');
+    Transfer = (opt:EventOptions={}) => this.eventContract('Transfer', opt);
     
-    Burn = () => this.eventContract('Burn');
-    Pause = () => this.eventContract('Pause');
-    Unpause = () => this.eventContract('Unpause');
-    OwnershipTransferred = () => this.eventContract('OwnershipTransferred');
-    Approval = () => this.eventContract('Approval');
+    Burn = (opt:EventOptions={}) => this.eventContract('Burn', opt);
+    Pause = (opt:EventOptions={}) => this.eventContract('Pause', opt);
+    Unpause = (opt:EventOptions={}) => this.eventContract('Unpause', opt);
+    OwnershipTransferred = (opt:EventOptions={}) => this.eventContract('OwnershipTransferred', opt);
+    Approval = (opt:EventOptions={}) => this.eventContract('Approval', opt);
 }
 
 export {Tokens}

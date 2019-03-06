@@ -8,8 +8,8 @@ import AGITokenNetworks from 'singularitynet-platform-contracts/networks/MultiPa
 //@ts-ignore
 import AGITokenAbi from 'singularitynet-platform-contracts/abi/MultiPartyEscrow.json';
 
-import {TransactOptions, EventOptions} from '../eth';
-import {Account} from '../account';
+import {TransactOptions, EventOptions} from '../utils/eth';
+import {Account} from '../models/account';
 
 class Mpe extends Contract {
     constructor(account:Account){ super(account); }

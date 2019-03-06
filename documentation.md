@@ -53,11 +53,11 @@ Modules
 -------
 
 *   [Snet](modules/snet.md)
-*   [Organization](modules/organization.md)
-*   [Service](modules/service.md)
-*   [Account](modules/account.md)
+*   [OrganizationSvc](modules/organization.md)
+*   [ServiceSvc](modules/service.md)
+*   [AccountSvc](modules/account.md)
 *   [Repository](modules/repository.md)
-*   [Channel](modules/channel.md)
+*   [ChannelSvc](modules/channel.md)
 *   [Contract](modules/contract.md)
 *   [Error](modules/error.md)
 *   [Marketplace](modules/marketplace.md)

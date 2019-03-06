@@ -1,31 +1,31 @@
 {
-  "name": "snet-webclient",
-  "version": "0.1.0",
-  "description": "web client for singularitynet",
-  "main": "dist/snet-webclient.min.js",
+  "name": "singnet-js",
+  "version": "0.0.1",
+  "description": "Javascript library for singularitynet",
+  "main": "dist/singnet.min.js",
   "scripts": {
     "watch": "webpack --watch --config webpack.config.js",
     "build": "webpack --config webpack.config.js",
+    "build-ts": "npm run clean & tsc",
     "clean": "rm -rf build dist",
     "doc-md": "cp markdown-tmpl/partials/index.hbs node_modules/typedoc-plugin-markdown/dist/theme/partials/index.hbs && typedoc --options ./typedoc.json",
     "doc-html": "rm -rf docs-html && typedoc --options ./typedoc-html.json",
     "test-unit": "mocha -r ts-node/register test/unit/**.ts",
     "test-node": "mocha -r ts-node/register test/node/**.ts --timeout 15000",
     "test-browser": "node_modules/karma/bin/karma start karma.conf.js",
-    "showcase": "node_modules/http-server/bin/http-server",
     "postinstall": "scripts/install.js",
     "uninstall": "scripts/uninstall.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wei3hua2/snet-webclient.git"
+    "url": "git+https://github.com/wei3hua2/singnet-js.git"
   },
   "author": "James Chong",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wei3hua2/snet-webclient/issues"
+    "url": "https://github.com/wei3hua2/singnet-js/issues"
   },
-  "homepage": "https://github.com/wei3hua2/snet-webclient#readme",
+  "homepage": "https://github.com/wei3hua2/singnet-js#readme",
   "dependencies": {
     "axios": "^0.18.0",
     "bluebird": "^3.5.3",
@@ -46,13 +46,13 @@
     "@types/node": "^10.5.2",
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
-    "http-server": "^0.11.1",
     "jasmine-core": "^3.3.0",
     "karma": "^4.0.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^2.0.1",
     "karma-webpack": "^3.0.5",
     "mocha": "^5.2.0",
+    "parcel-bundler": "^1.11.0",
     "ts-loader": "^5.3.3",
     "ts-node": "^6.0.5",
     "typedoc": "^0.14.2",

@@ -2,11 +2,11 @@
  * @ignore
  */
 
-import {TransactOptions, EventOptions} from '../eth';
-import {Account} from '../account';
+import {TransactOptions, EventOptions} from '../utils/eth';
+import {Account} from '../models/account';
 import {PromiEvent} from 'web3-core-promievent';
 import {EventEmitter} from 'events';
-import {EthUtil} from '../eth';
+import {EthUtil} from '../utils/eth';
 
 abstract class Contract {
     account: Account;
@@ -21,7 +21,7 @@ abstract class Contract {
 
     constructor(currentAccount: Account){
         this.account = currentAccount;
-        this.eth = currentAccount.getEthUtil();
+        this.eth = currentAccount.eth;
     }
 
     abstract getAbi(): any[];
@@ -48,7 +48,7 @@ abstract class Contract {
         
         txOptions.from = txOptions.from || this.account.address;
 
-        return this.eth.transact(this.account.getPrivateKey(),
+        return this.eth.transact(this.account.privateKey,
             this.contract, method, this.address, txOptions, ...params);
     }
 

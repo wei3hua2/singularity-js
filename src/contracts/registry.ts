@@ -3,14 +3,14 @@
  */
 
 import {Contract} from './contract';
-import {Account} from '../account';
+import {Account} from '../models/account';
 
 //@ts-ignore
 import RegistryNetworks from 'singularitynet-platform-contracts/networks/Registry.json';
 //@ts-ignore
 import RegistryAbi from 'singularitynet-platform-contracts/abi/Registry.json';
 
-import {TransactOptions} from '../eth';
+import {TransactOptions, EventOptions} from '../utils/eth';
 
 class Registry extends Contract {
     constructor(account: Account){ super(account); }
@@ -18,16 +18,16 @@ class Registry extends Contract {
     getAbi(){ return RegistryAbi; }
     getNetworkObj(){ return RegistryNetworks; }
 
-    OrganizationCreated = () => this.eventContract('OrganizationCreated');
-    OrganizationModified = () => this.eventContract('OrganizationModified');
-    OrganizationDeleted = () => this.eventContract('OrganizationDeleted');
-    ServiceCreated = () => this.eventContract('ServiceCreated');
-    ServiceMetadataModified = () => this.eventContract('ServiceMetadataModified');
-    ServiceTagsModified = () => this.eventContract('ServiceTagsModified');
-    ServiceDeleted = () => this.eventContract('ServiceDeleted');
-    TypeRepositoryCreated = () => this.eventContract('TypeRepositoryCreated');
-    TypeRepositoryModified = () => this.eventContract('TypeRepositoryModified');
-    TypeRepositoryDeleted = () => this.eventContract('TypeRepositoryDeleted');
+    OrganizationCreated = (opt:EventOptions={}) => this.eventContract('OrganizationCreated', opt);
+    OrganizationModified = (opt:EventOptions={}) => this.eventContract('OrganizationModified', opt);
+    OrganizationDeleted = (opt:EventOptions={}) => this.eventContract('OrganizationDeleted', opt);
+    ServiceCreated = (opt:EventOptions={}) => this.eventContract('ServiceCreated', opt);
+    ServiceMetadataModified = (opt:EventOptions={}) => this.eventContract('ServiceMetadataModified', opt);
+    ServiceTagsModified = (opt:EventOptions={}) => this.eventContract('ServiceTagsModified', opt);
+    ServiceDeleted = (opt:EventOptions={}) => this.eventContract('ServiceDeleted', opt);
+    TypeRepositoryCreated = (opt:EventOptions={}) => this.eventContract('TypeRepositoryCreated', opt);
+    TypeRepositoryModified = (opt:EventOptions={}) => this.eventContract('TypeRepositoryModified', opt);
+    TypeRepositoryDeleted = (opt:EventOptions={}) => this.eventContract('TypeRepositoryDeleted', opt);
 
     /******* Call *******/
 

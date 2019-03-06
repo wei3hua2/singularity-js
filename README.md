@@ -22,9 +22,52 @@ A few motivating and useful examples of how your product can be used. Spice this
 
 _For more examples and usage, please refer to the [Wiki][wiki]._
 
+
+## Models
+
+There are 4 main model for this library:
+- AccountSvc
+- OrganizationSvc
+- ServiceSvc 
+- ChannelSvc/ChannelSvc State
+
+### AccountSvc
+Contains the current logged in account. This class operations that helps with the account holder. Such as retrieving AGI token counts, deposit to escrow, add fund to existing channel etc.
+
+
+
+### OrganizationSvc
+
+
+### ServiceSvc
+
+
+### ChannelSvc / ChannelSvc State
+
+
+When `Snet.init(web3)` is call, an entry object is created. This object contains helper functions to gather and execute functions from some of these models.
+
+### Run Job
+
+The `runJob` method is an alias to the class "ServiceSvc". 
+
+### AccountSvc
+
+
+### OrganizationSvc
+
+
+### ServiceSvc
+
+
+### ChannelSvc
+
+
+
+
 ## Documentation
 
-[Full Documentation](docs/README.md)
+For full documentation. Please refer to the page [Full Documentation](docs/README.md).
 
 
 ## Release History

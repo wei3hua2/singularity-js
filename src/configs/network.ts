@@ -1,4 +1,4 @@
-{
+const NETWORK = {
     "1": {
       "name": "mainnet",
       "etherscan": "https://etherscan.io",
@@ -28,3 +28,5 @@
       "protobufjs": "http://protojs.singularitynet.io/kovan/"
     }
   }
+
+export {NETWORK}

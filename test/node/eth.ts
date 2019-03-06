@@ -1,7 +1,7 @@
 import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
-import {EthUtil} from '../../src/eth';
+import {EthUtil} from '../../src/utils/eth';
 
 //@ts-ignore
 import AGITokenNetworks from 'singularitynet-token-contracts/networks/SingularityNetToken.json';

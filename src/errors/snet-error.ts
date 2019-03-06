@@ -26,10 +26,10 @@ enum ERROR_CODE {
  */
 const ERROR_CODES = {
     "org_id_not_found":{
-        message:'Organization Id not found'
+        message:'OrganizationSvc Id not found'
     },
     "org_id_svc_not_found":{
-        message: (params:any[]) => `Service org Id ${params[0]} not found`
+        message: (params:any[]) => `ServiceSvc org Id ${params[0]} not found`
     }
 };
 

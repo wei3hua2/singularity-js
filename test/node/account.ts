@@ -1,31 +1,28 @@
 import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
-import {Mpe} from '../../src/contracts/mpe';
-import {Tokens} from '../../src/contracts/tokens';
-import {Registry} from '../../src/contracts/registry';
-import {Account} from '../../src/account';
+import {AccountSvc} from '../../src/impls/account';
 
 let web31, web32, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK,
     TEST_ACCOUNT, TEST_ACCOUNT_PK;
 
-// m.before(() => {
-//     web31 = initWeb3();
+m.before(() => {
+    web31 = initWeb3();
 
-//     PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-//     PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-//     TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-//     TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
-// });
-// m.after(() => {
-//     web31.currentProvider.connection.close();
-// })
+    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
+    PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
+    TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
+    TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
+});
+m.after(() => {
+    web31.currentProvider.connection.close();
+})
 
-m.describe('Account', () => {
+m.describe('AccountSvc', () => {
 
-    m.it('should transfer for main to test account', async function () {
-        const acct = await Account.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await Account.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
+    m.xit('should transfer for main to test account', async function () {
+        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
+        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
 
         const response = await acct.transfer(testAcct, 10);
         console.log(response);
@@ -44,8 +41,8 @@ m.describe('Account', () => {
     });
 
     m.it('should get account information', async function () {
-        const acct = await Account.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await Account.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
+        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
+        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
         try{
         const agiTokens = await acct.getAgiTokens();
         const escrowBalance = await acct.getEscrowBalances();
