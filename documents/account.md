@@ -10,11 +10,6 @@ Contains the current logged in account. This class operations that helps with th
 *   [approve](#approve)
 *   [depositToEscrow](#depositToEscrow)
 *   [withdrawFromEscrow](#withdrawFromEscrow)
-*   [openChannel](#openChannel)
-*   [depositAndOpenChannel](#depositAndOpenChannel)
-*   [extendChannel](#extendChannel)
-*   [addFundsToChannel](#addFundsToChannel)
-*   [extendsAndAddFundsToChannel](#extendsAndAddFundsToChannel)
 *   [init](#init)
 *   [data](#data)
 
@@ -128,56 +123,6 @@ acct.withdrawFromEscrow(10).then(console.log);
 1. __amount__ (number) amount to withdraw from escrow.
 ##### Returns
 - __Snet__ Snet object.
-
-
-## openChannel
-``` javascript
-const recipient = "0xADDRESS";
-const groupdId = 'groupId';
-const value = 10;
-const expiration = 1000000;
-opts = {};
-
-acct.openChannel(recipient, groupId, value, expiration, opts).then(console.log);
-```
-##### Parameters
-1. __recipient__ (string) The payment address of the agent.
-2. __groupId__ (string) Groupd Id of the agent. Can be retrieve from service metadata.
-3. __value__ (number) cogs to be deposited to the channel.
-4. __expiration__ (number) The expiration of the channel.
-##### Returns
-
-
-## depositAndOpenChannel
-``` javascript
-const recipient = "0xADDRESS";
-const groupdId = 'groupId';
-const value = 10;
-const expiration = 1000000;
-opts = {};
-
-acct.depositAndOpenChannel(recipient, groupId, value, expiration, opts).then(console.log);
-```
-##### Parameters
-1. __recipient__ (string) The payment address of the agent.
-2. __groupId__ (string) Groupd Id of the agent. Can be retrieve from service metadata.
-3. __value__ (number) cogs to be deposited to the channel.
-4. __expiration__ (number) The expiration of the channel.
-##### Returns
-
-
-## extendChannel
-``` javascript
-const channelId = 123;
-const expiration = 1000000;
-opts = {};
-
-acct.extendChannel(channelId, expiration, opts).then(console.log);
-```
-##### Parameters
-1. __ChannelId__ (string) The payment address of the agent.
-2. __Expiration__ (number) Groupd Id of the agent. Can be retrieve from service metadata.
-##### Returns
 
 
 ## init

@@ -2,8 +2,8 @@
 
 *   [getChannelState](#getChannelState)
 *   [extendAndAddFunds](#extendAndAddFunds)
-*   [channelAddFunds](#channelAddFunds)
-*   [channelExtend](#channelExtend)
+*   [addFunds](#addFunds)
+*   [extend](#extend)
 *   [claimTimeout](#claimTimeout)
 *   [init](#init)
 *   [data](#data)
@@ -60,7 +60,7 @@ const response = await channel.extendAndAddFunds(value_in_cogs);
 ##### Returns
 - 
 
-## channelExtend
+## extend
 ``` javascript
 import {Snet, Channel} from 'singularity-js'
 

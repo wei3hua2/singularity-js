@@ -2,6 +2,30 @@
 
 This is the main class of singularity-js. It provides basic operations to access information and run job.
 
+``` javascript
+import {Snet} from 'singularity-js';
+import Web3 from 'web3';
+
+const web3 = new Web3(...);
+
+(async () => {
+    const snet = Snet.init(web3, {address: ADDRESS, privateKey: PRIVATE_KEY});
+
+    const organizations = await snet.listOrganizations();
+    console.log(organizations.map(org => org.toString()));
+
+    const organization = await snet.getOrganization('snet');
+    console.log(organization.toString());
+
+    const exampleSvc = await snet.getService('snet', 'example-service');
+    console.log(exampleSvc.toString());
+
+    const job = snet.runJob('snet', 'example-service', 'add', {a:4,b:5});
+
+    job.then(console.log);
+})();
+```
+
 *   [Snet.init](#snet.init)
 *   [listOrganizations](#listOrganizations)
 *   [getOrganization](#getOrganization)
