@@ -1,4 +1,4 @@
-# Product Name
+# Singularity-JS
 > Javascript library for singularitynet
 
 
@@ -6,73 +6,63 @@ One to two paragraph statement about your product and what it does.
 
 ## Prerequisite
 
-
+* web3.js version 1 and beyond
+* node 
 
 ## Installation
 
 
 ```sh
-npm install singularitynet-js --save
+npm install singularity-js --save
 ```
 
 
 ## Usage example
 
-A few motivating and useful examples of how your product can be used. Spice this up with code blocks and potentially more screenshots.
+```javascript
 
-_For more examples and usage, please refer to the [Wiki][wiki]._
+import {Snet} from 'singularity-js';
+import {web3} from 'web3.js;
+
+var snet = Snet.init(web3);
+
+var evt = snet.runJob("snet", "example-service", "add", {a:5, b:6});
+
+
+evt.on("channel", (channel) => {
+    console.log("channel used : " + channel);
+});
+
+evt.then((response) => {
+    // {value : 11}
+    console.log(response.value);
+});
+```
+
+Initialize a Snet instance by injecting `web3` object. 
+
+
+To run a job, pass in the following parameters: 1. organization id, 2. service id, method of the service, 4. payload.
 
 
 ## Models
 
-There are 4 main model for this library:
-- AccountSvc
-- OrganizationSvc
-- ServiceSvc 
-- ChannelSvc/ChannelSvc State
 
-### AccountSvc
-Contains the current logged in account. This class operations that helps with the account holder. Such as retrieving AGI token counts, deposit to escrow, add fund to existing channel etc.
-
-
-
-### OrganizationSvc
-
-
-### ServiceSvc
-
-
-### ChannelSvc / ChannelSvc State
-
-
-When `Snet.init(web3)` is call, an entry object is created. This object contains helper functions to gather and execute functions from some of these models.
-
-### Run Job
-
-The `runJob` method is an alias to the class "ServiceSvc". 
-
-### AccountSvc
-
-
-### OrganizationSvc
-
-
-### ServiceSvc
-
-
-### ChannelSvc
-
-
-
-
-## Documentation
-
-For full documentation. Please refer to the page [Full Documentation](docs/README.md).
+*   [Snet](documents/snet.md)
+*   [Organization](documents/organization.md)
+*   [Service](documents/service.md)
+*   [Account](documents/account.md)
+*   [Channel](documents/channel.md)
+<!-- *   [Repository](documents/repository.md) -->
+<!-- *   [Contract](modules/contract.md) -->
+<!-- *   [Error](modules/error.md) -->
+<!-- *   [Marketplace](modules/marketplace.md) -->
+<!-- *   [Utils](modules/utils.md) -->
 
 
 ## Release History
 
-* 0.1.0
+* 0.0.1
     * The first proper release
     * CHANGE: Rename `foo()` to `bar()`
 

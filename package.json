@@ -2,7 +2,7 @@
   "name": "singnet-js",
   "version": "0.0.1",
   "description": "Javascript library for singularitynet",
-  "main": "dist/singnet.min.js",
+  "main": "dist/singularity.min.js",
   "scripts": {
     "watch": "webpack --watch --config webpack.config.js",
     "build": "webpack --config webpack.config.js",
@@ -18,14 +18,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wei3hua2/singnet-js.git"
+    "url": "git+https://github.com/wei3hua2/singularity-js.git"
   },
   "author": "James Chong",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wei3hua2/singnet-js/issues"
+    "url": "https://github.com/wei3hua2/singularity-js/issues"
   },
-  "homepage": "https://github.com/wei3hua2/singnet-js#readme",
+  "homepage": "https://github.com/wei3hua2/singularity-js#readme",
   "dependencies": {
     "axios": "^0.18.0",
     "bluebird": "^3.5.3",
