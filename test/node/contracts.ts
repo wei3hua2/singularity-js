@@ -99,8 +99,8 @@ m.describe('Contract', () => {
 
 
 
-  m.xit('Tokens: should transfer 1 cog from one account to another ', async function () {
-    const tokens = acct.getTokens(), TRANSFER_VALUE = 1;
+  m.it('Tokens: should transfer 1 cog from one account to another ', async function () {
+    const tokens = acct.tokens, TRANSFER_VALUE = 1;
 
     const balanceOfB4 = await tokens.balanceOf(TEST_ACCOUNT);
 
@@ -258,7 +258,7 @@ m.describe('Contract', () => {
 
   }).timeout(10 * 10 * 60 * 1000);
 
-  m.xit('Mpe: should perform basic transfer of funds', async function () {
+  m.it('Mpe: should perform basic transfer of funds', async function () {
     const mpe:Mpe = acct.mpe, token:Tokens = acct.tokens;
 
     const initBalance = await mpe.balances(PERSONAL_ACCOUNT);

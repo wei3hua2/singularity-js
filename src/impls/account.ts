@@ -20,11 +20,15 @@ class AccountSvc extends Account {
         return this.eth.getNetwork();
     }
 
-    public getAgiTokens = ():Promise<number> => this.tokens.balanceOf(this.address);
-    public getEscrowBalances = ():Promise<number> => this.mpe.balances(this.address);
-    public getChannels = (filter: any = {}): Promise<any> => {
+    public getAgiTokens():Promise<number> {
+        return this.tokens.balanceOf(this.address);
+    }
+    public getEscrowBalances():Promise<number> {
+        return this.mpe.balances(this.address);
+    }
+    public getChannels (filter: any = {}): Promise<any> {
         filter.sender = this.address;
-        return this.mpe.PastChannelOpen({filter:filter});
+        return <Promise<any>> this.mpe.ChannelOpen('past' , filter);
     }
 
     ///////// transact
@@ -42,14 +46,28 @@ class AccountSvc extends Account {
         opts.from = this.address;
         return this.mpe.withdraw(amount, opts);
     }
-
-    public async openChannel(){}
-    public async depositAndOpenChannel(){}
-    public async extendChannel(){}
-    public async extendChannelExpiration(){}
-    public async transferEscrow(){}
-    public async addFundsToChannel(){}
-    public async extendsAndAddFundsToChannel(){}
+    public async openChannel(recipient:string, groupId:string, 
+        value:number, expiration:number, opts:TransactOptions={}): PromiEvent<any> {
+        opts.from = this.address;
+        return this.mpe.openChannel(this.address, recipient, groupId, value, expiration, opts);
+    }
+    public async depositAndOpenChannel(recipient:string, 
+        groupId:string,value:number, expiration:number,txOpt:TransactOptions={}){
+        return this.mpe.depositAndOpenChannel(this.address, recipient, groupId, value, expiration, txOpt);
+    }
+    public async extendChannel(channelId:number, newExpiration:number, txOpt:TransactOptions={}){
+        return this.mpe.channelExtend(channelId, newExpiration, txOpt);
+    }
+    public async extendChannelExpiration(channelId:number, newExpiration:number, txOpt:TransactOptions={}){
+        return this.mpe.channelExtend(channelId, newExpiration, txOpt);
+    }
+    // public async transferEscrow(){}
+    public async addFundsToChannel(channelId:number, amount:number, txOpt:TransactOptions={}){
+        return this.mpe.channelAddFunds(channelId, amount, txOpt);
+    }
+    public async extendsAndAddFundsToChannel(channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}){
+        return this.mpe.channelExtendAndAddFunds(channelId, newExpiration, amount, txOpt);
+    }
 
 
     ///////// event

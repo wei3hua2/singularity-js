@@ -18,16 +18,16 @@ class Registry extends Contract {
     getAbi(){ return RegistryAbi; }
     getNetworkObj(){ return RegistryNetworks; }
 
-    OrganizationCreated = (opt:EventOptions={}) => this.eventContract('OrganizationCreated', opt);
-    OrganizationModified = (opt:EventOptions={}) => this.eventContract('OrganizationModified', opt);
-    OrganizationDeleted = (opt:EventOptions={}) => this.eventContract('OrganizationDeleted', opt);
-    ServiceCreated = (opt:EventOptions={}) => this.eventContract('ServiceCreated', opt);
-    ServiceMetadataModified = (opt:EventOptions={}) => this.eventContract('ServiceMetadataModified', opt);
-    ServiceTagsModified = (opt:EventOptions={}) => this.eventContract('ServiceTagsModified', opt);
-    ServiceDeleted = (opt:EventOptions={}) => this.eventContract('ServiceDeleted', opt);
-    TypeRepositoryCreated = (opt:EventOptions={}) => this.eventContract('TypeRepositoryCreated', opt);
-    TypeRepositoryModified = (opt:EventOptions={}) => this.eventContract('TypeRepositoryModified', opt);
-    TypeRepositoryDeleted = (opt:EventOptions={}) => this.eventContract('TypeRepositoryDeleted', opt);
+    OrganizationCreated = (type: string, opt:EventOptions={}) => this.event('OrganizationCreated', type, opt);
+    OrganizationModified = (type: string, opt:EventOptions={}) => this.event('OrganizationModified', type, opt);
+    OrganizationDeleted = (type: string, opt:EventOptions={}) => this.event('OrganizationDeleted', type, opt);
+    ServiceCreated = (type: string, opt:EventOptions={}) => this.event('ServiceCreated', type, opt);
+    ServiceMetadataModified = (type: string, opt:EventOptions={}) => this.event('ServiceMetadataModified', type, opt);
+    ServiceTagsModified = (type: string, opt:EventOptions={}) => this.event('ServiceTagsModified', type, opt);
+    ServiceDeleted = (type: string, opt:EventOptions={}) => this.event('ServiceDeleted', type, opt);
+    TypeRepositoryCreated = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryCreated', type, opt);
+    TypeRepositoryModified = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryModified', type, opt);
+    TypeRepositoryDeleted = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryDeleted', type, opt);
 
     /******* Call *******/
 

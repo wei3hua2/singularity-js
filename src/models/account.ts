@@ -55,6 +55,10 @@ abstract class Account implements Data {
         return this;
     }
 
+    abstract getAgiTokens();
+    abstract getEscrowBalances();
+    abstract getChannels(filter?: any): Promise<any>;
+
     public toString(): string {
         return `*** Account : ${this.address}` +
             `\ncogs : ${this.cogs} , escrow balances : ${this.escrowBalances}` +

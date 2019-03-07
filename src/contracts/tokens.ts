@@ -39,13 +39,12 @@ class Tokens extends Contract {
     transferFrom = (from: string, to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transferFrom', txOpt, from, to, value);
     transferTokens = (beneficiary: string, amount: number, txOpt:TransactOptions={}) => this.transactContract('transferTokens', txOpt, beneficiary, amount);
 
-    Transfer = (opt:EventOptions={}) => this.eventContract('Transfer', opt);
-    
-    Burn = (opt:EventOptions={}) => this.eventContract('Burn', opt);
-    Pause = (opt:EventOptions={}) => this.eventContract('Pause', opt);
-    Unpause = (opt:EventOptions={}) => this.eventContract('Unpause', opt);
-    OwnershipTransferred = (opt:EventOptions={}) => this.eventContract('OwnershipTransferred', opt);
-    Approval = (opt:EventOptions={}) => this.eventContract('Approval', opt);
+    Transfer = (type: string, opt:EventOptions={}) => this.event('Transfer', type, opt);
+    Burn = (type: string, opt:EventOptions={}) => this.event('Burn', type, opt);
+    Pause = (type: string, opt:EventOptions={}) => this.event('Pause', type, opt);
+    Unpause = (type: string, opt:EventOptions={}) => this.event('Unpause', type, opt);
+    OwnershipTransferred = (type: string, opt:EventOptions={}) => this.event('OwnershipTransferred',type, opt);
+    Approval = (type: string, opt:EventOptions={}) => this.event('Approval', type, opt);
 }
 
 export {Tokens}

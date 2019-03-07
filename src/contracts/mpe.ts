@@ -38,7 +38,7 @@ class Mpe extends Contract {
             return this.transactContract('openChannel',txOpt, signer, recipient, gId, value, expiration);
         }
 
-    depositAndOpenChannel = (signer:string, recipient:string, groupId:Uint8Array,
+    depositAndOpenChannel = (signer:string, recipient:string, groupId:string,
         value:number, expiration:number,txOpt:TransactOptions={}) => this.transactContract('depositAndOpenChannel',txOpt,signer,recipient,groupId,value,expiration);
     channelExtend = (channelId:number, newExpiration:number, txOpt:TransactOptions={}) => this.transactContract('channelExtend',txOpt,channelId,newExpiration);
     channelAddFunds = (channelId:number, amount:number, txOpt:TransactOptions={}) => this.transactContract('channelAddFunds',txOpt,channelId,amount);
@@ -49,32 +49,31 @@ class Mpe extends Contract {
     // channelClaim = (channelId:number, amount:number, isSendback:boolean,
     //     v:string, s:string, r:string, txOpt:TransactOptions={}) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
     
-    ChannelOpen = (opt:EventOptions={}) => {
+    ChannelOpen = (type: string, opt:EventOptions={}) => {
         if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
-        return this.eventContract('ChannelOpen',opt);
+        return this.event('ChannelOpen',type, opt);
     }
-    ChannelSenderClaim = (opt:EventOptions={}) => this.eventContract('ChannelSenderClaim',opt);
-    ChannelExtend = (opt:EventOptions={}) => this.eventContract('ChannelExtend',opt);
-    ChannelAddFunds = (opt:EventOptions={}) => this.eventContract('ChannelAddFunds',opt);
-    DepositFunds = (opt:EventOptions={}) => this.eventContract('DepositFunds',opt);
-    WithdrawFunds = (opt:EventOptions={}) => this.eventContract('WithdrawFunds',opt);
-    TransferFunds = (opt:EventOptions={}) => this.eventContract('TransferFunds',opt);
+    ChannelSenderClaim = (type: string, opt:EventOptions={}) => this.event('ChannelSenderClaim', type, opt);
+    ChannelExtend = (type: string, opt:EventOptions={}) => this.event('ChannelExtend',type, opt);
+    ChannelAddFunds = (type: string, opt:EventOptions={}) => this.event('ChannelAddFunds',type, opt);
+    DepositFunds = (type: string, opt:EventOptions={}) => this.event('DepositFunds',type, opt);
+    WithdrawFunds = (type: string, opt:EventOptions={}) => this.event('WithdrawFunds',type, opt);
+    TransferFunds = (type: string, opt:EventOptions={}) => this.event('TransferFunds',type, opt);
     // ChannelClaim = (opt:EventOptions={}) => this.eventContract('ChannelClaim',opt);
 
-    ChannelOpenOnce = (opt:EventOptions={}) => this.onceContract('ChannelOpen',opt);
-    PastChannelOpen = async (opt:EventOptions={}) => {
-        if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
-        const events = await this.pastEventsContract('ChannelOpen',opt);
+    // PastChannelOpen = async (opt:EventOptions={}) => {
+    //     if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
+    //     const events = await this.pastEventsContract('ChannelOpen',opt);
         
-        return events.map((evt) => {
-            evt.returnValues.channelId = parseInt(evt.returnValues.channelId);
-            evt.returnValues.nonce = parseInt(evt.returnValues.nonce);
-            evt.returnValues.amount = parseInt(evt.returnValues.amount);
-            evt.returnValues.expiration = parseInt(evt.returnValues.expiration);
+    //     return events.map((evt) => {
+    //         evt.returnValues.channelId = parseInt(evt.returnValues.channelId);
+    //         evt.returnValues.nonce = parseInt(evt.returnValues.nonce);
+    //         evt.returnValues.amount = parseInt(evt.returnValues.amount);
+    //         evt.returnValues.expiration = parseInt(evt.returnValues.expiration);
 
-            return evt;
-        });
-    }
+    //         return evt;
+    //     });
+    // }
 
 
     base64ToBytes(b64Val:string): string {

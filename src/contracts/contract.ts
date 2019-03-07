@@ -52,6 +52,13 @@ abstract class Contract {
             this.contract, method, this.address, txOptions, ...params);
     }
 
+    protected event(method: string, type: string, opts:EventOptions={}): EventEmitter | Promise<any> {
+        if (type === 'event') return this.eventContract(method, opts);
+        else if (type === 'once') return this.onceContract(method, opts);
+        else if (type === 'past') return this.pastEventsContract(method, opts);
+        else throw new Error('Event type not found');
+    }
+
     protected eventContract(method: string, opts:EventOptions={}): EventEmitter {
         return this.eth.event(this.contract, method, opts);
     }

@@ -68,33 +68,6 @@ class ChannelSvc extends Channel {
     static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {
         return account.mpe.allEvents(opts);
     }
-
-
-    // static async getAvailableChannels(
-    //     account:Account, from:string, orgId:string, serviceId:string) {
-
-    //     const marketplace = new Marketplace(account.eth);
-
-    //     const channelResponse = (await marketplace.availableChannels(from, serviceId, orgId)).data;
-        
-    //     if(channelResponse.length == 0) return [];
-
-    //     const channelMain = channelResponse[0];
-        
-    //     const channels = channelMain.channels;
-    //     const endpoints = channelMain.endpoint;
-
-    //     return channels.map((channel, index, chls) => {
-    //         const c = Object.assign(channel,{
-    //             endpoint: endpoints[index],
-    //             groupId: channelMain.groupId,
-    //             sender: channelMain.sender,
-    //             recipient: channelMain.recipient
-    //         });
-            
-    //         return new ChannelSvc(account, channel.channelId, c);
-    //     });
-    // }
     
 }
 

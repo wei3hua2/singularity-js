@@ -190,8 +190,11 @@ class ServiceSvc extends Service {
     public async getChannels(filter:{id?:number}={}): Promise<ChannelSvc[]> {
         const recipient = this.account.address, sender = this.getPaymentAddress(), groupId = this.getGroupId();
 
-        const openChannels = await this.account.mpe.PastChannelOpen(
-            {filter: {recipient: sender, sender: recipient, groupId: groupId}});
+        const openChannels = await this.account.getChannels(
+            {filter: {recipient: sender, sender: recipient, groupId: groupId}}
+        );
+        // const openChannels = await this.account.mpe.PastChannelOpen(
+        //     {filter: {recipient: sender, sender: recipient, groupId: groupId}});
 
         return Array.from(openChannels);
     }
