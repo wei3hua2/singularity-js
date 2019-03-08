@@ -1,4 +1,4 @@
-import {Data} from './index';
+import {Data, RUN_JOB_STATE} from './index';
 import {Grpc} from './grpc';
 import {rpc, Method} from 'protobufjs';
 import {Account} from './account';
@@ -159,6 +159,8 @@ abstract class ChannelState extends Grpc implements Data {
         const byteSig:Uint8Array = await this.signChannelId(promi);
         const request = {"channelId":byteschannelID, "signature":byteSig};
 
+        if(promi) promi.emit(RUN_JOB_STATE.sign_channel_state, request);
+        
         const channelResponse = await this.createService()['getChannelState'](request);
 
         this.data = {

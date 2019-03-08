@@ -18,7 +18,7 @@ m.after(() => {
     web31.currentProvider.connection.close();
 })
 
-m.describe.only('Account', () => {
+m.describe('Account', () => {
 
     m.xit('should transfer for main to test account', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});

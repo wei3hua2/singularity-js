@@ -93,7 +93,7 @@ abstract class Grpc {
     }
 
     protected convertGrpcResponseChunk(response, callback) {
-        let error = null, chunkMessage;
+        let errorMsg = null, chunkMessage;
         const status = response.statusText;
 
         if (status === 'OK') {
@@ -103,21 +103,20 @@ abstract class Grpc {
 
             const grpcMessage = response.headers['grpc-message'];
 
-            if (grpcMessage != null) error = grpcMessage;
+            if (grpcMessage != null) errorMsg = grpcMessage;
         }
         else {
             const errorStatus = status || "Connection failed";
-            error = "Request failed with error ["+errorStatus+"]. Please retry in some time."
+            errorMsg = "Request failed with error ["+errorStatus+"]. Please retry in some time.";
         }
     
-        try
-        {
-            const resp = 
-                chunkMessage && chunkMessage.data ? new Uint8Array(chunkMessage.data) : null;
-            callback(error, resp);
+        try{
+            const resp = chunkMessage && chunkMessage.data ? new Uint8Array(chunkMessage.data) : null;
+            
+            if(errorMsg) callback(new Error(errorMsg), resp);
+            else callback(null, resp);
         }
         catch(err) {
-            console.log(err);
             callback(err);
         }
     }

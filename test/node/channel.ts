@@ -21,38 +21,6 @@ m.after(() => {
 })
 
 m.describe('Channels', () => {
-
-    m.xit('should listen to open channel', async function (done) {
-        const blockNo = await account._eth.getBlockNumber();
-        const emitter = ChannelSvc.listenOpenChannel(account, 
-            {filter:{sender:PERSONAL_ACCOUNT}, fromBlock:blockNo-10000});
-        console.log('listening to open channel...');
-        let data = 0;
-        let changed = 0;
-
-        emitter.on('data',(evt)=> {
-            data++;
-            console.log('====== data '+data+'=====');
-            // console.log(evt);
-            
-        }).on('changed',(evt) => {
-            changed++;
-            console.log('====== changed '+changed+'=====');
-            // console.log(evt);
-        }).on('error', console.error);
-
-    }).timeout(500000);
-
-    m.xit('get past events', async function () {
-        const blockNo = await account._eth.getBlockNumber();
-        const past = await ChannelSvc.PastOpenChannel(account,
-            {filter:{sender:PERSONAL_ACCOUNT}, fromBlock:blockNo-10000, toBlock:'latest'});
-
-        console.log('past length = '+past.length);
-        c.expect(past.length).to.be.greaterThan(0);
-        
-    }).timeout(500000);
-
     m.xit('should open channel on snet, example-service', async function () {
         const exampleSvc = await ServiceSvc.init(account, 'snet','example-service');
         await exampleSvc.init();

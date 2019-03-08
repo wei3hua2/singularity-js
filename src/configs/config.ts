@@ -1,5 +1,6 @@
 const CONFIG = {
-    "GAS_LIMIT": 800000
+    "GAS_LIMIT": 800000,
+    "EXPIRATION_BLOCK_OFFSET": 80640
 }
 
 export {CONFIG}

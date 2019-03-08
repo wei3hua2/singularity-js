@@ -5,7 +5,7 @@
 import { EventEmitter } from 'events';
 import { Channel, ChannelState, Account } from '../models';
 import {ChannelStateSvc} from './channel-state';
-import { SnetError } from '../errors/snet-error';
+import { SnetError, ERROR_CODE } from '../errors/snet-error';
 import { Marketplace } from '../utils/marketplace';
 import { TransactOptions, EventOptions } from '../utils/eth';
 import {PromiEvent} from 'web3-core-promievent';
@@ -16,7 +16,7 @@ class ChannelSvc extends Channel {
     }
 
     async getChannelState(promi?: PromiEvent) : Promise<ChannelState> {
-        if(!this.endpoint) throw new SnetError('channel_endpoint_not_found');
+        if(!this.endpoint) throw new SnetError(ERROR_CODE.channel_endpoint_not_found, this);
         
         const cs = new ChannelStateSvc(this.account, this.endpoint, this);
         return await cs.init(promi);

@@ -4,7 +4,7 @@
 
 import {Contract} from './contract';
 import {Account} from '../models/account';
-
+import {SnetError} from '../errors/snet-error';
 //@ts-ignore
 import RegistryNetworks from 'singularitynet-platform-contracts/networks/Registry.json';
 //@ts-ignore
@@ -64,6 +64,8 @@ class Registry extends Contract {
     getServiceRegistrationById = (orgId: string, serviceId: string) => {
         return this.callContract('getServiceRegistrationById', this.eth.asciiToBytes(orgId), this.eth.asciiToBytes(serviceId)).then(
             (svcReg) => {
+                if(!svcReg.found) throw new SnetError('sv_registry_id_not_found', orgId, serviceId);
+
                 const tags = Array.from(svcReg.tags);
                 svcReg.id = this.eth.hexToUtf8(svcReg.id);
                 svcReg.metadataURI = svcReg.metadataURI ?  this.eth.hexToUtf8(svcReg.metadataURI) : svcReg.metadataURI;
