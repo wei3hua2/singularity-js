@@ -114,25 +114,29 @@ class ServiceSvc extends Service {
 
         this.account.eth.getBlockNumber().then((blockNo) => {
             if(!opts.channel_min_expiration)
-                opts.channel_min_expiration = blockNo + this.getPaymentExpirationThreshold() + CONFIG.EXPIRATION_BLOCK_OFFSET;
+                opts.channel_min_expiration = this.getPaymentExpirationThreshold() + 1;
+                // opts.channel_min_expiration = blockNo + this.getPaymentExpirationThreshold() + CONFIG.EXPIRATION_BLOCK_OFFSET;
         
             return this.getChannel(jobPromise, this.account.address, opts);
         }).then((channel) => {
-            const conditions = this.checkCriteria(channel, opts.channel_min_amount, opts.channel_min_expiration);
+            // const conditions = this.checkCriteria(channel, opts.channel_min_amount, opts.channel_min_expiration);
 
-            if(!conditions) 
+            if(channel)
                 return Promise.resolve(channel);
             else if(opts.autohandle_channel) 
-                return this.autoHandleChannel(jobPromise, channel, conditions);
+                return this.openChannel(opts.channel_min_amount, opts.channel_min_expiration);
+                // return this.autoHandleChannel(jobPromise, channel, conditions);
             else
-                throw new SnetError(ERROR_CODE.runjob_condition_not_meet, conditions, channel);
+                throw new SnetError(ERROR_CODE.runjob_condition_not_meet, {}, channel);
 
         }).then((channel) => {
             
             jobPromise.emit(RUN_JOB_STATE.selected_channel, channel.data);
 
-            return this.invokeAgentService(jobPromise, channel, method, request);
-            
+            return this.handleChannelState(jobPromise, channel, opts.channel_min_expiration)
+                .then(header => [header, channel]);
+        }).then((payload) => {
+            return this.invokeAgentService(jobPromise, payload[0], payload[1], method, request);
         }).then((response) => {
 
             jobPromise.emit(RUN_JOB_STATE.response, response);
@@ -158,8 +162,8 @@ class ServiceSvc extends Service {
             channel = channels.find((c) => c.id === use_channel_id);
         else {
             channel = channels.find((c) => min_amount >= c.value && min_expiration >= c.expiration);
-
-            if(!channel && channels.length > 0) channel = channels[0];
+            // if(!channel && channels.length > 0) channel = channels[0];
+            if(channels.length > 0) channel = channels[0];
         }
 
         if(channel) await channel.init();
@@ -167,24 +171,14 @@ class ServiceSvc extends Service {
         return channel;
     }
 
-    private checkCriteria(channel: Channel, 
-        min_amount: number, min_expiration: number): Object {
-        const conditions = {};
-
-        if(min_amount < channel.value) conditions['min_amount'] = min_amount;
-        if(min_expiration > channel.expiration) conditions['min_expiration'] = min_expiration;
-
-        return Object.keys(conditions).length > 0 ? conditions : null;
-    }
-
     private async autoHandleChannel(jobPromi: PromiEvent, channel: Channel, conditions: Object): Promise<Channel> {
         let result_channel;
 
-        if(!channel){
-            result_channel = await this.openChannel(conditions['min_amount'], conditions['min_expiration']);
-            jobPromi.emit(RUN_JOB_STATE.create_new_channel, result_channel.data);
-        }
-        else if(conditions['min_amount'] && conditions['min_expiration']) {
+        // if(!channel){
+        //     result_channel = await this.openChannel(conditions['min_amount'], conditions['min_expiration']);
+        //     jobPromi.emit(RUN_JOB_STATE.create_new_channel, result_channel.data);
+        // }
+        if(conditions['min_amount'] && conditions['min_expiration']) {
             result_channel = await channel.extendAndAddFunds(conditions['min_expiration'], conditions['min_amount']);
             jobPromi.emit(RUN_JOB_STATE.channel_extend_and_add_funds, result_channel.data);
         }
@@ -240,8 +234,7 @@ class ServiceSvc extends Service {
         return (await axios.get(url)).data;
     }
     
-    private async invokeAgentService(promi:PromiEvent, channel:Channel, method:string, request:any): Promise<any>{
-        
+    private async handleChannelState(promi:PromiEvent, channel:Channel, min_expiration:number): Promise<any> {
         const state = await channel.getChannelState(promi);
 
         promi.emit(RUN_JOB_STATE.channel_state, state.data);
@@ -250,9 +243,22 @@ class ServiceSvc extends Service {
         const price_in_cogs = this.metadata.pricing.price_in_cogs + (state.currentSignedAmount || 0);
 
         promi.emit(RUN_JOB_STATE.sign_request_header, {channelId: channel.id, nonce: nonce, price: price_in_cogs});
+        
+        if(this.autoHandleChannel) {
+            const conditions = {}; 
+            if (channel.value < price_in_cogs) conditions['min_amount'] = price_in_cogs;
+            if (channel.expiration < min_expiration) conditions['min_expiration'] = min_expiration;
 
-        const signed = await this.signServiceHeader(channel.id, nonce, price_in_cogs);
-        const header = await this.parseAgentRequestHeader(signed, channel.id, nonce, price_in_cogs);
+            channel = await this.autoHandleChannel(promi, channel, conditions);
+        }
+
+        return {channelId: channel.id, nonce: nonce, price_in_cogs: price_in_cogs};
+    }
+
+    private async invokeAgentService(promi:PromiEvent, headerPayload:any, channel:Channel, method:string, request:any): Promise<any>{
+
+        const signed = await this.signServiceHeader(headerPayload.channelId, headerPayload.nonce, headerPayload.price_in_cogs);
+        const header = await this.parseAgentRequestHeader(signed, headerPayload.channelId, headerPayload.nonce, headerPayload.price_in_cogs);
 
         const svc = await this.createService(header);
 

@@ -108,6 +108,7 @@ m.describe.only('ServiceSvc', () => {
       job.on(RUN_JOB_STATE.selected_channel,(channel) => {
         console.log('*** selected_channel ***');
         c.expect(channel).to.exist;
+        console.log(JSON.stringify(channel));
       });
       job.on(RUN_JOB_STATE.sign_channel_state,(channelStateRqt) => {
         console.log('*** sign_channel_state ***');

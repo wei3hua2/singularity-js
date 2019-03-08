@@ -104,8 +104,8 @@ None
 3. __options__ (Object) optional. Options for running the job.
     * __use_channel_id__ (number) Default to undefined.
     * __autohandle_channel__ (boolean) Auto handling the logic for valid channel. Default to true.
-    * __channel_min_amount__ (number) Default to 1.
-    * __channel_min_expiration__ (number) Default to current block + payment threshold.
+    * __channel_min_amount__ (number) Default to signedAmount + 5.
+    * __channel_min_expiration__ (number) Default to payment threshold + 1.
 ##### Returns
 - __PromiEvent__ 
 
