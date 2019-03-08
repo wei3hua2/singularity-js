@@ -133,10 +133,12 @@ class ServiceSvc extends Service {
             
             jobPromise.emit(RUN_JOB_STATE.selected_channel, channel.data);
 
-            return this.handleChannelState(jobPromise, channel, opts.channel_min_expiration)
-                .then(header => [header, channel]);
-        }).then((payload) => {
-            return this.invokeAgentService(jobPromise, payload[0], payload[1], method, request);
+            return this.handleChannelState(jobPromise, channel, opts.channel_min_expiration);
+        }).then((header) => {
+
+            jobPromise.emit(RUN_JOB_STATE.sign_request_header, header);
+
+            return this.invokeAgentService(jobPromise, header, method, request);
         }).then((response) => {
 
             jobPromise.emit(RUN_JOB_STATE.response, response);
@@ -241,8 +243,6 @@ class ServiceSvc extends Service {
         
         const nonce = channel.nonce || 0;
         const price_in_cogs = this.metadata.pricing.price_in_cogs + (state.currentSignedAmount || 0);
-
-        promi.emit(RUN_JOB_STATE.sign_request_header, {channelId: channel.id, nonce: nonce, price: price_in_cogs});
         
         if(this.autoHandleChannel) {
             const conditions = {}; 
@@ -255,7 +255,7 @@ class ServiceSvc extends Service {
         return {channelId: channel.id, nonce: nonce, price_in_cogs: price_in_cogs};
     }
 
-    private async invokeAgentService(promi:PromiEvent, headerPayload:any, channel:Channel, method:string, request:any): Promise<any>{
+    private async invokeAgentService(promi:PromiEvent, headerPayload:any, method:string, request:any): Promise<any>{
 
         const signed = await this.signServiceHeader(headerPayload.channelId, headerPayload.nonce, headerPayload.price_in_cogs);
         const header = await this.parseAgentRequestHeader(signed, headerPayload.channelId, headerPayload.nonce, headerPayload.price_in_cogs);

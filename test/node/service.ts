@@ -122,7 +122,7 @@ m.describe.only('ServiceSvc', () => {
       });
       job.on(RUN_JOB_STATE.sign_request_header,(reqHeader) => {
         console.log('*** sign_request_header *** ');
-        c.expect(reqHeader).to.have.all.keys(['channelId','nonce','price']);
+        c.expect(reqHeader).to.have.all.keys(['channelId','nonce','price_in_cogs']);
         console.log(JSON.stringify(reqHeader));
       });
       job.on(RUN_JOB_STATE.request_info,(request) => {
