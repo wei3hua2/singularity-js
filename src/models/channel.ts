@@ -68,7 +68,7 @@ abstract class Channel implements Data {
     account: Account;
 
     constructor(account:Account, id: number, fields?:any) {
-        this.data = Object.assign({id: id}, fields);
+        this.data = Object.assign({}, fields, {id: id});
         this.account = account;
     }
 
@@ -99,6 +99,7 @@ abstract class Channel implements Data {
 
         const channel = await this.account.mpe.channels(this.id);
         this.data = channel;
+        this.isInit = true;
 
         return this;
     }

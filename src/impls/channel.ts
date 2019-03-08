@@ -45,8 +45,9 @@ class ChannelSvc extends Channel {
             `\nendpoint : ${this.endpoint} , expiration : ${this.expiration}`;
     }
 
-    static init(account:Account, channelId:number) {
-        return new ChannelSvc(account, channelId);
+    static init(account:Account, channelId:number, fields:Object={}) {
+        const channel = new ChannelSvc(account, channelId, fields);
+        return channel;
     }
 
     static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
@@ -55,20 +56,14 @@ class ChannelSvc extends Channel {
         return await account.mpe.openChannel(signer, recipient, groupId, value, expiration,opts);
     }
 
-    static listenOpenChannel(account:Account, opts:EventOptions):EventEmitter {
-        return account.mpe.ChannelOpen(opts);
-    }
-    static listenOpenChannelOnce(account:Account, opts:EventOptions={}):Promise<any> {
-        return account.mpe.ChannelOpenOnce(opts);
-    }
-    static PastOpenChannel(account:Account, opts:EventOptions={}):Promise<any> {
-        return account.mpe.PastChannelOpen(opts);
-    }
-
     static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {
         return account.mpe.allEvents(opts);
     }
     
+}
+
+class InitOption {
+    init: boolean;
 }
 
 export {ChannelSvc}

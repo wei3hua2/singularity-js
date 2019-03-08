@@ -49,10 +49,19 @@ class Mpe extends Contract {
     // channelClaim = (channelId:number, amount:number, isSendback:boolean,
     //     v:string, s:string, r:string, txOpt:TransactOptions={}) => this.transactContract('channelClaim',txOpt,channelId,amount,isSendback,v,s,r);
     
-    ChannelOpen = (type: string, opt:EventOptions={}) => {
+    ChannelOpen = async (type: string, opt:EventOptions={}) => {
         if(opt.filter && opt.filter['groupId']) opt.filter['groupId'] = this.base64ToBytes(opt.filter['groupId']);
-        return this.event('ChannelOpen',type, opt);
+        
+        const events = await this.event('ChannelOpen',type, opt);
+        
+        return events.map(e => ({
+            channelId: parseInt(e.returnValues.channelId), nonce: parseInt(e.returnValues.nonce),
+            sender: e.returnValues.sender, signer: e.returnValues.signer,
+            recipient: e.returnValues.recipient, amount: parseInt(e.returnValues.amount),
+            expiration: parseInt(e.returnValues.expiration), groupId: e.returnValues.groupId
+        }));
     }
+
     ChannelSenderClaim = (type: string, opt:EventOptions={}) => this.event('ChannelSenderClaim', type, opt);
     ChannelExtend = (type: string, opt:EventOptions={}) => this.event('ChannelExtend',type, opt);
     ChannelAddFunds = (type: string, opt:EventOptions={}) => this.event('ChannelAddFunds',type, opt);

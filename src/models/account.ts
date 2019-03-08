@@ -1,13 +1,11 @@
 import {Data} from './index';
 import {Registry, Tokens, Mpe} from '../contracts';
-import {EthUtil} from '../utils/eth';
-import {Grpc} from './grpc';
+import {EthUtil, TransactOptions} from '../utils/eth';
+import PromiEvent from 'web3-core-promievent';
 
 abstract class Account implements Data {
     address: string;
     privateKey?: string;   
-    cogs: number;
-    escrowBalances: number;
 
     isInit: boolean = false;
 
@@ -31,14 +29,11 @@ abstract class Account implements Data {
     set data(data: Object) {
         this.address = data['address'] || this.address;
         this.privateKey = data['privateKey'] || this.privateKey;
-        this.cogs = data['cogs'] || this.cogs;
-        this.escrowBalances = data['escrowBalances'] || this.escrowBalances;
     }
 
     get data(): Object {
         return {
-            address: this.address, privateKey: this.privateKey,
-            cogs: this.cogs, escrowBalances: this.escrowBalances
+            address: this.address, privateKey: this.privateKey
         };
     }
 
@@ -55,13 +50,18 @@ abstract class Account implements Data {
         return this;
     }
 
-    abstract getAgiTokens();
-    abstract getEscrowBalances();
-    abstract getChannels(filter?: any): Promise<any>;
+    abstract getAgiTokens(): Promise<number>;
+    abstract getEscrowBalances(): Promise<number>;
+    // abstract allowance(sender: string): Promise<number>;
+    abstract escrowAllowance(): Promise<number>;
+    abstract getChannels(filter?: any): Promise<Object[]>;
+    // abstract approve(spender: string, value: number, txOpt?:TransactOptions);
+    abstract transfer(to:string|Account, amount:number,opts?:TransactOptions): PromiEvent<any>;
+    abstract depositToEscrow(amount:number, opts?:TransactOptions): PromiEvent<any>;
+    abstract withdrawFromEscrow(amount:number, opts?:TransactOptions): PromiEvent<any>;
 
     public toString(): string {
         return `*** Account : ${this.address}` +
-            `\ncogs : ${this.cogs} , escrow balances : ${this.escrowBalances}` +
             `\ninit : ${this.isInit} `;
     }
 }
