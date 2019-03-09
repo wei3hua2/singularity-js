@@ -4,23 +4,27 @@ import {initWeb3} from './utils';
 import {ServiceSvc} from '../../src/impls/service';
 import {RUN_JOB_STATE} from '../../src/models/options';
 import {AccountSvc} from '../../src/impls/account';
+import {Snet} from '../../src/snet';
 import {getConfigInfo} from './utils';
 
-let web3, account, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
+let web3, account, testAccount, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PK;
 
 m.before(async() => {
     web3 = initWeb3();
 
     PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
     PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
+    TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
+    TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
 
     account = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
+    testAccount = await AccountSvc.create(web3, {address: TEST_ACCOUNT, privateKey: TEST_ACCOUNT_PK});
 });
 m.after(async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe.only('ServiceSvc', () => {
+m.describe('ServiceSvc', () => {
 
   m.xit('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
@@ -76,7 +80,7 @@ m.describe.only('ServiceSvc', () => {
         'endpoints', 'service_description']);
   });
 
-  m.it('should run the job', function (done) {
+  m.xit('should run the job', function (done) {
 
     const svc = ServiceSvc.init(account, 'snet', 'example-service');
 
@@ -141,4 +145,34 @@ m.describe.only('ServiceSvc', () => {
 
     
   }).timeout(10 * 60 * 1000);
+
+
+  m.xit('should run example job', function (done){
+    const svc = ServiceSvc.init(account, 'snet', 'example-service');
+
+    svc.then(s => {
+      const request = s.defaultRequest('add');
+      request.a = 4, request.b = 6;
+
+      const job = s.runJob('add', request, {channel_min_expiration: 10000});
+
+      listAllEvents(job);
+
+      job.then(r => done());
+      job.catch(done);
+    });
+
+  }).timeout(10 *60 * 1000);
+
 })
+
+
+function listAllEvents(promiEvent) {
+  for(var state in RUN_JOB_STATE){
+    const s = state.slice(0);
+    promiEvent.on(s, (evt) => {
+      console.log('*** '+s+' ***');
+      console.log(evt);
+    });
+  }
+}

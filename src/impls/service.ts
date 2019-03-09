@@ -107,25 +107,23 @@ class ServiceSvc extends Service {
      * @param request The payload of the method.
      * @param opts Additional options.
      */
-    public runJob(method:string, request:any, opts:RunJobOptions = {
-        autohandle_channel: true, channel_min_amount: 1, channel_min_expiration: null, use_channel_id: null}): PromiEvent<any> {
+    public runJob(method:string, request:any, opts:RunJobOptions = {}): PromiEvent<any> {
+        opts = Object.assign(
+            {autohandle_channel: true, channel_min_amount: 1, channel_min_expiration: null, use_channel_id: null},
+            opts);
 
         const jobPromise = new PromiEvent();
 
         this.account.eth.getBlockNumber().then((blockNo) => {
             if(!opts.channel_min_expiration)
-                opts.channel_min_expiration = this.getPaymentExpirationThreshold() + 1;
-                // opts.channel_min_expiration = blockNo + this.getPaymentExpirationThreshold() + CONFIG.EXPIRATION_BLOCK_OFFSET;
+                opts.channel_min_expiration = blockNo + this.getPaymentExpirationThreshold() + CONFIG.EXPIRATION_BLOCK_OFFSET;
         
             return this.getChannel(jobPromise, this.account.address, opts);
         }).then((channel) => {
-            // const conditions = this.checkCriteria(channel, opts.channel_min_amount, opts.channel_min_expiration);
-
             if(channel)
                 return Promise.resolve(channel);
             else if(opts.autohandle_channel) 
-                return this.openChannel(opts.channel_min_amount, opts.channel_min_expiration);
-                // return this.autoHandleChannel(jobPromise, channel, conditions);
+                return this.openChannel(jobPromise, opts.channel_min_amount, opts.channel_min_expiration);
             else
                 throw new SnetError(ERROR_CODE.runjob_condition_not_meet, {}, channel);
 
@@ -165,7 +163,12 @@ class ServiceSvc extends Service {
         else {
             channel = channels.find((c) => min_amount >= c.value && min_expiration >= c.expiration);
             // if(!channel && channels.length > 0) channel = channels[0];
-            if(channels.length > 0) channel = channels[0];
+            if(channels.length > 0) {
+                channel = channels.reduce((acc, c) => {
+                    if(c.id > acc.id) return c;
+                    else return acc;
+                }, channels[0]);
+            }
         }
 
         if(channel) await channel.init();
@@ -198,10 +201,16 @@ class ServiceSvc extends Service {
         return channel;
     }
 
-    public async openChannel(amount:number, expiration: number): Promise<any> {
-        return await ChannelSvc.openChannel(
+    public async openChannel(jobPromi: PromiEvent, amount:number, expiration: number): Promise<any> {
+        const channel = await ChannelSvc.openChannel(
             this.account, this.account.address, this.getPaymentAddress(), 
             this.getGroupId(), amount, expiration);
+        
+        channel['endpoint'] = this.metadata.endpoints[0].endpoint;
+        
+        if(jobPromi) jobPromi.emit(RUN_JOB_STATE.create_new_channel, channel.data);
+
+        return channel;
     }
 
     public async getChannels(filter:{id?:number}={}): Promise<Channel[]> {

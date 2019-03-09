@@ -72,28 +72,6 @@ class AccountSvc extends Account {
         opts.from = this.address;
         return this.mpe.withdraw(amount, opts);
     }
-    // public async openChannel(recipient:string, groupId:string, 
-    //     value:number, expiration:number, opts:TransactOptions={}): PromiEvent<any> {
-    //     opts.from = this.address;
-    //     return this.mpe.openChannel(this.address, recipient, groupId, value, expiration, opts);
-    // }
-    // public async depositAndOpenChannel(recipient:string, 
-    //     groupId:string,value:number, expiration:number,txOpt:TransactOptions={}){
-    //     return this.mpe.depositAndOpenChannel(this.address, recipient, groupId, value, expiration, txOpt);
-    // }
-    // public async extendChannel(channelId:number, newExpiration:number, txOpt:TransactOptions={}){
-    //     return this.mpe.channelExtend(channelId, newExpiration, txOpt);
-    // }
-    // public async extendChannelExpiration(channelId:number, newExpiration:number, txOpt:TransactOptions={}){
-    //     return this.mpe.channelExtend(channelId, newExpiration, txOpt);
-    // }
-    // // public async transferEscrow(){}
-    // public async addFundsToChannel(channelId:number, amount:number, txOpt:TransactOptions={}){
-    //     return this.mpe.channelAddFunds(channelId, amount, txOpt);
-    // }
-    // public async extendsAndAddFundsToChannel(channelId:number, newExpiration:number, amount:number, txOpt:TransactOptions={}){
-    //     return this.mpe.channelExtendAndAddFunds(channelId, newExpiration, amount, txOpt);
-    // }
 
     ///////// event
 

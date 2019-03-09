@@ -54,12 +54,20 @@ class Mpe extends Contract {
         
         const events = await this.event('ChannelOpen',type, opt);
         
-        return events.map(e => ({
-            channelId: parseInt(e.returnValues.channelId), nonce: parseInt(e.returnValues.nonce),
-            sender: e.returnValues.sender, signer: e.returnValues.signer,
-            recipient: e.returnValues.recipient, amount: parseInt(e.returnValues.amount),
-            expiration: parseInt(e.returnValues.expiration), groupId: e.returnValues.groupId
-        }));
+        if(type === 'once') {
+            return {
+                id: parseInt(events.returnValues.channelId), nonce: parseInt(events.returnValues.nonce),
+                sender: events.returnValues.sender, signer: events.returnValues.signer,
+                recipient: events.returnValues.recipient, amount: parseInt(events.returnValues.amount),
+                expiration: parseInt(events.returnValues.expiration), groupId: events.returnValues.groupId
+            };
+        } else
+            return events.map(e => ({
+                id: parseInt(e.returnValues.channelId), nonce: parseInt(e.returnValues.nonce),
+                sender: e.returnValues.sender, signer: e.returnValues.signer,
+                recipient: e.returnValues.recipient, amount: parseInt(e.returnValues.amount),
+                expiration: parseInt(e.returnValues.expiration), groupId: e.returnValues.groupId
+            }));
     }
 
     ChannelSenderClaim = (type: string, opt:EventOptions={}) => this.event('ChannelSenderClaim', type, opt);

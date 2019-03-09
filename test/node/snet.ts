@@ -2,7 +2,8 @@ import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
 import {Snet} from '../../src/snet';
-import { OrganizationSvc } from '../../src/impls/organization';
+import {RUN_JOB_STATE} from '../../src/models/options';
+import fs from 'fs';
 
 let web3, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
 
@@ -143,17 +144,16 @@ const EXAMPLESVC_SERVICE_INFO = {
 
 
 
-m.describe('Snet', () => {
-  m.it('should initialize with appropriate objects without error', async function () {
+m.describe.only('Snet', () => {
+  m.xit('should initialize with appropriate objects without error', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
 
     c.expect(snet.getCurrentAccount()).to.exist;
     c.expect(snet.getCurrentAccount().address).to.be.equal(PERSONAL_ACCOUNT);
   });
 
-  m.it('should retrieve information for organizations and services', async function () {
+  m.xit('should list organization', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
-
     // organizations
 
     let orgs = await snet.listOrganizations();
@@ -171,26 +171,30 @@ m.describe('Snet', () => {
     c.expect(org.isInit).to.be.true;
     c.expect(org.id).to.exist;
     c.expect(org.name).to.exist;
+  });
 
-
+  m.xit('should get organization', async function () {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
     const snetOrg = await snet.getOrganization('snet');
 
     c.expect(snetOrg.isInit).to.be.true;
     c.expect(snetOrg.id).to.be.equal('snet');
     c.expect(snetOrg.name).to.be.equal('snet');
 
-
-    // services
-
     const snetSvcs = await snetOrg.getServices();
+
     let snetSvc = snetSvcs[0];
-    c.expect(orgs.length).to.be.greaterThan(0);
+    c.expect(snetSvcs.length).to.be.greaterThan(0);
 
     c.expect(snetSvc.id).to.exist;
     c.expect(snetSvc.organizationId).to.be.equal('snet');
     c.expect(snetSvc.isInit).to.be.false;
-    
-    // service
+  });
+
+
+  m.xit('should get service', async function () {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+
     
     const exampleSvc = await snet.getService('snet', 'example-service');
     
@@ -201,20 +205,67 @@ m.describe('Snet', () => {
     c.expect(exampleSvc.metadata).to.exist;
     c.expect(exampleSvc.ServiceProto).to.exist;
 
-    const svcMethods = await exampleSvc.listMethods();
-    c.expect(svcMethods).to.have.keys(['add','sub','mul','div']);
 
-    const svcTypes = exampleSvc.listTypes();
-    c.expect(svcTypes['Result']).to.exist;
-    c.expect(svcTypes['Numbers']).to.exist;
-
-    const svcInfo = await exampleSvc.serviceInfo();
+    const svcInfo = await exampleSvc.info();
     c.expect(svcInfo).to.be.deep.equal(EXAMPLESVC_SERVICE_INFO);
-
-    const svcInfoVerbose = await exampleSvc.serviceInfo({pbField:true});
-    // console.log(svcInfoVerbose['methods']['add']['request']['fields']);
     
-  }).timeout(30000);
+  });
+
+  m.xit('should open channel', async function () {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    const svc = await snet.getService('snet', 'named-entity-disambiguation');
+    
+    const channel = await svc.openChannel(null, 1, 1000);
+    console.log(channel);
+
+    c.expect(channel.id).to.exist;
+
+  }).timeout(10 * 60 * 1000);
+
+  m.xit('should able to retrieve all services detail', async function() {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    const svcs = await (await snet.getOrganization('snet')).getServices({init:true});
+    // console.log(svcs.map(s => s.data['id']));
+
+    for(var i in svcs) {
+      const svc = svcs[i];
+      
+      console.log("******" + svc.data['id'] + "******");
+      console.log(Object.keys(svc.info().methods));
+
+      Object.keys(svc.info().methods).forEach(method => {
+        
+        console.log(svc.defaultRequest(method));
+      });
+      console.log();
+    }
+  });
+
+  m.xit('FOR INFO PURPOSE ONLY: try out individual service', function (done) {
+    const snetP = Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+
+    // snetP.then(snet => snet.getService('snet', 'speech-synthesis'))
+    //   .then(svc => {
+    //     const job = svc.runJob('t2s', {text: 'hello world from my world'}, {channel_min_expiration: 10000});
+    //     listAllEvents(job);
+    //     job.then(v => { fs.writeFileSync('temp.wav',v.data); done(); });
+    //     job.catch(done);
+    //   });
+
+    snetP.then(snet => snet.getService('snet', 'named-entity-disambiguation'))
+      .then(svc => {
+        console.log(svc.info());
+        console.log(svc.info().methods['named_entity_disambiguation'].request);
+        const request = svc.defaultRequest('named_entity_disambiguation');
+        request.value ="hello to the world";
+        
+        const job = svc.runJob('Show', request);
+        listAllEvents(job);
+        job.then(v => { console.log(v); done(); });
+        job.catch(done);
+      });
+    
+  }).timeout(10 * 60 * 1000);
 
   m.xit('should run addition job from snet, example-service', function (done) {
     let service;
@@ -247,7 +298,7 @@ m.describe('Snet', () => {
     })
   });
 
-  m.xit('FOR INFO PURPOSE ONLY', async function () {
+  m.xit('FOR INFO PURPOSE ONLY: all services info', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
     const result = {};
 
@@ -259,7 +310,7 @@ m.describe('Snet', () => {
       const svcs = await org.getServices({init:true});
       
       for(var j=0;j<svcs.length;j++) {
-        const info = await svcs[j].serviceInfo();
+        const info = await svcs[j].info();
         result[org.id].push(info);
       }
     }
@@ -270,3 +321,17 @@ m.describe('Snet', () => {
     
   }).timeout(50000);
 })
+
+function listAllEvents(promiEvent) {
+  for(var state in RUN_JOB_STATE){
+    const s = state.slice(0);
+    promiEvent.on(s, (evt) => {
+      console.log('*** '+s+' ***');
+
+      if(s === RUN_JOB_STATE.sign_channel_state)
+        console.log(Object.keys(evt));
+      else
+        console.log(evt);
+    });
+  }
+}
