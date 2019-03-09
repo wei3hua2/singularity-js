@@ -225,43 +225,49 @@ m.describe.only('Snet', () => {
   m.xit('should able to retrieve all services detail', async function() {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
     const svcs = await (await snet.getOrganization('snet')).getServices({init:true});
-    // console.log(svcs.map(s => s.data['id']));
+    console.log(svcs.map(s => s.id));
 
     for(var i in svcs) {
       const svc = svcs[i];
+      const id = svc.data['id'];
       
-      console.log("******" + svc.data['id'] + "******");
-      console.log(Object.keys(svc.info().methods));
+      if(id === 'example-service' || id === 'named-entity-disambiguation'){
+        console.log("******" + svc.data['id'] + "******");
+        console.log(Object.keys(svc.info().methods));
 
-      Object.keys(svc.info().methods).forEach(method => {
+        Object.keys(svc.info().methods).forEach(method => {
+          console.log(svc.defaultRequest(method));
+        });
+
+        // console.log('*** proto json');
+        // console.log(JSON.stringify(svc.rawJsonProto,null,1));
+        // console.log('*** proto array');
+        // console.log(svc.protoModelArray.Service[0].parent);
         
-        console.log(svc.defaultRequest(method));
-      });
-      console.log();
+        console.log();
+      }
     }
   });
 
-  m.xit('FOR INFO PURPOSE ONLY: try out individual service', function (done) {
+  m.it('FOR INFO PURPOSE ONLY: try out individual service', function (done) {
     const snetP = Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
 
-    // snetP.then(snet => snet.getService('snet', 'speech-synthesis'))
+    // snetP.then(snet => snet.getService('snet', 'example-service'))
     //   .then(svc => {
-    //     const job = svc.runJob('t2s', {text: 'hello world from my world'}, {channel_min_expiration: 10000});
+    //     const job = svc.runJob('add', {a:1,b:4}, {channel_min_expiration: 10000});
     //     listAllEvents(job);
-    //     job.then(v => { fs.writeFileSync('temp.wav',v.data); done(); });
+    //     job.then(v => { console.log(v); done(); });
     //     job.catch(done);
     //   });
 
     snetP.then(snet => snet.getService('snet', 'named-entity-disambiguation'))
       .then(svc => {
-        console.log(svc.info());
-        console.log(svc.info().methods['named_entity_disambiguation'].request);
         const request = svc.defaultRequest('named_entity_disambiguation');
-        request.value ="hello to the world";
+        request.input ="Macdonald was a great firm before it was sold to S. J. Wolfe &amp; Co. ";
         
-        const job = svc.runJob('Show', request);
+        const job = svc.runJob('named_entity_disambiguation', request, {channel_min_expiration: 10000});
         listAllEvents(job);
-        job.then(v => { console.log(v); done(); });
+        job.then(v => { console.log(JSON.stringify(v)); done(); });
         job.catch(done);
       });
     

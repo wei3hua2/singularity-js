@@ -41,7 +41,7 @@ class ServiceSvc extends Service {
      * 
      */
     private listMethods = (): {[method:string]:pb.Method} => this.ServiceProto.methods;
-    private listTypes = (): {[type:string]:pb.Type} => this.TypesProto;
+    private listTypes = (): {[type:string]:pb.Type} => this.dataTypesProto;
     
     public info(opt:{pbField:boolean}={pbField:false}): ServiceInfo{
         if(!this.isInit) return null;
@@ -221,9 +221,7 @@ class ServiceSvc extends Service {
         );
         
         const openChannels:ChannelSvc[] = openChannelsEvents.map((c) => {
-            c['value'] = c['amount'];
             c['endpoint'] = this.metadata.endpoints[0].endpoint;
-            delete c['amount'];
             return ChannelSvc.init(this.account, c['id'], c);
         });
 
@@ -284,7 +282,9 @@ class ServiceSvc extends Service {
     }
 
     protected serviceUrl(method: pb.Method): string {
-        const serviceName = this.ServiceProto.parent.name+'.'+this.ServiceProto.name;
+        const serviceName = this.ServiceProto.parent.name ? 
+            this.ServiceProto.parent.name+'.'+this.ServiceProto.name : this.ServiceProto.name;
+        
         return `${this.getEndpoint()}/${serviceName}/${method.name}`;
     }
 

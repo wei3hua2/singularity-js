@@ -11,11 +11,11 @@ const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser")
 
 
 abstract class Grpc {
-    private rootProtoBuf:NamespaceBase;
-    protected protoModelArray: {[k:string]:NamespaceBase[]};
-
+    public rootProtoBuf:NamespaceBase;
+    public protoModelArray: {[k:string]:NamespaceBase[]};
     public ServiceProto: Service;
-    public TypesProto: {[type:string]:Type};
+    public dataTypesProto: {[type:string]:Type};
+    public rawJsonProto: Object;
 
     public account: Account;
 
@@ -24,11 +24,12 @@ abstract class Grpc {
     }
 
     processProto(protoJson:Object) : void {
-        this.rootProtoBuf = this.processRootNamespace(protoJson);
-        this.protoModelArray = this.processProtoToArray(this.rootProtoBuf);
+        this.rawJsonProto = protoJson;
+        this.rootProtoBuf = this.getRootNamespace(protoJson);
+        this.protoModelArray = this.convertProtoToArray(this.rootProtoBuf);
 
         this.ServiceProto = <Service>this.protoModelArray['Service'][0];
-        this.TypesProto = this.processTypes();
+        this.dataTypesProto = this.getTypes(this.protoModelArray);
         
         if(!this.ServiceProto) throw new SnetError('proto_svc_not_found');
     }
@@ -53,14 +54,14 @@ abstract class Grpc {
             }, false, false);
     }
 
-    private processTypes(): {[type:string]:Type} {
-        return this.protoModelArray['Type'].reduce( (result, t) => {
+    private getTypes(protoArray): {[type:string]:Type} {
+        return protoArray['Type'].reduce( (result, t) => {
             result[t['name']] = t;
             return result;
         },{});
     }
 
-    private processProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase[]} {
+    private convertProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase[]} {
         const proto = root['nestedArray'].reduce( (accumulator, ele) => {
             const type = ele.toString().split(' ')[0];
     
@@ -73,7 +74,7 @@ abstract class Grpc {
         return proto;
     }
 
-    private processRootNamespace(protoJson: Object) : NamespaceBase {
+    private getRootNamespace(protoJson: Object) : NamespaceBase {
         const rootPb = Array.isArray(protoJson) ? Root.fromJSON(protoJson[0]) : Root.fromJSON(protoJson);
 
         const nestedNamespace = rootPb['nestedArray'].find( (element) => {

@@ -34,7 +34,7 @@ class AccountSvc extends Account {
         const openChannels:ChannelSvc[] = openChannelsEvents.map((c) => {
             c['value'] = c['amount'];
             delete c['amount'];
-            return ChannelSvc.init(this, c['channelId'], c);
+            return ChannelSvc.init(this, c['id'], c);
         });
 
         return Array.from(openChannels);
