@@ -25,7 +25,7 @@ abstract class Organization implements Data {
         this.owner = data['owner'] || this.owner;
         this.name = data['name'] || this.name;
         this.members = data['members'] || this.members;
-        this.services = data['services'] || this.services;
+        // this.services = data['services'] || this.services;
     }
 
     get data(): Object {

@@ -121,7 +121,25 @@ get sample request payload for the method. This method auto generate an object t
 ## init
 Initialize the full detail of the service.
 ``` javascript
- await service.init();
+const service = await snet.getService('snet','example-service');
+console.log(service.isInit);
+// false
+console.log(service.data);
+// {id: 'example-service', organizationId: 'snet'}
+
+await service.init();
+
+console.log(service.isInit);
+// true
+console.log(service.data);
+// { id: 'example-service',
+//   organizationId: 'snet',
+//   metadata:
+//    { version: 1,
+//      display_name: 'SingularityNET Example Service',
+//      encoding: 'proto',
+//      service_type: 'grpc', ... } },
+//   tags: [ 'Service', 'Example', 'Arithmetic' ] }
 ```
 ##### Parameters
 none
@@ -132,16 +150,16 @@ none
 ## data
 Get the full data of the service.
 ``` javascript
- console.log(JSON.stringify(service.data));
+ console.log(service.data);
  > {id:'example-service', organizationId:'snet',...}
 ```
 ##### Parameters
 None
 ##### Returns
-- __id__ (string)
-- __organizationId__ (string)
-- __metadata__ ([ServiceMetadata](#service-metadata))
-- __tags__ (string[])
+- __id__ *string*
+- __organizationId__ *string*
+- __metadata__ *[ServiceMetadata](#service-metadata)*
+- __tags__ *string[]*
 
 ## getChannels
 Get the list of channel for this service.
@@ -166,8 +184,8 @@ const channel = await service.openChannel(100, 100000);
 ```
 
 #### Parameters
-- __amount__ (number) Amount in cogs to be deposited.
-- __expiration__ (number) The expiration limit.
+- __amount__ *number|string* Amount in cogs to be deposited.
+- __expiration__ *number|string* The expiration limit.
 
 ## Returns
 - __channel__ (Promise<Channel>) Opened channel.
