@@ -170,10 +170,10 @@ const channels = await service.getChannels();
 ```
 
 #### Parameters
-- __InitOptions__ {init: boolean}
+- __InitOptions__ *{init: boolean}*
 
 #### Returns
-- __channels__ (Promise<Channel[]>)
+- __channels__ *Promise<Channel[]>*
 
 
 

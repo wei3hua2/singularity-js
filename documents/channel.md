@@ -1,4 +1,13 @@
 # Channel
+Model for Service's  Channel and Channel state.
+
+``` javascript
+// list of existing channels for the service.
+const channels = await service.getChannels();
+
+// new channel created.
+const channel = await service.openChannel();
+```
 
 *   [getChannelState](#getChannelState)
 *   [extendAndAddFunds](#extendAndAddFunds)
@@ -11,20 +20,15 @@
 
 ## getChannelState
 ``` javascript
-import {Snet, Channel} from 'singularity-js'
+const channelState = await channel.getChannelState();
 
-(async function() {
-  const snet = await Snet.init(web3);
-  const service = await snet.getService('snet', 'example-service');
-  const channel = (await service.getChannels())[0];
-
-  console.log((await channel.getChannelState()).data);
-})();
+console.log((channelState.data);
+// {channelId: 123, endpoint: 'https://bh.singularitynet.io:7052', currentSignedAmount: 14}
 ```
 ##### Parameters
 None
 ##### Returns
-- __ChannelState__ ([ChannelState](#channel-state))
+- __ChannelState__ *[Promise:ChannelState](#channel-state)*
 
 
 ## extendAndAddFunds
@@ -39,10 +43,10 @@ const response = await channel.extendAndAddFunds(expiration, value_in_cogs);
 
 ```
 ##### Parameters
-1. __expiration__ (number)
-2. __value__ (number) In cogs.
+1. __expiration__ (number|string)
+2. __value__ (number|string) In cogs.
 ##### Returns
-- 
+- __receipt__ 
 
 
 ## addFunds
@@ -56,24 +60,24 @@ const response = await channel.extendAndAddFunds(value_in_cogs);
 
 ```
 ##### Parameters
-1. __value__ (number) In cogs.
+1. __value__ (number|string) In cogs.
 ##### Returns
-- 
+- __receipt__
 
 ## extend
 ``` javascript
 import {Snet, Channel} from 'singularity-js'
 
 ...
-const expiration = 10;
+const expiration = 100000;
 
 const response = await channel.channelExtend(expiration);
 
 ```
 ##### Parameters
-1. __expiration__ (number)
+1. __expiration__ (number|string)
 ##### Returns
--
+- __receipt__
 
 
 ## claimTimeout
@@ -88,11 +92,15 @@ const response = await channel.claimTimeout();
 ##### Parameters
 None
 ##### Returns
--
+- __receipt__
 
 
 # ChannelState
-
+``` javascript
+const channelState = await channel.getChannelState();
+console.log(channelState.data);
+// {channelId: 123, endpoint: 'https://bh.singularitynet.io:7052', currentSignedAmount: 14}
+```
 *   [data](#data)
 
 ## data

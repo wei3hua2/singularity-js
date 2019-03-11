@@ -228,7 +228,7 @@ response = await exampleService.runJob('add', request, {autohandle_channel: true
 
 ```
 
-For a more comprehensive explanation, please refer to [RunJobOptions]('').
+For a more comprehensive explanation, please refer to [RunJobOptions](documents/service.md#run-job-state).
 
 #### Job execution state
 
@@ -246,7 +246,7 @@ jobEvents.then(response => console.log(response));
 // {value:11}
 ```
 
-For the list of running state and workflow, refer to [Here]('').
+For the list of running state and workflow, refer to [Here](documents/service.md).
 
 
 ## Documentations
