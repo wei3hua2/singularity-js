@@ -105,7 +105,7 @@ class Snet {
     runJob (orgId:string, serviceId:string, method:string, 
         request:any, opts:RunJobOptions= {}): PromiEvent {
 
-        return ServiceSvc.init(this.currentAccount, orgId, serviceId).then((svc) => {
+        return <PromiEvent>ServiceSvc.init(this.currentAccount, orgId, serviceId).then((svc) => {
             return svc.runJob(method, request, opts);
         });
     }
