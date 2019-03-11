@@ -2,63 +2,111 @@
 
 Model for the agent service. 
 
-``` javascript
-import {Snet} from 'singularity-js';
-import Web3 from 'web3';
-
-const web3 = new Web3(...);
-
-(async () => {
-    
-    const snet = Snet.init(web3, {address: ADDRESS, privateKey: PRIVATE_KEY}); //for using private key
-    // const snet = Snet.init(web3, {ethereum: ethereum}); //for metamusk
-    const exampleSvc = await snet.getService('snet', 'example-service');
-
-    // get full information of the service.
-    const info = exampleSvc.info();
-    console.log(info.something);
-    console.log(info.somethingelse);
-
-    // get the list of channels for the service
-    const channels = await exampleSvc.getChannels();
-    console.log( channels.map(c => c.toString()+'\n') );
-
-    // get sample request payload
-    const request = exampleSvc.defaultRequest('add');
-    console.log(request)  // {a:0, b:0}
-    request.a = 5;
-    request.b = 9;
-
-    const promi = exampleSvc.runJob('add', request);
-    promi.on('something', (res) => console.log(res));
-    promi.then((response) => console.log(response));
-})();
-
-```
-
+*   [runJob](#runJob)
 *   [info](#info)
 *   [defaultRequest](#defaultRequest)
 *   [init](#init)
 *   [data](#data)
-*   [runJob](#runJob)
 *   [openChannel](#openChannel)
 *   [getChannels](#getChannels)
 
+## runJob
+Execute the job of the service.
+
+There are 2 mode for running `runJob` method.
+  * [Auto Channel management]("#auto-channel-management").
+  * [Manual Channel management]("#manual-channel-management").
+
+
+### Auto Channel management
+``` javascript
+ const promiEvent = service.runJob('add', {a: 5, b: 6}, {
+     channel_autohandle: true
+ });
+
+ promiEvent.then(console.log);
+ // {value: 11}
+```
+#### Workflow
+
+1. *get_available_channels*: get a list of channels for this service.
+
+2. *open_new_channel*: call `openChannel(channel_topup_amount, channel_topup_expiration)` and use the newly created channel. triggered if there is no available channels.
+
+3. *selected_channel*: the newly open channel or  the largest `channelId` from the list of channels.
+
+4. *sign_channel_state*: signing the key for calling the service agent channel state.
+
+5. *channel_state*: the response from calling the service state.
+
+6. *channel_extend_and_add_funds*: extend and add funds to the selected channel if amount < signed amount and expiration has expired.
+
+7. *channel_add_funds*: add funds to the selected channel if amount < signed amount.
+
+8. *channel_extend_expiration*: extend expiration to the selected channel if expiration has expired.
+
+9. *sign_request_header*: signing the key for service call.
+
+10. *request_info*: request information.
+
+11. *response*: result of the service call.
+
+### Manual Channel management
+``` javascript
+// if channel available, use the first channel. example
+const channel = (await service.gtChannels())[0];
+
+// if no channel, create a new channel with 100 cogs and expiration
+const channel = await service.openChannel(100, 'currentBlockNo + 10');
+
+const promiEvent = service.runJob('add', {a: 5, b: 6}, {
+     use_channel_id: channel.id
+ });
+promiEvent.then(console.log);
+// {value: 11}
+```
+
+##### Parameters
+1. __Method__ (string) method name.
+2. __Request__ (Object) request payload for the job. 
+3. __options__ (Object) optional. Options for running the job.
+    * __use_channel_id__ (number) Default to null.
+    * __channel_autohandle__ (boolean) Auto handling the logic for valid channel. Default to false.
+    * __channel_min_amount__ (number) Default to signedAmount + 5.
+    * __channel_min_expiration__ (number) Default to payment threshold + 1.
+    * __channel_topup_amount__ (number) Default to signedAmount + 5.
+    * __channel_topup_expiration__ (number) Default to payment threshold + 1.
+##### Returns
+- __PromiseEvent__ (PromiEvent<Object>).
+
+### RunJobState
+__available_channels__ - a list of channels available for the service.  
+__create_new_channel__ - create a new channel.  
+__selected_channel__ - channel chosen.  
+__sign_channel_state__ - signing the request header for checking the channel state in agent daemon.  
+__channel_state__ - channel state information  
+__channel_extend_and_add_funds__  
+__channel_add_funds__  
+__channel_extend_expiration__  
+__sign_request_header__ - signing the request header for the grpc service call.  
+__request_info__ - request information for the service call.  
+__response__ - response from the service.  
+__all_events__ - triggered when any of the events is triggered.
 
 
 ## info
+Get the information on the service.
 ``` javascript
  const info = service.info();
 ```
 ##### Parameters
-1. __InitOptions__ Options for initialising a model.
-    * init: default to false. Only id is retrieve.
+none
 ##### Returns
-- __Snet__ Snet object.
+- __ServiceInfo__ Detail of the service. See [ServiceInfo](#service-info).
 
 
 ## defaultRequest
-get sample request payload for the method
+get sample request payload for the method. This method auto generate an object template that follows the structure of the request payload.
 ``` javascript
  const requestPayload = service.defaultRequest('add');
  console.log(requestPayload);
@@ -67,23 +115,25 @@ get sample request payload for the method
 ##### Parameters
 1. __Method__ (string) Method name.
 ##### Returns
-- __Request__ (Object) The payload for the method
+- __Request__ (Object) The payload for the method.
 
 
 ## init
+Initialize the full detail of the service.
 ``` javascript
- const organizations = snet.listOrganizations({init:true});
+ await service.init();
 ```
 ##### Parameters
-1. __InitOptions__ Options for initialising a model.
-    * init: default to false. Only id is retrieve.
+none
 ##### Returns
-- __Snet__ Snet object.
+- __Service__ the service object. This method is mutable, thus reassignment is not required.
 
 
 ## data
+Get the full data of the service.
 ``` javascript
  console.log(JSON.stringify(service.data));
+ > {id:'example-service', organizationId:'snet',...}
 ```
 ##### Parameters
 None
@@ -93,36 +143,34 @@ None
 - __metadata__ ([ServiceMetadata](#service-metadata))
 - __tags__ (string[])
 
+## getChannels
+Get the list of channel for this service.
 
-## runJob
 ``` javascript
- const promiEvent = service.runJob('add', {a: 33, b: 44}, {});
+const channels = await service.getChannels();
+
 ```
-##### Parameters
-1. __Method__ (string) method name.
-2. __Request__ (Object) request payload for the job. 
-3. __options__ (Object) optional. Options for running the job.
-    * __use_channel_id__ (number) Default to undefined.
-    * __autohandle_channel__ (boolean) Auto handling the logic for valid channel. Default to true.
-    * __channel_min_amount__ (number) Default to signedAmount + 5.
-    * __channel_min_expiration__ (number) Default to payment threshold + 1.
-##### Returns
-- __PromiEvent__ 
 
-### RunJobState
-__available_channels__ - a list of channels available for the service.  
-__create_new_channel__ - create a new channel.  
-__add_fund_extend_expiration__ - add fund and/or extend  the expiration.  
-__selected_channel__ - channel chosen.  
-__sign_channel_state__ - signing the request header for checking the channel state in agent daemon.  
-__channel_state__ - channel state information  
-__sign_request_header__ - signing the request header for the grpc service call.  
-__request_info__ - request information for the service call.  
-__response__ - response from the service.  
+#### Parameters
+- __InitOptions__ {init: boolean}
 
-__allowance__ - the allowance of the sender account.  
-__approve__ - approve the transfer from sender to escrow account.
+#### Returns
+- __channels__ (Promise<Channel[]>)
 
+
+
+## openChannel
+Open a new channel for this service.
+``` javascript
+const channel = await service.openChannel(100, 100000);
+```
+
+#### Parameters
+- __amount__ (number) Amount in cogs to be deposited.
+- __expiration__ (number) The expiration limit.
+
+## Returns
+- __channel__ (Promise<Channel>) Opened channel.
 
 # ServiceMetadata
 
@@ -137,4 +185,28 @@ __approve__ - approve the transfer from sender to escrow account.
 - __groups__: { __group_name__ (string), __group_id__ (string), __payment_address__ (string) } [],
 - __endpoints__ { __group_name__ (string), __endpoint__ (string) } [],
 - __service_description__ { __description__ (string), __url__ (string) }
+
+
+# ServiceInfo
+
+__name__ (string),  
+__methods__ {  
+&nbsp;&nbsp;&nbsp;__[method-name]__ (string) {  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__request__  {  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__name__ (string),  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__fields__ (ServiceFieldInfo)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__response__ {  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__name__ (string),  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__fields__ (ServiceFieldInfo)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}  
+&nbsp;&nbsp;&nbsp;}  
+    }  
+
+## ServiceFieldInfo
+__[name]__ (string) {  
+&nbsp;&nbsp;&nbsp;__type__ (string),  
+&nbsp;&nbsp;&nbsp;__required__ (boolean),  
+&nbsp;&nbsp;&nbsp;__optional__ (boolean)  
+}
 
