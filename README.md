@@ -25,7 +25,7 @@ For browser:
 
 ## Demo
 
-Please refer to [this link]("TODO") for the usage of the library implemented in Angular. The repository of this demo can be found at [singularity-js-demo]("TODO").
+Please refer to [this link]("TODO") for the the demo of the library implemented in Angular. The repository of this demo can be found at [singularity-js-demo]("TODO").
 
 
 ## Installation

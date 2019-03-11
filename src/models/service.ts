@@ -20,10 +20,13 @@ abstract class Service extends Grpc implements Data {
     }
 
     get data() {
-        return {
-            id: this.id, organizationId: this.organizationId,
-            metadata: this.metadata, tags: this.tags
-        };
+        let d = {id: this.id, organizationId: this.organizationId};
+        if(this.isInit) {
+            d = Object.assign(d, {
+                metadata: this.metadata, tags: this.tags
+            });
+        }
+        return d;
     }
     set data(data: Object) {
         this.id = data['id'] || this.id; 

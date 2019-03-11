@@ -29,10 +29,12 @@ abstract class Organization implements Data {
     }
 
     get data(): Object {
-        return {
-            id: this.id, name: this.name, owner: this.owner,
-            members: this.members, services: this.services
-        };
+        let d = {id: this.id};
+
+        if(this.isInit) d = Object.assign(d, {
+            name: this.name, owner: this.owner, members: this.members, services: this.services}
+        );
+        return d;
     }
 
     async init(): Promise<any> {
