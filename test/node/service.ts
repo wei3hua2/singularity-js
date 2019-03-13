@@ -24,7 +24,7 @@ m.after(async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe('ServiceSvc', () => {
+m.describe.only('ServiceSvc', () => {
 
   m.xit('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
@@ -78,6 +78,26 @@ m.describe('ServiceSvc', () => {
     c.expect(svcData['metadata']).to.be.contain.keys(['version', 'display_name', 'encoding','service_type',
         'payment_expiration_threshold', 'model_ipfs_hash', 'mpe_address', 'pricing', 'groups',
         'endpoints', 'service_description']);
+  });
+
+  m.it('should ping example service daemon for heartbeat', async function () {
+    const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
+    const heartbeat = await exampleSvc.pingDaemonHeartbeat();
+
+    c.expect(heartbeat).have.all.keys(['daemonID','timestamp','status','serviceheartbeat']);
+    c.expect(heartbeat.status).to.be.equal('Online');
+    c.expect(heartbeat.timestamp).to.be.greaterThan(0);
+    c.expect(heartbeat.timestamp).to.be.lessThan(new Date().getTime());
+
+    console.log(heartbeat.timestamp);
+
+  });
+
+  m.it('should get the encoding from example service daemon', async function () {
+    const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
+    const encoding = await exampleSvc.getDaemonEncoding();
+
+    c.expect(encoding).that.be.equal('proto\n');
   });
 
   m.xit('should run the job', function (done) {

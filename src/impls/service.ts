@@ -8,7 +8,7 @@ import {SnetError, ERROR_CODE} from '../errors/snet-error';
 import * as pb from 'protobufjs';
 import {ChannelSvc} from './channel';
 import {ServiceMetadata, Service, Channel, Account, InitOptions, 
-    RunJobOptions, RUN_JOB_STATE, ServiceInfo, ServiceFieldInfo} from '../models';
+    ServiceHeartbeat, RunJobOptions, RUN_JOB_STATE, ServiceInfo, ServiceFieldInfo} from '../models';
 import axios from 'axios';
 import {PromiEvent} from 'web3-core-promievent';
 //@ts-ignore
@@ -75,6 +75,19 @@ class ServiceSvc extends Service {
         const type = list[this.ServiceProto.methods[method].requestType];
 
         return type.toObject(type.fromObject({}), opts);
+    }
+
+    public async pingDaemonHeartbeat(): Promise<ServiceHeartbeat> {
+        const response = await axios.get(this.getEndpoint()+'/heartbeat');
+        const result = response.data;
+        const heartbeat:ServiceHeartbeat = Object.assign({}, result, {timestamp: parseInt(result.timestamp)});
+
+        return heartbeat;
+    }
+
+    public async getDaemonEncoding(): Promise<string> {
+        const response = await axios.get(this.getEndpoint()+'/encoding');
+        return response.data;
     }
 
     private parseTypeFields (typeList:any, typeName:string, pbField:boolean): ServiceFieldInfo {

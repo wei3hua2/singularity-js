@@ -39,12 +39,13 @@ abstract class Service extends Grpc implements Data {
         if(this.isInit) return this;
 
         const svcReg = await this.account.registry.getServiceRegistrationById(this.organizationId, this.id);
+
         this.data = {tags: svcReg.tags, metadata: await Ipfs.cat(svcReg.metadataURI)};
 
         this.processProto(await this.getServiceProto(this.organizationId, this.id));
 
         this.isInit = true;
-        
+
         return this;
     }
 
@@ -111,4 +112,14 @@ interface ServiceInfo {
     }
 }
 
-export {Service, ServiceMetadata, ServiceFieldInfo, ServiceInfo}
+interface ServiceHeartbeat {
+    daemonID: string;
+    timestamp: number;
+    status: string;
+    serviceheartbeat: {
+        serviceID: string;
+        status: string;
+    }
+}
+
+export {Service, ServiceMetadata, ServiceFieldInfo, ServiceInfo, ServiceHeartbeat}
