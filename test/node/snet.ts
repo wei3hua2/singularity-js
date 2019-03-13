@@ -2,8 +2,9 @@ import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
 import {Snet} from '../../src/snet';
-import {ServiceSvc, OrganizationSvc} from '../../src/impls';
-import {Service, Organization} from '../../src/models';
+import {ServiceSvc, OrganizationSvc, AccountSvc} from '../../src/impls';
+import {Service, Organization, Account} from '../../src/models';
+import {Utils} from '../../src/utils';
 import {RUN_JOB_STATE} from '../../src/models/options';
 import fs from 'fs';
 
@@ -156,6 +157,9 @@ m.describe.only('Snet', () => {
     const svc = await snet.getService('snet', 'example-service', {init: false});
 
     c.expect(snet).to.be.an.instanceof(Snet);
+    c.expect(snet.utils).to.be.an.instanceof(Utils);
+    // c.expect(snet.account).to.be.an.instanceof(Account);
+    // c.expect(snet.account).to.be.an.instanceof(AccountSvc);
     c.expect(svc).to.be.an.instanceof(Service);
     c.expect(svc).to.be.an.instanceof(ServiceSvc);
     c.expect(orgs).to.be.an.instanceof(Array);

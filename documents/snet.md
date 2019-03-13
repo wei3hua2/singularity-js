@@ -5,6 +5,7 @@ This is the main class of singularity-js. It provides basic operations to access
 To initialize a `Snet` object.
 
 *   [Snet.init](#snet.init)
+*   [utils](#utils)
 *   [listOrganizations](#listOrganizations)
 *   [getOrganization](#getOrganization)
 *   [getService](#getService)
@@ -48,6 +49,15 @@ const ethereum = window.ethereum;
 #### Returns
 - __Snet__ Snet object.
 
+## utils
+Utility functions.
+``` javascript
+snet.utils
+```
+#### Parameters
+none
+#### Returns
+- __Utils__ *Utils* utility functions. See [Utils](utils.md)
 
 ## listOrganizations
 ``` javascript

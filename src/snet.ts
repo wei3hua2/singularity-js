@@ -9,6 +9,7 @@ import {OrganizationSvc} from './impls/organization';
 import {AccountSvc} from './impls/account';
 import {ServiceSvc} from './impls/service';
 import {RunJobOptions} from './models';
+import {Utils} from './utils';
 import PromiEvent from 'web3-core-promievent';
 
 /**
@@ -25,6 +26,7 @@ import PromiEvent from 'web3-core-promievent';
 class Snet {
     protected web3: any;
     protected currentAccount: AccountSvc;
+    protected _utils: Utils;
     protected opts:InitOption;
 
     /**
@@ -42,9 +44,19 @@ class Snet {
             this.currentAccount = await AccountSvc.create(this.web3,{ethereum: this.opts.ethereum});
         else
             throw new Error('Init error');
+
+        this.utils = new Utils(this.currentAccount.eth);
         
         return true;
     }
+
+    get utils(): Utils {
+        return this._utils;
+    }
+    set utils(utils:Utils){
+        this._utils = utils;
+    }
+    
 
     getCurrentAccount(): AccountSvc {
         return this.currentAccount;
