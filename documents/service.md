@@ -60,23 +60,22 @@ const channel = (await service.gtChannels())[0];
 // if no channel, create a new channel with 100 cogs and expiration
 const channel = await service.openChannel(100, 'currentBlockNo + 10');
 
-const promiEvent = service.runJob('add', {a: 5, b: 6}, {
-     use_channel_id: channel.id
- });
+const promiEvent = service.runJob('add', {a: 5, b: 6}, channel);
 promiEvent.then(console.log);
 // {value: 11}
 ```
 
 ##### Parameters
-1. __Method__ (string) method name.
-2. __Request__ (Object) request payload for the job. 
-3. __options__ (Object) optional. Options for running the job.
-    * __use_channel_id__ (number) Default to null.
-    * __channel_autohandle__ (boolean) Auto handling the logic for valid channel. Default to false.
-    * __channel_min_amount__ (number) Default to signedAmount + 5.
-    * __channel_min_expiration__ (number) Default to payment threshold + 1.
-    * __channel_topup_amount__ (number) Default to signedAmount + 5.
-    * __channel_topup_expiration__ (number) Default to payment threshold + 1.
+1. __Method__ *string* method name.
+2. __Request__ *Object* request payload for the job. 
+3. __Channel__ *Channel* optional. 
+3. __options__ *Object* optional. Options for running the job.
+    * __skip_validation__ *boolean* Default to false.
+    * __channel_autohandle__ *boolean* Auto handling the logic for valid channel. Default to false.
+    * __channel_min_amount__ *number* Default to signedAmount + service_fixe_price.
+    * __channel_min_expiration__ *number* Default to current_block_no + payment_threshold + 12 (~ 2 to 4 mins).
+    * __channel_topup_amount__ *number* Default to signedAmount + service_fixe_price.
+    * __channel_topup_expiration__ *number* Default to current_block_no + payment_threshold + 240 (~ 40 to 80 mins).
 ##### Returns
 - __PromiseEvent__ (PromiEvent<Object>).
 

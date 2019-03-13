@@ -51,10 +51,13 @@ enum RUN_JOB_STATE {
  * 
 *************/
 interface RunJobOptions {
-    use_channel_id?: number;
+    // use_channel_id?: number;
+    skip_validation?: boolean;
     autohandle_channel?: boolean;
     channel_min_amount?: number;
     channel_min_expiration?: number;
+    channel_topup_amount?: number;
+    channel_topup_expiration?: number;
 }
 
 export {InitOptions, RUN_JOB_STATE, RunJobOptions}
