@@ -21,11 +21,15 @@ class AccountSvc extends Account {
         return this.eth.getNetwork();
     }
 
-    public getAgiTokens():Promise<number> {
-        return this.tokens.balanceOf(this.address);
+    public async getAgiTokens(opts: {inCogs: boolean} = {inCogs:false}):Promise<number> {
+        const tokenCogs = await this.tokens.balanceOf(this.address);
+
+        return opts.inCogs ? tokenCogs : this.toAgis(tokenCogs);
     }
-    public getEscrowBalances():Promise<number> {
-        return this.mpe.balances(this.address);
+    public async getEscrowBalances(opts: {inCogs: boolean} = {inCogs:false}):Promise<number> {
+        const tokenCogs = await this.mpe.balances(this.address);
+
+        return opts.inCogs ? tokenCogs : this.toAgis(tokenCogs);
     }
     public async getChannels (opts: EventOptions = {filter:{}}): Promise<ChannelSvc[]> {
         opts.filter['sender'] = this.address;
@@ -39,38 +43,39 @@ class AccountSvc extends Account {
 
         return Array.from(openChannels);
     }
-    // public allowance(sender: string|Account): Promise<number> {
-    //     const toStr = sender instanceof Account ? sender.address : sender;
-    //     return this.tokens.allowance(this.address, toStr);
-    // }
-    public escrowAllowance(): Promise<number> {
-        return this.tokens.allowance(this.address, this.mpe.address);
+    public async escrowAllowance(opts: {inCogs: boolean} = {inCogs:false}): Promise<number> {
+        const tokenCogs = await this.tokens.allowance(this.address, this.mpe.address);
+
+        return opts.inCogs ? tokenCogs : this.toAgis(tokenCogs);
     }
 
     ///////// transact
 
-    // public approve(sender: string|Account, amount: number, opts:TransactOptions={}): PromiEvent<any> {
-    //     const toStr = sender instanceof Account ? sender.address : sender;
-    //     opts.from = this.address;
-    //     return this.tokens.approve(toStr, amount, opts);
-    // }
-    public approveEscrow(amount: number, opts: TransactOptions={}): PromiEvent<any> {
-        opts.from = this.address;
-        return this.tokens.approve(this.mpe.address, amount, opts);
+    public approveEscrow(amount: number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
+        const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
+        return this.tokens.approve(this.mpe.address, cogAmount, {from: this.address});
     }
 
-    public transfer(to:string|Account, amount:number,opts:TransactOptions={}): PromiEvent<any> {
+    public transfer(to:string|Account, amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
         const toStr = to instanceof Account ? to.address : to;
-        opts.from = this.address;
-        return this.tokens.transfer(toStr, amount, opts);
+        const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
+
+        return this.tokens.transfer(toStr, cogAmount, {from: this.address});
     }
-    public depositToEscrow(amount:number, opts:TransactOptions={}): PromiEvent<any> {
-        opts.from = this.address;
-        return this.mpe.deposit(amount, opts);
+    public depositToEscrow(amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
+        const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
+        return this.mpe.deposit(cogAmount, {from: this.address});
     }
-    public withdrawFromEscrow(amount:number, opts:TransactOptions={}): PromiEvent<any> {
-        opts.from = this.address;
-        return this.mpe.withdraw(amount, opts);
+    public withdrawFromEscrow(amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
+        const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
+        return this.mpe.withdraw(cogAmount, {from: this.address});
+    }
+
+    private toCogs(agi: number): number {
+        return Math.floor(agi * 100000000.0);
+    }
+    private toAgis(cogs: number): number {
+        return +((cogs / 100000000.0).toFixed(8));
     }
 
     ///////// event

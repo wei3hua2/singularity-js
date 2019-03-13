@@ -50,15 +50,13 @@ abstract class Account implements Data {
         return this;
     }
 
-    abstract getAgiTokens(): Promise<number>;
-    abstract getEscrowBalances(): Promise<number>;
-    // abstract allowance(sender: string): Promise<number>;
+    abstract getAgiTokens(opts?:{inCogs: boolean}): Promise<number>;
+    abstract getEscrowBalances(opts?:{inCogs: boolean}): Promise<number>;
     abstract escrowAllowance(): Promise<number>;
     abstract getChannels(filter?: any): Promise<Object[]>;
-    // abstract approve(spender: string, value: number, txOpt?:TransactOptions);
-    abstract transfer(to:string|Account, amount:number,opts?:TransactOptions): PromiEvent<any>;
-    abstract depositToEscrow(amount:number, opts?:TransactOptions): PromiEvent<any>;
-    abstract withdrawFromEscrow(amount:number, opts?:TransactOptions): PromiEvent<any>;
+    abstract transfer(to:string|Account, amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
+    abstract depositToEscrow(amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
+    abstract withdrawFromEscrow(amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
 
     public toString(): string {
         return `*** Account : ${this.address}` +

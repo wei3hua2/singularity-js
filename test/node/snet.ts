@@ -147,7 +147,7 @@ const EXAMPLESVC_SERVICE_INFO = {
 
 
 
-m.describe.only('Snet', () => {
+m.describe('Snet', () => {
 
   m.it('should have valid class', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
