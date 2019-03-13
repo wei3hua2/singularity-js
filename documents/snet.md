@@ -6,6 +6,7 @@ To initialize a `Snet` object.
 
 *   [Snet.init](#snet.init)
 *   [utils](#utils)
+*   [account](#account)
 *   [listOrganizations](#listOrganizations)
 *   [getOrganization](#getOrganization)
 *   [getService](#getService)
@@ -49,6 +50,7 @@ const ethereum = window.ethereum;
 #### Returns
 - __Snet__ Snet object.
 
+
 ## utils
 Utility functions.
 ``` javascript
@@ -58,6 +60,18 @@ snet.utils
 none
 #### Returns
 - __Utils__ *Utils* utility functions. See [Utils](utils.md)
+
+
+## account
+Current Account
+``` javascript
+snet.account
+```
+#### Parameters
+none
+#### Returns
+- __Account__ *Account* utility functions. See [Account](account.md)
+
 
 ## listOrganizations
 ``` javascript

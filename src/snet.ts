@@ -39,13 +39,13 @@ class Snet {
 
     async init():Promise<boolean> {
         if(this.opts.privateKey && this.opts.address)
-            this.currentAccount = await AccountSvc.create(this.web3,{address:this.opts.address, privateKey:this.opts.privateKey});
+            this.account = await AccountSvc.create(this.web3,{address:this.opts.address, privateKey:this.opts.privateKey});
         else if(this.opts.ethereum)
-            this.currentAccount = await AccountSvc.create(this.web3,{ethereum: this.opts.ethereum});
+            this.account = await AccountSvc.create(this.web3,{ethereum: this.opts.ethereum});
         else
             throw new Error('Init error');
 
-        this.utils = new Utils(this.currentAccount.eth);
+        this.utils = new Utils(this.account.eth);
         
         return true;
     }
@@ -56,10 +56,11 @@ class Snet {
     set utils(utils:Utils){
         this._utils = utils;
     }
-    
-
-    getCurrentAccount(): AccountSvc {
+    get account(): AccountSvc {
         return this.currentAccount;
+    }
+    set account(acct: AccountSvc){
+        this.currentAccount = acct;
     }
 
     /**
@@ -72,7 +73,7 @@ class Snet {
      *
      */
     async listOrganizations(opts:{init:boolean} = {init:false}): Promise<OrganizationSvc[]>{
-        return Array.from(await OrganizationSvc.listOrganizations(this.currentAccount, opts));
+        return Array.from(await OrganizationSvc.listOrganizations(this.account, opts));
     }
 
     /**
@@ -84,7 +85,7 @@ class Snet {
      *
      */
     getOrganization(orgId:string, opts:{init:boolean} = {init:true}): Promise<OrganizationSvc> {
-        return OrganizationSvc.init(this.currentAccount, orgId, opts);
+        return OrganizationSvc.init(this.account, orgId, opts);
     }
 
 
@@ -98,7 +99,7 @@ class Snet {
      *
      */
     async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<ServiceSvc> {
-        return ServiceSvc.init(this.currentAccount, orgId, serviceId, opts);
+        return ServiceSvc.init(this.account, orgId, serviceId, opts);
     }
 
     /**
@@ -117,7 +118,7 @@ class Snet {
     runJob (orgId:string, serviceId:string, method:string, 
         request:any, opts:RunJobOptions= {}): PromiEvent {
 
-        return <PromiEvent>ServiceSvc.init(this.currentAccount, orgId, serviceId).then((svc) => {
+        return <PromiEvent>ServiceSvc.init(this.account, orgId, serviceId).then((svc) => {
             return svc.runJob(method, request, opts);
         });
     }

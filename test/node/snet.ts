@@ -158,8 +158,8 @@ m.describe.only('Snet', () => {
 
     c.expect(snet).to.be.an.instanceof(Snet);
     c.expect(snet.utils).to.be.an.instanceof(Utils);
-    // c.expect(snet.account).to.be.an.instanceof(Account);
-    // c.expect(snet.account).to.be.an.instanceof(AccountSvc);
+    c.expect(snet.account).to.be.an.instanceof(Account);
+    c.expect(snet.account).to.be.an.instanceof(AccountSvc);
     c.expect(svc).to.be.an.instanceof(Service);
     c.expect(svc).to.be.an.instanceof(ServiceSvc);
     c.expect(orgs).to.be.an.instanceof(Array);
@@ -169,13 +169,6 @@ m.describe.only('Snet', () => {
     c.expect(org).to.be.an.instanceof(OrganizationSvc);
 
     c.expect(org).to.not.be.an.instanceof(Snet);
-  });
-
-  m.xit('should initialize with appropriate objects without error', async function () {
-    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
-
-    c.expect(snet.getCurrentAccount()).to.exist;
-    c.expect(snet.getCurrentAccount().address).to.be.equal(PERSONAL_ACCOUNT);
   });
 
   m.xit('should list organization', async function () {
