@@ -2,6 +2,8 @@ import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
 import {Snet} from '../../src/snet';
+import {ServiceSvc, OrganizationSvc} from '../../src/impls';
+import {Service, Organization} from '../../src/models';
 import {RUN_JOB_STATE} from '../../src/models/options';
 import fs from 'fs';
 
@@ -144,7 +146,27 @@ const EXAMPLESVC_SERVICE_INFO = {
 
 
 
-m.describe('Snet', () => {
+m.describe.only('Snet', () => {
+
+  m.it('should have valid class', async function () {
+    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    
+    const orgs = await snet.listOrganizations();
+    const org = await snet.getOrganization('snet', {init: false});
+    const svc = await snet.getService('snet', 'example-service', {init: false});
+
+    c.expect(snet).to.be.an.instanceof(Snet);
+    c.expect(svc).to.be.an.instanceof(Service);
+    c.expect(svc).to.be.an.instanceof(ServiceSvc);
+    c.expect(orgs).to.be.an.instanceof(Array);
+    c.expect(orgs[0]).to.be.an.instanceof(Organization);
+    c.expect(orgs[0]).to.be.an.instanceof(OrganizationSvc);
+    c.expect(org).to.be.an.instanceof(Organization);
+    c.expect(org).to.be.an.instanceof(OrganizationSvc);
+
+    c.expect(org).to.not.be.an.instanceof(Snet);
+  });
+
   m.xit('should initialize with appropriate objects without error', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
 
@@ -249,30 +271,6 @@ m.describe('Snet', () => {
     }
   });
 
-  m.it('FOR INFO PURPOSE ONLY: try out individual service', function (done) {
-    const snetP = Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
-
-    // snetP.then(snet => snet.getService('snet', 'example-service'))
-    //   .then(svc => {
-    //     const job = svc.runJob('add', {a:1,b:4}, {channel_min_expiration: 10000});
-    //     listAllEvents(job);
-    //     job.then(v => { console.log(v); done(); });
-    //     job.catch(done);
-    //   });
-
-    snetP.then(snet => snet.getService('snet', 'named-entity-disambiguation'))
-      .then(svc => {
-        const request = svc.defaultRequest('named_entity_disambiguation');
-        request.input ="Macdonald was a great firm before it was sold to S. J. Wolfe &amp; Co. ";
-        
-        const job = svc.runJob('named_entity_disambiguation', request, {channel_min_expiration: 10000});
-        listAllEvents(job);
-        job.then(v => { console.log(JSON.stringify(v)); done(); });
-        job.catch(done);
-      });
-    
-  }).timeout(10 * 60 * 1000);
-
   m.xit('should run addition job from snet, example-service', function (done) {
     let service;
 
@@ -303,6 +301,30 @@ m.describe('Snet', () => {
       done(err);
     })
   });
+
+  m.xit('FOR INFO PURPOSE ONLY: try out individual service', function (done) {
+    const snetP = Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+
+    // snetP.then(snet => snet.getService('snet', 'example-service'))
+    //   .then(svc => {
+    //     const job = svc.runJob('add', {a:1,b:4}, {channel_min_expiration: 10000});
+    //     listAllEvents(job);
+    //     job.then(v => { console.log(v); done(); });
+    //     job.catch(done);
+    //   });
+
+    snetP.then(snet => snet.getService('snet', 'named-entity-disambiguation'))
+      .then(svc => {
+        const request = svc.defaultRequest('named_entity_disambiguation');
+        request.input ="Macdonald was a great firm before it was sold to S. J. Wolfe &amp; Co. ";
+        
+        const job = svc.runJob('named_entity_disambiguation', request, {channel_min_expiration: 10000});
+        listAllEvents(job);
+        job.then(v => { console.log(JSON.stringify(v)); done(); });
+        job.catch(done);
+      });
+    
+  }).timeout(10 * 60 * 1000);
 
   m.xit('FOR INFO PURPOSE ONLY: all services info', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});

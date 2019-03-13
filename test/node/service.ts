@@ -24,7 +24,7 @@ m.after(async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe.only('ServiceSvc', () => {
+m.describe('ServiceSvc', () => {
 
   m.xit('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
@@ -80,7 +80,7 @@ m.describe.only('ServiceSvc', () => {
         'endpoints', 'service_description']);
   });
 
-  m.it('should ping example service daemon for heartbeat', async function () {
+  m.xit('should ping example service daemon for heartbeat', async function () {
     const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
     const heartbeat = await exampleSvc.pingDaemonHeartbeat();
 
@@ -91,7 +91,7 @@ m.describe.only('ServiceSvc', () => {
 
   });
 
-  m.it('should get the encoding from example service daemon', async function () {
+  m.xit('should get the encoding from example service daemon', async function () {
     const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
     const encoding = await exampleSvc.getDaemonEncoding();
 
