@@ -5,6 +5,7 @@ Model for the agent service.
 *   [runJob](#runJob)
 *   [info](#info)
 *   [defaultRequest](#defaultRequest)
+*   [pingDaemonHeartbeat](#pingDaemonHeartbeat)
 *   [init](#init)
 *   [data](#data)
 *   [openChannel](#openChannel)
@@ -117,6 +118,33 @@ get sample request payload for the method. This method auto generate an object t
 ##### Returns
 - __Request__ (Object) The payload for the method.
 
+## info
+Get the information on the service.
+``` javascript
+ const info = service.info();
+```
+##### Parameters
+none
+##### Returns
+- __ServiceInfo__ Detail of the service. See [ServiceInfo](#service-info).
+
+
+## pingDaemonHeartbeat
+ping the service daemon for status check.
+``` javascript
+ const heartbeat = await service.pingDaemonHeartbeat();
+ console.log(heartbeat);
+//  { daemonID:
+//    '46af9d997fcff0dc172c6c109ac2e7e2e11b08a41f83680cee5567875536057a',
+//   timestamp: 1552446317,
+//   status: 'Online',
+//   serviceheartbeat: '{"serviceID":"SERVICE001", "status":"SERVING"}' }
+```
+##### Parameters
+none
+##### Returns
+- __StatusHeartbeat__ (Statusheartbeat) daemon status heartbeat.
+
 
 ## init
 Initialize the full detail of the service.
@@ -228,3 +256,12 @@ __[name]__ (string) {
 &nbsp;&nbsp;&nbsp;__optional__ (boolean)  
 }
 
+
+## ServiceHeartbeat
+__daemonID__ (string),  
+__timestamp__ (number),  
+__status__ (string),  
+__serviceheartbeat__  {  
+&nbsp;&nbsp;&nbsp;__serviceID__ (string),  
+&nbsp;&nbsp;&nbsp;__status__ (string)  
+}

@@ -89,8 +89,6 @@ m.describe.only('ServiceSvc', () => {
     c.expect(heartbeat.timestamp).to.be.greaterThan(0);
     c.expect(heartbeat.timestamp).to.be.lessThan(new Date().getTime());
 
-    console.log(heartbeat.timestamp);
-
   });
 
   m.it('should get the encoding from example service daemon', async function () {
