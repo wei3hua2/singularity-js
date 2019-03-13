@@ -126,23 +126,74 @@ class ServiceSvc extends Service {
         this._runJob(jobPromise, method, request, channel, options).then(result => {
             jobPromise.resolve(result);
             jobPromise.removeAllListeners();
-        }).catch((err) => jobPromise.reject(err));
+        }).catch((err) => {
+            jobPromise.reject(err);
+            jobPromise.removeAllListeners();
+        });
 
         return jobPromise;
     }
 
     private emitAllEvents(jobPromise) {
-        jobPromise.on('available_channels', d => jobPromise.emit('all_events', ['available_channels', d]));
-        jobPromise.on('create_new_channel', d => jobPromise.emit('all_events', ['create_new_channel',d]));
-        jobPromise.on('channel_extend_and_add_funds', d => jobPromise.emit('all_events', ['channel_extend_and_add_funds',d]));
-        jobPromise.on('channel_add_funds', d => jobPromise.emit('all_events', ['channel_add_funds',d]));
-        jobPromise.on('channel_extend_expiration', d => jobPromise.emit('all_events', ['channel_extend_expiration',d]));
-        jobPromise.on('selected_channel', d => jobPromise.emit('all_events', ['selected_channel',d]));
-        jobPromise.on('sign_channel_state', d => jobPromise.emit('all_events', ['sign_channel_state',d]));
-        jobPromise.on('channel_state', d => jobPromise.emit('all_events', ['channel_state',d]));
-        jobPromise.on('sign_request_header', d => jobPromise.emit('all_events', ['sign_request_header',d]));
-        jobPromise.on('request_info', d => jobPromise.emit('all_events', ['request_info',d]));
-        jobPromise.on('response', d => jobPromise.emit('all_events', ['response',d]));
+
+        const data = {
+            available_channels: null,
+            create_new_channel: null,
+            channel_extend_and_add_funds: null,
+            channel_add_funds: null, 
+            channel_extend_expiration: null,
+            selected_channel: null,
+            sign_channel_state: null,
+            channel_state: null,
+            sign_request_header: null,
+            request_info: null,
+            response: null
+        };
+
+        jobPromise.on('available_channels', d => {
+            data.available_channels = d;
+            jobPromise.emit('all_events', ['available_channels', data]);
+        });
+        jobPromise.on('create_new_channel', d => {
+            data.create_new_channel = d;
+            jobPromise.emit('all_events', ['create_new_channel',data]);
+        });
+        jobPromise.on('channel_extend_and_add_funds', d => {
+            data.channel_extend_and_add_funds = d;
+            jobPromise.emit('all_events', ['channel_extend_and_add_funds',data]);
+        });
+        jobPromise.on('channel_add_funds', d => {
+            data.channel_add_funds = d;
+            jobPromise.emit('all_events', ['channel_add_funds',data]);
+        });
+        jobPromise.on('channel_extend_expiration', d => {
+            data.channel_extend_expiration = d;
+            jobPromise.emit('all_events', ['channel_extend_expiration',data]);
+        });
+        jobPromise.on('selected_channel', d => {
+            data.selected_channel = d;
+            jobPromise.emit('all_events', ['selected_channel',data]);
+        });
+        jobPromise.on('sign_channel_state', d => {
+            data.sign_channel_state = d;
+            jobPromise.emit('all_events', ['sign_channel_state',data]);
+        });
+        jobPromise.on('channel_state', d => {
+            data.channel_state = d;
+            jobPromise.emit('all_events', ['channel_state',data]);
+        });
+        jobPromise.on('sign_request_header', d => {
+            data.sign_request_header = d;
+            jobPromise.emit('all_events', ['sign_request_header',data]);
+        });
+        jobPromise.on('request_info', d => {
+            data.request_info = d;
+            jobPromise.emit('all_events', ['request_info',data]);
+        });
+        jobPromise.on('response', d => {
+            data.response = d;
+            jobPromise.emit('all_events', ['response',data]);
+        });
     }
 
     private resolveChannelAndOptions(channelOrOpts:Channel|RunJobOptions, opts?:RunJobOptions) {
@@ -166,7 +217,6 @@ class ServiceSvc extends Service {
         method: string, request: Object, channel: Channel, opts: RunJobOptions): Promise<Object> {
 
         let _newOpenChannel: boolean = false;
-
         channel = await this.resolveExistingChannel(jobPromise, channel);
 
         opts = Object.assign({}, opts, await this.handleExpirationOpts(opts));

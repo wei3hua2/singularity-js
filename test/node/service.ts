@@ -112,7 +112,10 @@ m.describe.only('ServiceSvc', () => {
       const job = svc.runJob('add', request);
 
       // handleEvents(job);
-      job.on('all_events', console.log);
+      job.on('all_events', (evts) => {
+        console.log('**** '+evts[0]+' ****');
+        if(evts[0] !== 'available_channels' && evts[0] != 'sign_channel_state') console.log(evts[1]);
+      });
 
       return job;
     }).then((response) => {
