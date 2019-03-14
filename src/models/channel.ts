@@ -3,6 +3,8 @@ import {Grpc} from './grpc';
 import {rpc, Method} from 'protobufjs';
 import {Account} from './account';
 import {PromiEvent} from 'web3-core-promievent';
+import * as Perf from 'execution-time';
+const perf = Perf.default();
 
 const SERVICE_STATE_JSON = {
     "nested": {
@@ -87,11 +89,20 @@ abstract class Channel implements Data {
         this.endpoint = data['endpoint'] || this.endpoint;
     }
     get data () {
-        return {
-            id: this.id, nonce: this.nonce, sender: this.sender, signer: this.signer,
-            recipient: this.recipient, groupId: this.groupId, value: this.value, expiration: this.expiration,
-            balance_in_cogs: this.balance_in_cogs, pending: this.pending, endpoint: this.endpoint
-        };
+        const d = {};
+        
+        if(this.id) d['id'] = this.id;
+        if(this.sender) d['sender'] = this.sender;
+        if(this.signer) d['signer'] = this.signer;
+        if(this.recipient) d['recipient'] = this.recipient;
+        if(this.groupId) d['groupId'] = this.groupId;
+        if(this.value) d['value'] = this.value;
+        if(this.expiration) d['expiration'] = this.expiration;
+        if(this.balance_in_cogs) d['balance_in_cogs'] = this.balance_in_cogs;
+        if(this.pending) d['pending'] = this.pending;
+        if(this.endpoint) d['endpoint'] = this.endpoint;
+
+        return d;
     }
 
     async init(): Promise<Channel> {
@@ -121,7 +132,7 @@ abstract class ChannelState extends Grpc implements Data {
     channelId: string;
     url: string;
     currentSignature: string;
-    currentNonce: string;
+    currentNonce: number;
     currentSignedAmount: number;
 
     isInit: boolean = false;
@@ -159,7 +170,7 @@ abstract class ChannelState extends Grpc implements Data {
         const byteSig:Uint8Array = await this.signChannelId(promi);
         const request = {"channelId":byteschannelID, "signature":byteSig};
 
-        if(promi) promi.emit(RUN_JOB_STATE.sign_channel_state, request);
+        if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
         
         const channelResponse = await this.createService()['getChannelState'](request);
 

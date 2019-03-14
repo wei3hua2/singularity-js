@@ -45,8 +45,10 @@ class ChannelSvc extends Channel {
             `\nendpoint : ${this.endpoint} , expiration : ${this.expiration}`;
     }
 
-    static init(account:Account, channelId:number, fields:Object={}) {
-        const channel = new ChannelSvc(account, channelId, fields);
+    static async retrieve(account:Account, channelId:number, init:boolean=true): Promise<Channel> {
+        const channel = new ChannelSvc(account, channelId);
+        if(init) await channel.init();
+
         return channel;
     }
 
@@ -65,7 +67,7 @@ class ChannelSvc extends Channel {
         channel.value = channel.amount;
         delete channel.amount;
 
-        return ChannelSvc.init(account, channel.id, channel);
+        return new ChannelSvc(account, channel.id, channel);
     }
 
     static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {

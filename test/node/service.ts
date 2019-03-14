@@ -2,12 +2,19 @@ import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3} from './utils';
 import {ServiceSvc} from '../../src/impls/service';
+import {ChannelSvc} from '../../src/impls/channel';
 import {RUN_JOB_STATE} from '../../src/models/options';
 import {AccountSvc} from '../../src/impls/account';
-import {Snet} from '../../src/snet';
 import {getConfigInfo} from './utils';
+import {Logger} from '../../src/utils/logger';
+import * as Perf from 'execution-time';
+
+const perf = Perf.default();
+
+Logger.setLogLevel(2);
 
 let web3, account, testAccount, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PK;
+const log = Logger.logger();
 
 m.before(async() => {
     web3 = initWeb3();
@@ -28,7 +35,8 @@ m.describe.only('ServiceSvc', () => {
 
   m.xit('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
-    let channels = await svc.getChannels();
+    let channels = await svc.getChannels({init: true});
+
     c.expect(channels.length).to.be.greaterThan(0);
 
     svc = await ServiceSvc.init(account, 'snet', 'style-transfer');
@@ -36,9 +44,7 @@ m.describe.only('ServiceSvc', () => {
     c.expect(channels.length).to.be.greaterThan(-1);
 
     try{
-
       const svc = await ServiceSvc.init(account, 'snet', 'not-found-service');
-
     }catch(err){
       c.expect(err.code).to.be.equal('sv_registry_id_not_found');
       c.expect(err.params).to.be.deep.equal(['snet','not-found-service']);
@@ -98,28 +104,39 @@ m.describe.only('ServiceSvc', () => {
     c.expect(encoding).that.be.equal('proto\n');
   });
 
-  m.it('should run simple example-service job', function (done) {
+  m.xit('should run simple example-service job', function (done) {
 
     const svc = ServiceSvc.init(account, 'snet', 'example-service');
 
+    perf.start('main');
+
     svc.then((svc) => {
+      perf.start();
       const request = svc.defaultRequest('add');
       c.expect(Object.keys(request)).to.be.deep.equal(['a','b']);
 
       request.a = 5, request.b = 6;
-      console.log(request);
   
       const job = svc.runJob('add', request);
 
       // handleEvents(job);
       job.on('all_events', (evts) => {
-        console.log('**** '+evts[0]+' ****');
-        if(evts[0] !== 'available_channels' && evts[0] != 'sign_channel_state') console.log(evts[1]);
+        log.info(perf.stop().words);
+        log.info('**** '+evts[0]+' ****');
+
+        if(evts[0] === 'response') {
+          evts[1].sign_channel_state.signature = "* EXCLUDED *";
+          log.info(evts[1]);
+        }
+
+        perf.start();
       });
 
       return job;
     }).then((response) => {
       c.expect(response.value).to.be.equals(11);
+      log.info(perf.stop('main').words);
+      perf.stop();
       done();
     }).catch(err => {
       console.log('ERROR FOUND : ');
@@ -129,77 +146,30 @@ m.describe.only('ServiceSvc', () => {
     
   }).timeout(10 * 60 * 1000);
 
-  function handleEvents (job) {
-    job.on(RUN_JOB_STATE.available_channels,(channels) => {
-      console.log('*** available_channels *** ');
-      c.expect(channels.length).to.be.greaterThan(0);
-    });
-    job.on(RUN_JOB_STATE.create_new_channel,(channel) => {
-      console.log('*** create_new_channel *** ');
-      c.expect(channel).to.exist;
-    });
-    job.on(RUN_JOB_STATE.channel_extend_and_add_funds,(channel) => {
-      console.log('*** channel_extend_and_add_funds ***');
-    });
-    job.on(RUN_JOB_STATE.channel_add_funds,(channel) => {
-      console.log('*** channel_add_funds ***');
-    });
-    job.on(RUN_JOB_STATE.channel_extend_expiration,(channel) => {
-      console.log('*** channel_extend_expiration ***');
-    });
-    job.on(RUN_JOB_STATE.selected_channel,(channel) => {
-      console.log('*** selected_channel ***');
-      c.expect(channel).to.exist;
-      console.log(JSON.stringify(channel));
-    });
-    job.on(RUN_JOB_STATE.sign_channel_state,(channelStateRqt) => {
-      console.log('*** sign_channel_state ***');
-      c.expect(channelStateRqt).to.have.all.keys(['channelId', 'signature']);
-    });
-    job.on(RUN_JOB_STATE.channel_state,(channelState) => {
-      console.log('*** channel_state ***');
-      c.expect(channelState).to.have.all.keys(['channelId','endpoint','url',
-        'currentSignature','currentNonce','currentSignedAmount']);
-      console.log(JSON.stringify(channelState));
-    });
-    job.on(RUN_JOB_STATE.sign_request_header,(reqHeader) => {
-      console.log('*** sign_request_header *** ');
-      c.expect(reqHeader).to.have.all.keys(['channelId','nonce','price_in_cogs']);
-      console.log(JSON.stringify(reqHeader));
-    });
-    job.on(RUN_JOB_STATE.request_info,(request) => {
-      console.log('*** request_info ***');
-      c.expect(request).to.be.deep.equal({a:5,b:6});
-    });
-  }
 
+  m.it('should run simple example-service job 2', async function () {
+    const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
-  m.xit('should run example job', function (done){
-    const svc = ServiceSvc.init(account, 'snet', 'example-service');
+    // const channels = await svc.getChannels({init:true});
+    const channel = await ChannelSvc.retrieve(account, 1218);
+    // const channel = await ChannelSvc.retrieve(account, 1132);
 
-    svc.then(s => {
-      const request = s.defaultRequest('add');
-      request.a = 4, request.b = 6;
+    // console.log(channels.map(c => c.data));
+    // console.log(channel.data);
 
-      const job = s.runJob('add', request, {channel_min_expiration: 10000});
+    const job = svc.runJob('add', {a:5, b:6}, channel);
+    job.on('all_events', (evts) => {
+      console.log(' === '+evts[0]+' ===');
+      const result = evts[1];
 
-      listAllEvents(job);
-
-      job.then(r => done());
-      job.catch(done);
+      if(result['request_channel_state']) result['request_channel_state'].signature = "* EXCLUDED *";
+      
+      log.info(result);
     });
+    const result = await job;
+    c.expect(result.value).to.be.equals(11);
 
-  }).timeout(10 *60 * 1000);
+  }).timeout(10 * 60 * 1000);
+
 
 })
-
-
-function listAllEvents(promiEvent) {
-  for(var state in RUN_JOB_STATE){
-    const s = state.slice(0);
-    promiEvent.on(s, (evt) => {
-      console.log('*** '+s+' ***');
-      console.log(evt);
-    });
-  }
-}

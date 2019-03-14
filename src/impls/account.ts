@@ -6,8 +6,9 @@ import {Account, Data} from '../models';
 import {InitOptions} from '../models/account';
 import {TransactOptions, EventOptions} from '../utils/eth';
 import {ChannelSvc} from './channel';
-
+import * as BbPromise from 'bluebird';
 import {PromiEvent} from 'web3-core-promievent';
+
 
 class AccountSvc extends Account {
     
@@ -31,17 +32,18 @@ class AccountSvc extends Account {
 
         return opts.inCogs ? tokenCogs : this.toAgis(tokenCogs);
     }
-    public async getChannels (opts: EventOptions = {filter:{}}): Promise<ChannelSvc[]> {
-        opts.filter['sender'] = this.address;
-        const openChannelsEvents = Array.from(await this.mpe.ChannelOpen('past' , opts));
-        
-        const openChannels:ChannelSvc[] = openChannelsEvents.map((c) => {
-            c['value'] = c['amount'];
-            delete c['amount'];
-            return ChannelSvc.init(this, c['id'], c);
-        });
+    public async getChannels (
+        opts: EventOptions = {filter:{}}, initOpts: {init:boolean} = {init:false}): Promise<ChannelSvc[]> {
 
-        return Array.from(openChannels);
+        opts.filter['sender'] = this.address;
+
+        const openChannelsEvents = Array.from(await this.mpe.ChannelOpen('past' , opts));
+
+        const openChannels: ChannelSvc[] = 
+            Array.from(await BbPromise.map(openChannelsEvents, 
+                (c) => { return ChannelSvc.retrieve(this, c['id'], initOpts.init); }));
+
+        return openChannels;
     }
     public async escrowAllowance(opts: {inCogs: boolean} = {inCogs:false}): Promise<number> {
         const tokenCogs = await this.tokens.allowance(this.address, this.mpe.address);

@@ -21,15 +21,14 @@ class SnetError extends Error {
 
 
 enum ERROR_CODE {
-    /** 
-    * when org id is not found
-    */
     org_id_not_found = "org_id_not_found",
     org_id_svc_not_found = "org_id_svc_not_found",
     sv_registry_id_not_found = "sv_registry_id_not_found",
     runjob_condition_not_meet = "runjob_condition_not_meet",
     channel_endpoint_not_found = 'channel_endpoint_not_found',
-    grpc_call_error = 'grpc_call_error'
+    runjob_svc_call_error = 'runjob_svc_call_error',
+    runjob_no_channel_found = 'runjob_no_channel_found',
+    runjob_insufficient_fund_expiration = 'runjob_insufficient_fund_expiration'
 }
 
 /**
@@ -52,9 +51,15 @@ const ERROR_CODES = {
     "channel_endpoint_not_found": {
         message: (params:any[]) => `Channel ${params[0].id} endpoint not found`
     },
-    "grpc_call_error": {
+    "runjob_svc_call_error": {
         message: (params:any[]) => `Error while calling service method
         ${params[0]} ${JSON.stringify(params[1])} : ${params[2]}`
+    },
+    "runjob_no_channel_found": {
+        message: (params:any[]) => `No channel found : ${params[0]}`
+    },
+    "runjob_insufficient_fund_expiration": {
+        message: (params:any[]) => `Insufficient fund or expired : ${JSON.stringify(params[0])}`
     }
 };
 

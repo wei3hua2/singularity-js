@@ -7,7 +7,7 @@
 import {SnetError, ERROR_CODE} from '../errors/snet-error';
 import * as pb from 'protobufjs';
 import {ChannelSvc} from './channel';
-import {ServiceMetadata, Service, Channel, Account, InitOptions, 
+import {ServiceMetadata, Service, Channel, Account, InitOptions, ChannelState,
     ServiceHeartbeat, RunJobOptions, RUN_JOB_STATE, ServiceInfo, ServiceFieldInfo} from '../models';
 import axios from 'axios';
 import {PromiEvent} from 'web3-core-promievent';
@@ -15,10 +15,10 @@ import {PromiEvent} from 'web3-core-promievent';
 import {NETWORK} from '../configs/network';
 import {CONFIG} from '../configs/config';
 
+import {Logger} from '../utils/logger';
 
-/**
- * To run the service. The logic for execution is from here.
- */
+const log = Logger.logger();
+
 class ServiceSvc extends Service {
     serviceId: string;
     organizationId: string;
@@ -108,17 +108,18 @@ class ServiceSvc extends Service {
         }, {});
     }
 
-    private DEFAULT_BASIC_OPTS = {
-        autohandle_channel: true, skip_validation: false, 
-        channel_topup_amount: null, channel_min_amount: null,
-        channel_topup_expiration: null, channel_min_expiration: null};
+    private DEFAULT_BASIC_OPTS() {
+        return {
+            autohandle_channel: true, autohandle_escrow: true,
+            channel_topup_amount: null, channel_min_amount: null,
+            channel_topup_expiration: null, channel_min_expiration: null,
+            escrow_topup_amount: null, escrow_min_amount: null};
+    }
 
-    /**
-     * 
-     */
+
     public runJob(method:string, request:any, channelOrOpts?:Channel|RunJobOptions, opts?:RunJobOptions): PromiEvent<any> {
-        const {channel, options} = this.resolveChannelAndOptions(channelOrOpts, opts);
         
+        const {channel, options} = this.resolveChannelAndOptions(channelOrOpts, opts);
         const jobPromise = new PromiEvent();
 
         this.emitAllEvents(jobPromise);
@@ -136,63 +137,16 @@ class ServiceSvc extends Service {
 
     private emitAllEvents(jobPromise) {
 
-        const data = {
-            available_channels: null,
-            create_new_channel: null,
-            channel_extend_and_add_funds: null,
-            channel_add_funds: null, 
-            channel_extend_expiration: null,
-            selected_channel: null,
-            sign_channel_state: null,
-            channel_state: null,
-            sign_request_header: null,
-            request_info: null,
-            response: null
-        };
+        const data = Object.keys(RUN_JOB_STATE).reduce((acc, state) => {
+            let d = {}; d[state] = null;
+            return Object.assign({}, acc, d);
+        },{});
 
-        jobPromise.on('available_channels', d => {
-            data.available_channels = d;
-            jobPromise.emit('all_events', ['available_channels', data]);
-        });
-        jobPromise.on('create_new_channel', d => {
-            data.create_new_channel = d;
-            jobPromise.emit('all_events', ['create_new_channel',data]);
-        });
-        jobPromise.on('channel_extend_and_add_funds', d => {
-            data.channel_extend_and_add_funds = d;
-            jobPromise.emit('all_events', ['channel_extend_and_add_funds',data]);
-        });
-        jobPromise.on('channel_add_funds', d => {
-            data.channel_add_funds = d;
-            jobPromise.emit('all_events', ['channel_add_funds',data]);
-        });
-        jobPromise.on('channel_extend_expiration', d => {
-            data.channel_extend_expiration = d;
-            jobPromise.emit('all_events', ['channel_extend_expiration',data]);
-        });
-        jobPromise.on('selected_channel', d => {
-            data.selected_channel = d;
-            jobPromise.emit('all_events', ['selected_channel',data]);
-        });
-        jobPromise.on('sign_channel_state', d => {
-            data.sign_channel_state = d;
-            jobPromise.emit('all_events', ['sign_channel_state',data]);
-        });
-        jobPromise.on('channel_state', d => {
-            data.channel_state = d;
-            jobPromise.emit('all_events', ['channel_state',data]);
-        });
-        jobPromise.on('sign_request_header', d => {
-            data.sign_request_header = d;
-            jobPromise.emit('all_events', ['sign_request_header',data]);
-        });
-        jobPromise.on('request_info', d => {
-            data.request_info = d;
-            jobPromise.emit('all_events', ['request_info',data]);
-        });
-        jobPromise.on('response', d => {
-            data.response = d;
-            jobPromise.emit('all_events', ['response',data]);
+        Object.keys(RUN_JOB_STATE).forEach( key => {
+            jobPromise.on(key, d => {
+                data[key] = d;
+                jobPromise.emit('all_events', JSON.parse(JSON.stringify([key, data])));
+            });    
         });
     }
 
@@ -205,51 +159,53 @@ class ServiceSvc extends Service {
         }
         else options = channelOrOpts || {};
         
-        options = Object.assign({}, this.DEFAULT_BASIC_OPTS, options);
+        options = Object.assign({}, this.DEFAULT_BASIC_OPTS(), options);
+        
+        channel.endpoint = this.getEndpoint();
 
         return {channel, options};
     }
 
-    // required validation:
-    // escrow amount >= sigedAmount + unit price
-    // expiration >= currentBlockNo + threshold + 3 mins (channel_min_expiration)
     private async _runJob(jobPromise: PromiEvent<any>, 
         method: string, request: Object, channel: Channel, opts: RunJobOptions): Promise<Object> {
 
         let _newOpenChannel: boolean = false;
+
         channel = await this.resolveExistingChannel(jobPromise, channel);
 
         opts = Object.assign({}, opts, await this.handleExpirationOpts(opts));
         
-
-        if(channel){}
-        else if(opts.autohandle_channel) {
-            channel = await this.openChannel(jobPromise, opts.channel_topup_amount, opts.channel_topup_expiration);
+        if(opts.autohandle_channel && !channel) {
+            channel = await this.openChannel(jobPromise, this.getPrice(), opts.channel_topup_expiration);
             _newOpenChannel = true;
         }
-        else throw new SnetError(ERROR_CODE.runjob_condition_not_meet, {});
+        else if(!opts.autohandle_channel && !channel) throw new SnetError(ERROR_CODE.runjob_no_channel_found, {});
 
-        jobPromise.emit(RUN_JOB_STATE.selected_channel, channel.data);
+        await channel.init();
+        
+        jobPromise.emit(RUN_JOB_STATE.resolved_channel, channel.data);
 
 
-        const state = await channel.getChannelState(jobPromise);
-
-        jobPromise.emit(RUN_JOB_STATE.channel_state, state.data);
+        const channelState = await channel.getChannelState(jobPromise); 
+        jobPromise.emit(RUN_JOB_STATE.reply_channel_state, channelState.data);
 
         let validity = {};
+        
         if(!_newOpenChannel) {
-            opts = Object.assign({}, opts, await this.handleAmountOpts(opts, state));
+            opts = Object.assign({}, opts, await this.handleAmountOpts(opts, channelState));
             validity = await this.validateChannel(channel, opts);
-        }
-        
-        if(opts.autohandle_channel) {
-            await this.topupChannel(jobPromise, validity, channel, opts);
-        }
+            jobPromise.emit(RUN_JOB_STATE.checked_channel_validity, {options:opts, validity:validity});
 
-        const grpcHeader = await this.handleRequestHeader(
-            jobPromise, channel.id, channel.nonce, state.currentSignedAmount);
+            if(opts.autohandle_channel) 
+                await this.topupChannel(jobPromise, validity, channel, opts);
+            else
+                throw new SnetError(ERROR_CODE.runjob_insufficient_fund_expiration, validity);
+        }
         
-        jobPromise.emit(RUN_JOB_STATE.request_info, request);
+        
+        const grpcHeader = await this.handleRequestHeader(channel.id, channelState.currentNonce, channelState.currentSignedAmount);
+        
+        jobPromise.emit(RUN_JOB_STATE.request_svc_call, {header: grpcHeader, body: request});
 
         return await this.invokeService(jobPromise, grpcHeader, method, request);
     }
@@ -259,23 +215,19 @@ class ServiceSvc extends Service {
             const svc = await this.createService(header);
             const result = await svc[method](request);
 
-            jobPromise.emit(RUN_JOB_STATE.response, result);  // state: response
+            jobPromise.emit(RUN_JOB_STATE.reply_svc_call, result);
 
             return result;
 
         }catch(err){
-            throw new SnetError(ERROR_CODE.grpc_call_error, method, request, err.message);
+            throw new SnetError(ERROR_CODE.runjob_svc_call_error, method, request, err.message);
         }
     }
 
-    private async handleRequestHeader(jobPromise, channelId:number, nonce:number, signedAmount:number): Promise<any> {
+    private async handleRequestHeader(channelId:number, nonce:number, signedAmount:number): Promise<any> {
         const header = {
-            channelId: channelId, 
-            nonce: nonce || 0, 
-            price_in_cogs: this.getPrice() + (signedAmount || 0)
+            channelId: channelId, nonce: nonce || 0, price_in_cogs: this.getPrice() + (signedAmount || 0)
         };
-
-        jobPromise.emit(RUN_JOB_STATE.sign_request_header, header);  // state: sign_request_header
 
         const signed = await this.signServiceHeader(header.channelId, header.nonce, header.price_in_cogs);
         const grpcHeader = {
@@ -284,28 +236,43 @@ class ServiceSvc extends Service {
             'snet-payment-channel-amount': header.price_in_cogs, 'snet-payment-channel-signature-bin': signed
         };
 
-        return grpcHeader
+        return grpcHeader;
     }
 
     private async topupChannel (jobPromise, validity:Object, channel:Channel, opts: RunJobOptions): Promise<any> {
+        let receipt;
         if(validity['channel_lessthan_topup_amount'] && validity['channel_lessthan_topup_expiration']) {
-            channel = await channel.extendAndAddFunds(
-                validity['channel_lessthan_topup_expiration'][1], validity['channel_lessthan_topup_amount'][1]);
+            const amount = validity['channel_lessthan_topup_amount'][1] - validity['channel_lessthan_topup_amount'][0];
 
-            jobPromise.emit(RUN_JOB_STATE.channel_extend_and_add_funds, channel.data);  // state: channel_extend_and_add_funds
+            jobPromise.emit(RUN_JOB_STATE.request_channel_extend_and_add_funds, 
+                {   channel: channel.data, expiration: validity['channel_lessthan_topup_expiration'][1], amount: amount });
+
+            receipt = await channel.extendAndAddFunds(validity['channel_lessthan_topup_expiration'][1], amount);
+
+            jobPromise.emit(RUN_JOB_STATE.reply_channel_extend_and_add_funds, receipt.transactionHash);
         }
         else if(validity['channel_lessthan_topup_amount']) {
-            channel = await channel.channelAddFunds(validity['channel_lessthan_topup_amount'][1]);
+            const amount = validity['channel_lessthan_topup_amount'][1] - validity['channel_lessthan_topup_amount'][0];
 
-            jobPromise.emit(RUN_JOB_STATE.channel_add_funds, channel.data);  // state: channel_add_funds
+            jobPromise.emit(RUN_JOB_STATE.request_channel_add_funds, {channel:channel.data, amount: amount});
+
+            receipt = await channel.channelAddFunds(amount);
+
+            jobPromise.emit(RUN_JOB_STATE.reply_channel_add_funds, receipt.transactionHash);
         }
         else if(validity['channel_lessthan_topup_expiration']) {
-            channel = await channel.channelExtend(validity['channel_lessthan_topup_expiration'][1]);
+            jobPromise.emit(RUN_JOB_STATE.request_channel_extend_expiration,
+                {channel:channel.data, expiration:validity['channel_lessthan_topup_expiration'][1]});
 
-            jobPromise.emit(RUN_JOB_STATE.channel_extend_expiration, channel.data);  // state: channel_extend_expiration
+            receipt = await channel.channelExtend(validity['channel_lessthan_topup_expiration'][1]);
+
+            jobPromise.emit(RUN_JOB_STATE.reply_channel_extend_expiration, receipt.transactionHash);
         }
     }
 
+    /**
+     * Service called: eth.getBlockNumber()
+     */
     private async handleExpirationOpts (opts: RunJobOptions): Promise<Object> {
         const result = {
             channel_topup_expiration: opts.channel_topup_expiration,
@@ -325,8 +292,9 @@ class ServiceSvc extends Service {
         return result;
     }
 
-    private async handleAmountOpts(opts: RunJobOptions, channelState:any): Promise<Object> {
-        const result = {channel_topup_amount: opts.channel_topup_amount,channel_min_amount: opts.channel_min_amount};
+    private async handleAmountOpts(opts: RunJobOptions, channelState:ChannelState): Promise<Object> {
+        const result = {
+            channel_topup_amount: opts.channel_topup_amount, channel_min_amount: opts.channel_min_amount};
         
         if(opts.channel_topup_amount && opts.channel_min_amount) return result;
 
@@ -342,32 +310,33 @@ class ServiceSvc extends Service {
     }
 
     private async resolveExistingChannel(jobPromise, channel: Channel): Promise<Channel> {
+        jobPromise.emit(RUN_JOB_STATE.request_available_channels, true);
+        const channels = await this.getChannels();
+        jobPromise.emit(RUN_JOB_STATE.reply_available_channels, channels.map(c => c.data));
+        
         let result = channel;
 
-        if(!result) {
-            const channels = await this.getChannels();
-            jobPromise.emit(RUN_JOB_STATE.available_channels, channels.map(c => c.data));
-
+        if(!result) 
             result = this.findLargestChannel(channels);
-        }
 
-        if(result)
-            await result.init();
+        else if(!channels.some(c => result.id === c.id))
+            throw new SnetError(ERROR_CODE.runjob_no_channel_found, result.id);
+            
 
         return result;
     }
 
     private async validateChannel(channel:Channel, opts: RunJobOptions): Promise<any> {
         const validity = {};
-        const escrowAmount = await this.account.getEscrowBalances();
+        // const escrowAmount = await this.account.getEscrowBalances({inCogs:true});
 
-        if(escrowAmount < opts.channel_topup_amount)
-            validity['not_enough_in_escrow'] = [escrowAmount, opts.channel_topup_amount];
+        // if(escrowAmount < opts.escrow_min_amount)
+        //     validity['not_enough_in_escrow'] = [escrowAmount, opts.escrow_topup_amount];
 
-        if(channel.value < opts.channel_topup_amount)
+        if(channel.value < opts.channel_min_amount)
             validity['channel_lessthan_topup_amount'] = [channel.value, opts.channel_topup_amount];
 
-        if(channel.expiration < opts.channel_topup_expiration)
+        if(channel.expiration < opts.channel_min_expiration)
             validity['channel_lessthan_topup_expiration'] = [channel.expiration, opts.channel_topup_expiration];
 
         return validity;
@@ -387,31 +356,29 @@ class ServiceSvc extends Service {
         return channel;
     }
 
-    public async openChannel(jobPromi: PromiEvent, amount:number, expiration: number): Promise<any> {
+    public async openChannel(amount:number, expiration: number, jobPromi?: PromiEvent): Promise<any> {
+        if(jobPromi) jobPromi.emit(RUN_JOB_STATE.request_new_channel, [this.account.address, this.getPaymentAddress(), this.getGroupId(), amount, expiration]);
+        
         const channel = await ChannelSvc.openChannel(
             this.account, this.account.address, this.getPaymentAddress(), 
             this.getGroupId(), amount, expiration);
         
-        channel['endpoint'] = this.metadata.endpoints[0].endpoint;
+        channel['endpoint'] = this.getEndpoint();
         
-        if(jobPromi) jobPromi.emit(RUN_JOB_STATE.create_new_channel, channel.data);
+        if(jobPromi) jobPromi.emit(RUN_JOB_STATE.reply_new_channel, channel.data);
 
         return channel;
     }
 
-    public async getChannels(filter:{id?:number}={}): Promise<Channel[]> {
-        const recipient = this.account.address, sender = this.getPaymentAddress(), groupId = this.getGroupId();
+    public async getChannels(opts:{init:boolean}={init:false}): Promise<Channel[]> {
+        const sender = this.account.address, recipient = this.getPaymentAddress(), groupId = this.getGroupId();
 
-        const openChannelsEvents = await this.account.getChannels(
-            {filter: {recipient: sender, sender: recipient, groupId: groupId}}
-        );
-        
-        const openChannels:ChannelSvc[] = openChannelsEvents.map((c) => {
-            c['endpoint'] = this.metadata.endpoints[0].endpoint;
-            return ChannelSvc.init(this.account, c['id'], c);
-        });
+        const channels:ChannelSvc[] = await this.account.getChannels(
+            {filter: {recipient: recipient, sender: sender, groupId: groupId}}, opts);
 
-        return Array.from(openChannels);
+        channels.forEach(c => { c.endpoint = this.metadata.endpoints[0].endpoint });
+
+        return Array.from(channels);
     }
 
 
@@ -426,8 +393,12 @@ class ServiceSvc extends Service {
         const netId = await this.account.eth.getNetworkId();
         const network = NETWORK[netId].protobufjs;
         const url = encodeURI(network + organizationId + '/' +  serviceId);
+
+        log.debug(`ServiceSvc: netId ${netId}, network ${network}, url ${url}`);
     
-        return (await axios.get(url)).data;
+        const result = (await axios.get(url)).data;
+
+        return result;
     }
 
     protected serviceUrl(method: pb.Method): string {
@@ -473,15 +444,7 @@ class ServiceSvc extends Service {
         return base64data;
     }
 
-    /**
-     * 
-     * Initialize a new service object
-     * 
-     * @param web3 Web3 instance
-     * @param serviceId ServiceSvc ID 
-     * @param organizationId OrganizationSvc Id
-     * 
-     */
+
     static async init(account:Account, 
         organizationId:string, serviceId:string, opts:InitOptions={init: true}) {
 

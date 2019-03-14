@@ -7,6 +7,9 @@ import {Account} from '../models/account';
 import {PromiEvent} from 'web3-core-promievent';
 import {EventEmitter} from 'events';
 import {EthUtil} from '../utils/eth';
+import {Logger} from '../utils/logger';
+
+const log = Logger.logger();
 
 abstract class Contract {
     account: Account;
@@ -28,25 +31,41 @@ abstract class Contract {
     abstract getNetworkObj(): any;
 
     async init():Promise<boolean> {
-        const netId = await this.eth.getNetworkId();
-        
-        const contractInfo = this.getNetworkObj()[netId];
-        this.address = contractInfo.address;
-        const abi = this.getAbi();
+        if(!this.isInit) {
+            log.debug('contract.init > getNetworkId ');
+            const netId = await this.eth.getNetworkId();
+            log.debug('contract.init >> getNetworkId : ' + netId);
+            
+            const contractInfo = this.getNetworkObj()[netId];
+            this.address = contractInfo.address;
+            const abi = this.getAbi();
 
-        this.contract = this.eth.getContract(abi, this.address);
+            this.contract = this.eth.getContract(abi, this.address);
 
-        this.isInit = true;
+            this.isInit = true;
+        }
 
         return this.isInit;
     }
     
-    protected callContract(method: string, ...params: any[]): Promise<any> {
-        return this.eth.call(this.contract, method, ...params);
+    protected async callContract(method: string, ...params: any[]): Promise<any> {
+        log.debug(`contract.callContract > eth.call ${method} , ${params}`);
+        log.debug(JSON.stringify(params));
+
+        const result = await this.eth.call(this.contract, method, ...params);
+
+        log.debug(`contract.callContract >> eth.call ${result}`);
+        log.debug(JSON.stringify(result));
+
+        return result;
     }
     protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): PromiEvent<any> {
         
         txOptions.from = txOptions.from || this.account.address;
+
+        log.debug(`contract.transactContract > eth.transact ${method} , ${txOptions} , ${params} , ${this.address}`);
+        log.debug(JSON.stringify(txOptions));
+        log.debug(JSON.stringify(params));
 
         return this.eth.transact(this.account.privateKey,
             this.contract, method, this.address, txOptions, ...params);
@@ -68,11 +87,19 @@ abstract class Contract {
         
         return this.eth.once(this.contract, method, opts);
     }
-    protected pastEventsContract(method: string, opts:EventOptions={}): Promise<any> {
+    protected async pastEventsContract(method: string, opts:EventOptions={}): Promise<any> {
         if(!opts.fromBlock) opts.fromBlock = 0;
         if(!opts.toBlock) opts.toBlock = 'latest';
 
-        return this.eth.pastEvents(this.contract, method, opts);
+        log.debug(`contract.pastEventsContract > eth.pastEvents ${method} , ${opts}`);
+        log.debug(JSON.stringify(opts));
+
+        const evts = await this.eth.pastEvents(this.contract, method, opts);
+
+        log.debug(`contract.pastEventsContract >> eth.pastEvents ${method} , ${opts}`);
+        log.debug(JSON.stringify(evts));
+
+        return evts;
     }
     
     public allEvents = (opt:EventOptions={}) => this.eth.allEvents(this.contract, opt);

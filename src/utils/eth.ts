@@ -108,8 +108,11 @@ class EthUtil {
         return new this.web3.eth.Contract(abi, address);
     }
 
-    getNetworkId(): Promise<any> {
-        return this.web3.eth.net.getId();
+    _netId: number;
+    async getNetworkId(): Promise<number> {
+        if(!this._netId) this._netId = await this.web3.eth.net.getId();
+
+        return this._netId;
     }
     getNetwork(): Promise<string> {
         return this.web3.eth.net.getId().then((id) => NETWORK[id].name);

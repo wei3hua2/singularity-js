@@ -4,60 +4,53 @@ interface InitOptions {
 
 // enum RUN_JOB_STATE {
 //     available_channels = 'available_channels',
+//     create_new_channel = 'create_new_channel',
 //     selected_channel = 'selected_channel',
-//     service_created = 'service_created',
-//     before_execution = 'before_execution',
-//     host = 'host',
-//     get_channel_state = 'get_channel_state',
-//     sign_channel_opts = 'sign_channel_opts',
-//     sign_request = 'sign_request',
-//     signed_channel = 'signed_channel',
+//     sign_channel_state = 'sign_channel_state',
 //     channel_state = 'channel_state',
-//     price_in_cogs = 'price_in_cogs',
-//     signed_header = 'signed_header',
-//     request_header = 'request_header',
+//     channel_validity = 'channel_validity',
+//     escrow_deposit = 'escrow_deposit',
+//     channel_extend_and_add_funds = 'channel_extend_and_add_funds',
+//     channel_add_funds = 'channel_add_funds',
+//     channel_extend_expiration = 'channel_extend_expiration',
+//     sign_request_header = 'sign_request_header',
 //     request_info = 'request_info',
-//     raw_response = 'raw_response'
+//     response = 'response'
 // }
 
 enum RUN_JOB_STATE {
-    available_channels = 'available_channels',
-    create_new_channel = 'create_new_channel',
-    channel_extend_and_add_funds = 'channel_extend_and_add_funds',
-    channel_add_funds = 'channel_add_funds',
-    channel_extend_expiration = 'channel_extend_expiration',
-    selected_channel = 'selected_channel',
-    sign_channel_state = 'sign_channel_state',
-    channel_state = 'channel_state',
-    sign_request_header = 'sign_request_header',
-    request_info = 'request_info',
-    response = 'response'
+    request_available_channels = 'request_available_channels',
+    reply_available_channels = 'reply_available_channels',
+    request_new_channel = 'request_new_channel',
+    reply_new_channel = 'reply_new_channel',
+    resolved_channel = 'resolved_channel',
+    request_channel_state = 'request_channel_state',
+    reply_channel_state = 'reply_channel_state',
+    checked_channel_validity = 'checked_channel_validity',
+    request_escrow_deposit = 'request_escrow_deposit',
+    reply_escrow_deposit = 'reply_escrow_deposit',
+    request_channel_extend_and_add_funds = 'request_channel_extend_and_add_funds',
+    reply_channel_extend_and_add_funds = 'reply_channel_extend_and_add_funds',
+    request_channel_add_funds = 'request_channel_add_funds',
+    reply_channel_add_funds = 'reply_channel_add_funds',
+    request_channel_extend_expiration = 'request_channel_extend_expiration',
+    reply_channel_extend_expiration = 'reply_channel_extend_expiration',
+    request_svc_call = 'request_svc_call',
+    reply_svc_call = 'reply_svc_call'
+    // sign_request_header = 'sign_request_header',
+    // request_info = 'request_info',
+    // response = 'response'
 }
 
-/********
- * default: use_channel_id = null, autohandle_channel = true, 
- *          channel_min_amount = 1, channel_min_expiration = current + x
- * 
- * if use_channel_id is number:
- *   retrieve channel is channel_id
- *   if channel not found, throw Error:notfound
- *   else if min_amount && min_expiration not met, topup if autohandle_channel
- * 
- * else retrieve all channels, select 1st channel that meet min_amount && min_expiration:
- *   if not found:
- *     if autohandle_channel is false, throw Error:notfound
- *     else topup if there's channel, else create channel
- * 
- * 
-*************/
 interface RunJobOptions {
-    // use_channel_id?: number;
-    skip_validation?: boolean;
-    autohandle_channel?: boolean;
-    channel_min_amount?: number;
-    channel_min_expiration?: number;
-    channel_topup_amount?: number;
-    channel_topup_expiration?: number;
+    autohandle_channel?: boolean;        // default true
+    autohandle_escrow?: boolean;         // default true
+    channel_min_amount?: number;         // default signedAmount + fixed_price * 1
+    channel_min_expiration?: number;     // default currentBlockNo + threshold + 3 min
+    channel_topup_amount?: number;       // default signedAmount + fixed_price * 1
+    channel_topup_expiration?: number;   // default currentBlockNo + threshold + 60 min
+    escrow_topup_amount?: number;        // default channel_min_amount + 10
+    escrow_min_amount?: number;          // default channel_min_amount
 }
 
 export {InitOptions, RUN_JOB_STATE, RunJobOptions}
