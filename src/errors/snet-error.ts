@@ -21,10 +21,10 @@ class SnetError extends Error {
 
 
 enum ERROR_CODE {
+    eth_tx_error = 'eth_tx_error',
     org_id_not_found = "org_id_not_found",
     org_id_svc_not_found = "org_id_svc_not_found",
     sv_registry_id_not_found = "sv_registry_id_not_found",
-    runjob_condition_not_meet = "runjob_condition_not_meet",
     channel_endpoint_not_found = 'channel_endpoint_not_found',
     runjob_svc_call_error = 'runjob_svc_call_error',
     runjob_no_channel_found = 'runjob_no_channel_found',
@@ -60,6 +60,9 @@ const ERROR_CODES = {
     },
     "runjob_insufficient_fund_expiration": {
         message: (params:any[]) => `Insufficient fund or expired : ${JSON.stringify(params[0])}`
+    },
+    "eth_tx_error": {
+        message: (params:any[]) => `Ethereum Transaction Error ${params[0]}`
     }
 };
 

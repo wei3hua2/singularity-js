@@ -150,21 +150,22 @@ m.describe.only('ServiceSvc', () => {
   m.it('should run simple example-service job 2', async function () {
     const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
-    // const channels = await svc.getChannels({init:true});
-    const channel = await ChannelSvc.retrieve(account, 1218);
-    // const channel = await ChannelSvc.retrieve(account, 1132);
+    // const balance = await account.getEscrowBalances({inCogs:true});
+    // console.log(balance);
+    // console.log(await account.withdrawFromEscrow(balance, {inCogs:true}));
+    // console.log(await account.getEscrowBalances({inCogs:true}));
 
-    // console.log(channels.map(c => c.data));
-    // console.log(channel.data);
+
+    const channel = await ChannelSvc.retrieve(account, 1218);
+    console.log(channel.data);
 
     const job = svc.runJob('add', {a:5, b:6}, channel);
-    job.on('all_events', (evts) => {
-      console.log(' === '+evts[0]+' ===');
-      const result = evts[1];
 
+    job.on('all_events', (evts) => {
+      log.info(' === '+evts[0]+' ===');
+      const result = evts[1];
       if(result['request_channel_state']) result['request_channel_state'].signature = "* EXCLUDED *";
-      
-      log.info(result);
+      if(evts[0] === 'reply_svc_call') log.info(result);
     });
     const result = await job;
     c.expect(result.value).to.be.equals(11);

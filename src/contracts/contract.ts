@@ -8,6 +8,7 @@ import {PromiEvent} from 'web3-core-promievent';
 import {EventEmitter} from 'events';
 import {EthUtil} from '../utils/eth';
 import {Logger} from '../utils/logger';
+import {SnetError, ERROR_CODE} from '../errors/snet-error';
 
 const log = Logger.logger();
 
@@ -68,7 +69,8 @@ abstract class Contract {
         log.debug(JSON.stringify(params));
 
         return this.eth.transact(this.account.privateKey,
-            this.contract, method, this.address, txOptions, ...params);
+            this.contract, method, this.address, txOptions, ...params)
+            .catch(err => {throw new SnetError(ERROR_CODE.eth_tx_error, err.message)});
     }
 
     protected event(method: string, type: string, opts:EventOptions={}): EventEmitter | Promise<any> {

@@ -55,7 +55,8 @@ abstract class Account implements Data {
 
     abstract getAgiTokens(opts?:{inCogs: boolean}): Promise<number>;
     abstract getEscrowBalances(opts?:{inCogs: boolean}): Promise<number>;
-    abstract escrowAllowance(): Promise<number>;
+    abstract escrowAllowance(opts?: {inCogs: boolean}): Promise<number>;
+    abstract approveEscrow(amount: number, opts?: {inCogs: boolean}): PromiEvent<any>;
     abstract getChannels(opts?: EventOptions, initOpts?: {init:boolean}): Promise<ChannelSvc[]>;
     abstract transfer(to:string|Account, amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
     abstract depositToEscrow(amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;

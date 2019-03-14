@@ -27,6 +27,8 @@ enum RUN_JOB_STATE {
     request_channel_state = 'request_channel_state',
     reply_channel_state = 'reply_channel_state',
     checked_channel_validity = 'checked_channel_validity',
+    request_escrow_approve_allowance = 'request_escrow_approve_allowance',
+    reply_escrow_approve_allowance = 'reply_escrow_approve_allowance',
     request_escrow_deposit = 'request_escrow_deposit',
     reply_escrow_deposit = 'reply_escrow_deposit',
     request_channel_extend_and_add_funds = 'request_channel_extend_and_add_funds',
@@ -37,20 +39,17 @@ enum RUN_JOB_STATE {
     reply_channel_extend_expiration = 'reply_channel_extend_expiration',
     request_svc_call = 'request_svc_call',
     reply_svc_call = 'reply_svc_call'
-    // sign_request_header = 'sign_request_header',
-    // request_info = 'request_info',
-    // response = 'response'
 }
 
 interface RunJobOptions {
     autohandle_channel?: boolean;        // default true
     autohandle_escrow?: boolean;         // default true
-    channel_min_amount?: number;         // default signedAmount + fixed_price * 1
+    channel_min_amount?: number;         // default signedAmount + fixed_price * 1 (assume only called once)
     channel_min_expiration?: number;     // default currentBlockNo + threshold + 3 min
-    channel_topup_amount?: number;       // default signedAmount + fixed_price * 1
+    channel_topup_amount?: number;       // default channel_min_amount (assume only called once)
     channel_topup_expiration?: number;   // default currentBlockNo + threshold + 60 min
-    escrow_topup_amount?: number;        // default channel_min_amount + 10
-    escrow_min_amount?: number;          // default channel_min_amount
+    escrow_topup_amount?: number;        // default channel_min_amount (assume only called once)
+    escrow_min_amount?: number;          // default channel_min_amount (assume only called once)
 }
 
 export {InitOptions, RUN_JOB_STATE, RunJobOptions}

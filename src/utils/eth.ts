@@ -50,9 +50,9 @@ class EthUtil {
                     .on('receipt', (receipt)=>promi.emit('receipt', receipt))
                     .on('transactionHash', (receipt)=>promi.emit('transactionHash', receipt))
                     .on('confirmation', (receipt)=>promi.emit('confirmation', receipt))
-                    .then((receipt)=>promi.resolve(receipt))
-                    .catch((err)=>promi.reject(err));
-            });
+                    .catch((error)=> promi.reject(error))
+                    .then((receipt)=>promi.resolve(receipt));
+            }).catch(error => promi.reject(error));
 
             return promi;
         } else
