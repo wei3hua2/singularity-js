@@ -10,5 +10,6 @@ interface Data {
     init(): Promise<any>;
 }
 
-export {Account, Organization, Service, Channel, ChannelState, InitOptions,
+
+export {Organization, Account, Service, Channel, ChannelState, InitOptions,
     ServiceHeartbeat, ServiceMetadata, ServiceInfo, ServiceFieldInfo, Data, RUN_JOB_STATE, RunJobOptions};

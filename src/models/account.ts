@@ -43,6 +43,8 @@ abstract class Account implements Data {
     async init(): Promise<Account> {
         if(this.isInit) return this;
 
+        if(!this.address) this.address = (await this.eth.getAccounts())[0];
+
         const ethInit = await this.eth.init();
         const tokenSuccess = await this.tokens.init();
         const mpeSuccess = await this.mpe.init();

@@ -1,6 +1,7 @@
 import {Data} from './index';
-import {Service} from './service';
+import {ServiceSvc} from '../impls/service';
 import {Account} from './account';
+import {Service} from './service';
 
 abstract class Organization implements Data {
     id:string;
@@ -19,13 +20,14 @@ abstract class Organization implements Data {
     }
 
     set data(data: Object) {
-        // this.services = fields.serviceIds ? fields.serviceIds.map((svcId) => ServiceSvc.init(this.account, this.id, svcId)) : [];
-
         this.id = data['id'] || this.id;
         this.owner = data['owner'] || this.owner;
         this.name = data['name'] || this.name;
         this.members = data['members'] || this.members;
-        // this.services = data['services'] || this.services;
+
+        const svcs = data['serviceIds'] ? 
+            data['serviceIds'].map((svcId) => ServiceSvc.init(this.account, this.id, svcId, {init:false})) : [];
+        this.services = svcs || this.services;
     }
 
     get data(): Object {

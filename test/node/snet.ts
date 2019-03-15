@@ -5,8 +5,7 @@ import {Snet} from '../../src/snet';
 import {ServiceSvc, OrganizationSvc, AccountSvc} from '../../src/impls';
 import {Service, Organization, Account} from '../../src/models';
 import {Utils} from '../../src/utils';
-import {RUN_JOB_STATE} from '../../src/models/options';
-import fs from 'fs';
+
 
 let web3, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
 
@@ -147,7 +146,7 @@ const EXAMPLESVC_SERVICE_INFO = {
 
 
 
-m.describe('Snet', () => {
+m.describe.only('Snet', () => {
 
   m.it('should have valid class', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
@@ -171,7 +170,7 @@ m.describe('Snet', () => {
     c.expect(org).to.not.be.an.instanceof(Snet);
   });
 
-  m.xit('should list organization', async function () {
+  m.it('should list organization', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
     // organizations
 
@@ -183,6 +182,7 @@ m.describe('Snet', () => {
     c.expect(org.id).to.exist;
     c.expect(org.name).to.undefined;
 
+
     orgs = await snet.listOrganizations({init:true});
     org = orgs[0];
 
@@ -190,9 +190,11 @@ m.describe('Snet', () => {
     c.expect(org.isInit).to.be.true;
     c.expect(org.id).to.exist;
     c.expect(org.name).to.exist;
+    c.expect(org.services.length).to.be.greaterThan(0);
+
   });
 
-  m.xit('should get organization', async function () {
+  m.xit('should get organization : snet', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
     const snetOrg = await snet.getOrganization('snet');
 
@@ -208,12 +210,11 @@ m.describe('Snet', () => {
     c.expect(snetSvc.id).to.exist;
     c.expect(snetSvc.organizationId).to.be.equal('snet');
     c.expect(snetSvc.isInit).to.be.false;
+
   });
 
-
-  m.xit('should get service', async function () {
+  m.xit('should get service: example-service', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
-
     
     const exampleSvc = await snet.getService('snet', 'example-service');
     
@@ -316,7 +317,6 @@ m.describe('Snet', () => {
         request.input ="Macdonald was a great firm before it was sold to S. J. Wolfe &amp; Co. ";
         
         const job = svc.runJob('named_entity_disambiguation', request, {channel_min_expiration: 10000});
-        listAllEvents(job);
         job.then(v => { console.log(JSON.stringify(v)); done(); });
         job.catch(done);
       });
@@ -346,17 +346,3 @@ m.describe('Snet', () => {
     
   }).timeout(50000);
 })
-
-function listAllEvents(promiEvent) {
-  for(var state in RUN_JOB_STATE){
-    const s = state.slice(0);
-    promiEvent.on(s, (evt) => {
-      console.log('*** '+s+' ***');
-
-      if(s === RUN_JOB_STATE.sign_channel_state)
-        console.log(Object.keys(evt));
-      else
-        console.log(evt);
-    });
-  }
-}

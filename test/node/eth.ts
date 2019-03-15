@@ -25,7 +25,7 @@ m.after(() => {
     eth.close();
 })
 
-m.describe('Eth', () => {
+m.describe.skip('Eth', () => {
   m.it('should ensure basic information is valid', async function() {
     const version = eth.getWeb3Version();
     const netId = await eth.getNetworkId();

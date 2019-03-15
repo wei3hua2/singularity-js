@@ -7,8 +7,13 @@
 import {SnetError, ERROR_CODE} from '../errors/snet-error';
 import * as pb from 'protobufjs';
 import {ChannelSvc} from './channel';
-import {ServiceMetadata, Service, Channel, Account, InitOptions, ChannelState,
-    ServiceHeartbeat, RunJobOptions, RUN_JOB_STATE, ServiceInfo, ServiceFieldInfo} from '../models';
+// import {ServiceMetadata, Service, Channel, Account, InitOptions, ChannelState,
+//     ServiceHeartbeat, RunJobOptions, RUN_JOB_STATE, ServiceInfo, ServiceFieldInfo} from '../models';
+import {Channel, ChannelState} from '../models/channel';
+import {Account} from '../models/account';
+import {InitOptions,RunJobOptions, RUN_JOB_STATE} from '../models/options';
+import {ServiceMetadata, Service,  
+        ServiceHeartbeat, ServiceInfo, ServiceFieldInfo} from '../models/service';
 import axios from 'axios';
 import {PromiEvent} from 'web3-core-promievent';
 //@ts-ignore

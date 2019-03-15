@@ -2,13 +2,13 @@
  * @module channel
  */
 
-import { EventEmitter } from 'events';
-import { Channel, ChannelState, Account } from '../models';
+import { Account } from '../models/account';
+import { Channel, ChannelState } from '../models/channel';
 import {ChannelStateSvc} from './channel-state';
 import { SnetError, ERROR_CODE } from '../errors/snet-error';
-import { Marketplace } from '../utils/marketplace';
 import { TransactOptions, EventOptions } from '../utils/eth';
 import {PromiEvent} from 'web3-core-promievent';
+
 
 class ChannelSvc extends Channel {
     private constructor(account:Account, id: number, fields:any = {}) {

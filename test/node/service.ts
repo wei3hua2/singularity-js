@@ -104,50 +104,7 @@ m.describe.only('ServiceSvc', () => {
     c.expect(encoding).that.be.equal('proto\n');
   });
 
-  m.xit('should run simple example-service job', function (done) {
-
-    const svc = ServiceSvc.init(account, 'snet', 'example-service');
-
-    perf.start('main');
-
-    svc.then((svc) => {
-      perf.start();
-      const request = svc.defaultRequest('add');
-      c.expect(Object.keys(request)).to.be.deep.equal(['a','b']);
-
-      request.a = 5, request.b = 6;
-  
-      const job = svc.runJob('add', request);
-
-      // handleEvents(job);
-      job.on('all_events', (evts) => {
-        log.info(perf.stop().words);
-        log.info('**** '+evts[0]+' ****');
-
-        if(evts[0] === 'response') {
-          evts[1].sign_channel_state.signature = "* EXCLUDED *";
-          log.info(evts[1]);
-        }
-
-        perf.start();
-      });
-
-      return job;
-    }).then((response) => {
-      c.expect(response.value).to.be.equals(11);
-      log.info(perf.stop('main').words);
-      perf.stop();
-      done();
-    }).catch(err => {
-      console.log('ERROR FOUND : ');
-      done(err);
-    })
-
-    
-  }).timeout(10 * 60 * 1000);
-
-
-  m.it('should run simple example-service job 2', async function () {
+  m.xit('should run simple example-service job', async function () {
     const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
     // const balance = await account.getEscrowBalances({inCogs:true});

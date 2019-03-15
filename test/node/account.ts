@@ -29,7 +29,7 @@ m.after(() => {
     web31.currentProvider.connection.close();
 })
 
-m.describe('Account', () => {
+m.describe.skip('Account', () => {
 
     m.it('should get agi token', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
