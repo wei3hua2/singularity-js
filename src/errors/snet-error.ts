@@ -28,7 +28,11 @@ enum ERROR_CODE {
     channel_endpoint_not_found = 'channel_endpoint_not_found',
     runjob_svc_call_error = 'runjob_svc_call_error',
     runjob_no_channel_found = 'runjob_no_channel_found',
-    runjob_insufficient_fund_expiration = 'runjob_insufficient_fund_expiration'
+    runjob_insufficient_fund_expiration = 'runjob_insufficient_fund_expiration',
+    runjob_invalid_channel_expiry_options = 'runjob_invalid_channel_expiry_options',
+    runjob_invalid_channel_amount_options = 'runjob_invalid_channel_amount_options',
+    runjob_invalid_escrow_amount_options = 'runjob_invalid_escrow_amount_options',
+    runjob_insufficient_fund_escrow = 'runjob_insufficient_fund_escrow'
 }
 
 /**
@@ -63,6 +67,18 @@ const ERROR_CODES = {
     },
     "eth_tx_error": {
         message: (params:any[]) => `Ethereum Transaction Error ${params[0]}`
+    },
+    "runjob_invalid_channel_expiry_options": {
+        message: (params:any[]) => `Channel expiration option error : ${params[0]}`
+    },
+    "runjob_invalid_channel_amount_options": {
+        message: (params:any[]) => `Channel amount option error : ${params[0]}`
+    },
+    "runjob_invalid_escrow_amount_options": {
+        message: (params:any[]) => `Escrow amount option error : ${params[0]}`
+    },
+    "runjob_insufficient_fund_escrow": {
+        message: (params:any[]) => `${params[0]}`
     }
 };
 

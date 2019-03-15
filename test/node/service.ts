@@ -157,16 +157,20 @@ m.describe.only('ServiceSvc', () => {
 
 
     const channel = await ChannelSvc.retrieve(account, 1218);
-    console.log(channel.data);
+    // console.log(channel.data);
 
-    const job = svc.runJob('add', {a:5, b:6}, channel);
+    const job = svc.runJob('add', {a:5, b:6}, channel, {channel_min_amount: 40})
+      .on('debug_update_options', d =>{ console.log(' - debug_update_options'); console.log(d); });
 
     job.on('all_events', (evts) => {
       log.info(' === '+evts[0]+' ===');
       const result = evts[1];
       if(result['request_channel_state']) result['request_channel_state'].signature = "* EXCLUDED *";
-      if(evts[0] === 'reply_svc_call') log.info(result);
+      // if(evts[0] === 'request_svc_call') log.info(result);
     });
+    
+    job.on('stats', console.log);
+
     const result = await job;
     c.expect(result.value).to.be.equals(11);
 

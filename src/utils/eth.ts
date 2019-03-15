@@ -44,22 +44,35 @@ class EthUtil {
         if(privateKey) {
             const promi = new PromiEvent();
 
-            this.signTx(privateKey, txOptions.from, toAddress, contractMethod).then((signedPayload) => {
-                promi.emit('signed', signedPayload);
-                this.web3.eth.sendSignedTransaction(signedPayload['rawTransaction'])
+            this.signTx(privateKey, txOptions.from, toAddress, contractMethod).then((result) => {
+                promi.emit('signed', result);
+                const rawTransaction = result.signed['rawTransaction'];
+
+                this.web3.eth.sendSignedTransaction(rawTransaction)
                     .on('receipt', (receipt)=>promi.emit('receipt', receipt))
                     .on('transactionHash', (receipt)=>promi.emit('transactionHash', receipt))
                     .on('confirmation', (receipt)=>promi.emit('confirmation', receipt))
                     .catch((error)=> promi.reject(error))
-                    .then((receipt)=>promi.resolve(receipt));
+                    .then((receipt)=>promi.resolve({method:method, tx:result , receipt:receipt}));
             }).catch(error => promi.reject(error));
 
             return promi;
-        } else
-            return contractMethod.send(txOptions);
+        } else {
+            const promi = new PromiEvent();
+
+            contractMethod.send(txOptions)
+                    .on('receipt', (receipt)=>promi.emit('receipt', receipt))
+                    .on('transactionHash', (receipt)=>promi.emit('transactionHash', receipt))
+                    .on('confirmation', (receipt)=>promi.emit('confirmation', receipt))
+                    .catch((error)=> promi.reject(error))
+                    .then((receipt)=>promi.resolve({method:method, tx:null , receipt:receipt}));
+            
+            return promi;
+        }
+            
     }
 
-    async signTx (privateKey: string, from:string, to:string, method:any): Promise<string> {
+    async signTx (privateKey: string, from:string, to:string, method:any): Promise<{transaction: Object, signed: string}> {
         const nonce = await this.web3.eth.getTransactionCount(from);
         const gas = await method.estimateGas({from:from});
         const gas_price = parseInt(await this.web3.eth.getGasPrice());
@@ -74,7 +87,9 @@ class EthUtil {
             data: method.encodeABI()
         };
 
-        return this.web3.eth.accounts.signTransaction(tx, privateKey);
+        const signed = await this.web3.eth.accounts.signTransaction(tx, privateKey);
+
+        return {transaction: tx, signed: signed};
     }
 
     once(contract, method, opts:EventOptions={}): Promise<any> {
