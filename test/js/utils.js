@@ -1,5 +1,4 @@
-import * as fs from 'fs';
-// import * as Web3 from 'web3';
+const fs = require('fs');
 const Web3 = require('web3');
 
 
@@ -16,4 +15,5 @@ function getConfigInfo () {
     return config;
 }
 
-export {initWeb3, getConfigInfo}
+// export {initWeb3, getConfigInfo}
+module.exports = {initWeb3, getConfigInfo}

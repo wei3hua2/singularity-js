@@ -56,22 +56,22 @@ class AccountSvc extends Account {
 
     public approveEscrow(amount: number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
         const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
-        return this.tokens.approve(this.mpe.address, cogAmount, {from: this.address});
+        return this.tokens.approve(this.mpe.address, cogAmount);
     }
 
     public transfer(to:string|Account, amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
         const toStr = to instanceof Account ? to.address : to;
         const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
 
-        return this.tokens.transfer(toStr, cogAmount, {from: this.address});
+        return this.tokens.transfer(toStr, cogAmount);
     }
     public depositToEscrow(amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
         const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
-        return this.mpe.deposit(cogAmount, {from: this.address});
+        return this.mpe.deposit(cogAmount);
     }
     public withdrawFromEscrow(amount:number, opts: {inCogs: boolean} = {inCogs:false}): PromiEvent<any> {
         const cogAmount = opts.inCogs ? amount : this.toCogs(amount);
-        return this.mpe.withdraw(cogAmount, {from: this.address});
+        return this.mpe.withdraw(cogAmount);
     }
 
     private toCogs(agi: number): number {

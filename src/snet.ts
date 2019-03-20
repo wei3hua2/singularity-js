@@ -149,5 +149,5 @@ class InitOption {
 }
 
 export {
-    Snet
+    Snet, InitOption
 };

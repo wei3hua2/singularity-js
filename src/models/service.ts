@@ -9,8 +9,8 @@ import {NETWORK} from '../configs/network';
 abstract class Service extends Grpc implements Data {
     id: string;
     organizationId: string;
-    metadata: ServiceMetadata;
-    tags: string[];
+    metadata?: ServiceMetadata;
+    tags?: string[];
 
     isInit: boolean = false;
 

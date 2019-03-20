@@ -5,10 +5,10 @@ import {Service} from './service';
 
 abstract class Organization implements Data {
     id:string;
-    name:string;
-    owner:Account;
-    members:Account[];
-    services: Service[];
+    name?:string;
+    owner?:Account;
+    members?:Account[];
+    services?: Service[];
 
     isInit: boolean = false;
 

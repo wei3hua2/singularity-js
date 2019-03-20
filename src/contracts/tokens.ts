@@ -2,11 +2,12 @@
  * @module snet
  */
 
+import * as EventEmitter from 'eventemitter3';
 import {Contract} from './contract';
 //@ts-ignore
 import AGITokenNetworks from 'singularitynet-token-contracts/networks/SingularityNetToken.json';
 
-//@ts-ignore
+// @ts-ignore
 import AGITokenAbi from 'singularitynet-token-contracts/abi/SingularityNetToken.json';
 
 import {Account} from '../models/account';
@@ -28,23 +29,23 @@ class Tokens extends Contract {
     symbol = () => this.callContract('symbol');
     allowance = (owner: string, sender: string) => this.callContract('allowance', owner, sender).then(parseInt);
 
-    transfer = (to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transfer', txOpt, to, value);
-    approve = (spender: string, value: number, txOpt:TransactOptions={}) => this.transactContract('approve', txOpt, spender, value);
-    transferOwnership = (newOwner: string, txOpt:TransactOptions={}) => this.transactContract('transferOwnership',txOpt, newOwner);
-    increaseApproval = (spender: string, addedValue: number, txOpt:TransactOptions={}) => this.transactContract('increaseApproval',txOpt, spender, addedValue);
-    decreaseApproval = (spender: string, subtractedValue: number, txOpt:TransactOptions={}) => this.transactContract('decreaseApproval',txOpt, spender, subtractedValue);
-    unpause = (txOpt:TransactOptions={}) => this.transactContract('unpause', txOpt);
-    pause = (txOpt:TransactOptions={}) => this.transactContract('pause', txOpt);
-    burn = (value: number, txOpt:TransactOptions={}) => this.transactContract('burn', txOpt, value);
-    transferFrom = (from: string, to: string, value: number, txOpt:TransactOptions={}) => this.transactContract('transferFrom', txOpt, from, to, value);
-    transferTokens = (beneficiary: string, amount: number, txOpt:TransactOptions={}) => this.transactContract('transferTokens', txOpt, beneficiary, amount);
+    transfer = (to: string, value: number) => this.transactContract('transfer', to, value);
+    approve = (spender: string, value: number) => this.transactContract('approve', spender, value);
+    transferOwnership = (newOwner: string) => this.transactContract('transferOwnership',newOwner);
+    increaseApproval = (spender: string, addedValue: number) => this.transactContract('increaseApproval',spender, addedValue);
+    decreaseApproval = (spender: string, subtractedValue: number) => this.transactContract('decreaseApproval',spender, subtractedValue);
+    unpause = () => this.transactContract('unpause');
+    pause = () => this.transactContract('pause');
+    burn = (value: number) => this.transactContract('burn', value);
+    transferFrom = (from: string, to: string, value: number) => this.transactContract('transferFrom', from, to, value);
+    transferTokens = (beneficiary: string, amount: number) => this.transactContract('transferTokens', beneficiary, amount);
 
-    Transfer = (type: string, opt:EventOptions={}) => this.event('Transfer', type, opt);
-    Burn = (type: string, opt:EventOptions={}) => this.event('Burn', type, opt);
-    Pause = (type: string, opt:EventOptions={}) => this.event('Pause', type, opt);
-    Unpause = (type: string, opt:EventOptions={}) => this.event('Unpause', type, opt);
-    OwnershipTransferred = (type: string, opt:EventOptions={}) => this.event('OwnershipTransferred',type, opt);
-    Approval = (type: string, opt:EventOptions={}) => this.event('Approval', type, opt);
+    Transfer = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('Transfer', type, opt);
+    Burn = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('Burn', type, opt);
+    Pause = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('Pause', type, opt);
+    Unpause = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('Unpause', type, opt);
+    OwnershipTransferred = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('OwnershipTransferred',type, opt);
+    Approval = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('Approval', type, opt);
 }
 
 export {Tokens}

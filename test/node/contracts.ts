@@ -12,6 +12,7 @@ import {Ipfs} from '../../src/utils/ipfs';
 let web3, acct;
 let PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PRIVATE_KEY;
 
+
 m.before(async () => {
   web3 = initWeb3();
 
@@ -21,7 +22,7 @@ m.before(async () => {
 
   acct = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
 });
-m.after(() => {
+m.after(async () => {
   web3.currentProvider.connection.close();
 })
 

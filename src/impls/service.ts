@@ -21,6 +21,7 @@ import {NETWORK} from '../configs/network';
 import {CONFIG} from '../configs/config';
 
 import {Logger} from '../utils/logger';
+import {Buffer} from 'buffer';
 
 const log = Logger.logger();
 

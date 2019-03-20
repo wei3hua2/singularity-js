@@ -1,10 +1,14 @@
 import * as c from 'chai';
 import * as m from 'mocha';
 import {initWeb3, getConfigInfo} from './utils';
-import {Snet} from '../../src/snet';
-import {ServiceSvc, OrganizationSvc, AccountSvc} from '../../src/impls';
-import {Service, Organization, Account} from '../../src/models';
-import {Utils} from '../../src/utils';
+// import {Snet} from '../../src/snet';
+// import {ServiceSvc, OrganizationSvc, AccountSvc} from '../../src/impls';
+// import {Service, Organization, Account} from '../../src/models';
+// import {Utils} from '../../src/utils';
+import {Snet} from '../../dist/snet';
+import {ServiceSvc, OrganizationSvc, AccountSvc} from '../../dist/impls';
+import {Service, Organization, Account} from '../../dist/models';
+import {Utils} from '../../dist/utils';
 
 
 let web3, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
@@ -146,7 +150,7 @@ const EXAMPLESVC_SERVICE_INFO = {
 
 
 
-m.describe('Snet', () => {
+m.describe.only('Snet', () => {
 
   m.it('should have valid class', async function () {
     const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});

@@ -7,7 +7,8 @@ import {Account} from './account';
 import { Root, NamespaceBase, Service, rpc, Type, Method } from 'protobufjs';
 import axios from 'axios';
 
-const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
+// const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
+import { ChunkParser, ChunkType } from "grpc-web-client/dist/ChunkParser";
 
 
 abstract class Grpc {

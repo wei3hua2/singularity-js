@@ -20,7 +20,7 @@ m.after(() => {
     web3.currentProvider.connection.close();
 })
 
-m.describe('Channels', () => {
+m.describe.skip('Channels', () => {
     m.xit('should open channel on snet, example-service', async function () {
         const exampleSvc = await ServiceSvc.init(account, 'snet','example-service');
         await exampleSvc.init();
@@ -33,9 +33,9 @@ m.describe('Channels', () => {
         // const channel = channels.find((c)=> c.id === 1133);
         // await channel.claimTimeout();
 
-        const c = ChannelSvc.init(account, 1133);
-        await c.init();
-        console.log(c.toString());
+        // const c = ChannelSvc.init(account, 1133);
+        // await c.init();
+        // console.log(c.toString());
 
 
         // const receipt = await exampleSvc.openChannel(20, {from:PERSONAL_ACCOUNT, privateKey:PERSONAL_ACCOUNT_PK});

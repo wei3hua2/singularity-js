@@ -2,6 +2,7 @@
  * @module snet
  */
 
+import * as EventEmitter from 'eventemitter3';
 import {Contract} from './contract';
 import {Account} from '../models/account';
 import {SnetError} from '../errors/snet-error';
@@ -18,16 +19,16 @@ class Registry extends Contract {
     getAbi(){ return RegistryAbi; }
     getNetworkObj(){ return RegistryNetworks; }
 
-    OrganizationCreated = (type: string, opt:EventOptions={}) => this.event('OrganizationCreated', type, opt);
-    OrganizationModified = (type: string, opt:EventOptions={}) => this.event('OrganizationModified', type, opt);
-    OrganizationDeleted = (type: string, opt:EventOptions={}) => this.event('OrganizationDeleted', type, opt);
-    ServiceCreated = (type: string, opt:EventOptions={}) => this.event('ServiceCreated', type, opt);
-    ServiceMetadataModified = (type: string, opt:EventOptions={}) => this.event('ServiceMetadataModified', type, opt);
-    ServiceTagsModified = (type: string, opt:EventOptions={}) => this.event('ServiceTagsModified', type, opt);
-    ServiceDeleted = (type: string, opt:EventOptions={}) => this.event('ServiceDeleted', type, opt);
-    TypeRepositoryCreated = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryCreated', type, opt);
-    TypeRepositoryModified = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryModified', type, opt);
-    TypeRepositoryDeleted = (type: string, opt:EventOptions={}) => this.event('TypeRepositoryDeleted', type, opt);
+    OrganizationCreated = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('OrganizationCreated', type, opt);
+    OrganizationModified = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('OrganizationModified', type, opt);
+    OrganizationDeleted = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('OrganizationDeleted', type, opt);
+    ServiceCreated = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('ServiceCreated', type, opt);
+    ServiceMetadataModified = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('ServiceMetadataModified', type, opt);
+    ServiceTagsModified = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('ServiceTagsModified', type, opt);
+    ServiceDeleted = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('ServiceDeleted', type, opt);
+    TypeRepositoryCreated = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('TypeRepositoryCreated', type, opt);
+    TypeRepositoryModified = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('TypeRepositoryModified', type, opt);
+    TypeRepositoryDeleted = (type: string, opt:EventOptions={}): EventEmitter|Promise<any> => this.event('TypeRepositoryDeleted', type, opt);
 
     /******* Call *******/
 
@@ -110,71 +111,71 @@ class Registry extends Contract {
 
     // transact
 
-    createOrganization = (orgId:string, orgName:string='', members:string[]=[], txOpt:TransactOptions={}) => {
+    createOrganization = (orgId:string, orgName:string='', members:string[]=[]) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('createOrganization',txOpt,oId, orgName, members);
+        return this.transactContract('createOrganization',oId, orgName, members);
     }
 
-    changeOrganizationOwner = (orgId:string, newOwner:string, txOpt:TransactOptions={}) => {
+    changeOrganizationOwner = (orgId:string, newOwner:string) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('changeOrganizationOwner',txOpt,oId,newOwner);
+        return this.transactContract('changeOrganizationOwner',oId,newOwner);
     }
-    changeOrganizationName = (orgId:string, orgName:string, txOpt:TransactOptions={}) => {
+    changeOrganizationName = (orgId:string, orgName:string) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('changeOrganizationName',txOpt,oId,orgName);
+        return this.transactContract('changeOrganizationName',oId,orgName);
     }
-    addOrganizationMembers = (orgId:string, newMembers:string[], txOpt:TransactOptions={}) => {
+    addOrganizationMembers = (orgId:string, newMembers:string[]) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('addOrganizationMembers',txOpt,oId,newMembers);
+        return this.transactContract('addOrganizationMembers',oId,newMembers);
     }
-    removeOrganizationMembers = (orgId:string, existingMembers:string[], txOpt:TransactOptions={}) => {
+    removeOrganizationMembers = (orgId:string, existingMembers:string[]) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('removeOrganizationMembers',txOpt,oId,existingMembers);
+        return this.transactContract('removeOrganizationMembers',oId,existingMembers);
     }
-    deleteOrganization = (orgId:string, txOpt:TransactOptions={}) => {
+    deleteOrganization = (orgId:string) => {
         const oId = this.eth.asciiToBytes(orgId);
-        return this.transactContract('deleteOrganization',txOpt,oId);
+        return this.transactContract('deleteOrganization',oId);
     }
 
-    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='', tags:string[]=[], txOpt:TransactOptions={}) => {
+    createServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='', tags:string[]=[]) => {
         const that = this;
         const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
         const mdURI = this.eth.asciiToBytes(metadataURI);
         const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
 
-        return this.transactContract('createServiceRegistration',txOpt, oId, sId, mdURI, ts);
+        return this.transactContract('createServiceRegistration',oId, sId, mdURI, ts);
     }
-    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='', txOpt:TransactOptions={}) => {
+    updateServiceRegistration = (orgId:string, serviceId:string, metadataURI:string='') => {
         const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
         const mdURI = this.eth.asciiToBytes(metadataURI);
 
-        return this.transactContract('updateServiceRegistration',txOpt, oId, sId, mdURI);
+        return this.transactContract('updateServiceRegistration',oId, sId, mdURI);
     }
-    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[], txOpt:TransactOptions={}) => {
+    addTagsToServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[]) => {
         const that = this;
         const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
         const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
 
-        return this.transactContract('addTagsToServiceRegistration',txOpt, oId, sId, ts);
+        return this.transactContract('addTagsToServiceRegistration',oId, sId, ts);
     }
-    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[], txOpt:TransactOptions={}) => {
+    removeTagsFromServiceRegistration = (orgId:string, serviceId:string, tags:string[]=[]) => {
         const that = this;
         const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
         const ts = tags.map(function(t){return that.eth.asciiToBytes(t);});
 
-        return this.transactContract('removeTagsFromServiceRegistration',txOpt, oId, sId, ts);
+        return this.transactContract('removeTagsFromServiceRegistration',oId, sId, ts);
     }
-    deleteServiceRegistration = (orgId:string, serviceId:string, txOpt:TransactOptions={}) => {
+    deleteServiceRegistration = (orgId:string, serviceId:string) => {
         const oId = this.eth.asciiToBytes(orgId), sId = this.eth.asciiToBytes(serviceId);
 
-        return this.transactContract('deleteServiceRegistration',txOpt, oId, sId);
+        return this.transactContract('deleteServiceRegistration', oId, sId);
     }
 
-    createTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('createTypeRepositoryRegistration',txOpt,orgId,repositoryId,repositoryURI,tags);
-    updateTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, txOpt:TransactOptions={}) => this.transactContract('updateTypeRepositoryRegistration',txOpt,orgId, repositoryId, repositoryURI);
-    addTagsToTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('addTagsToTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
-    removeTagsFromTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[], txOpt:TransactOptions={}) => this.transactContract('removeTagsFromTypeRepositoryRegistration',txOpt,orgId, repositoryId, tags);
-    deleteTypeRepositoryRegistration = (orgId:string, repositoryId:string, txOpt:TransactOptions={}) => this.transactContract('deleteTypeRepositoryRegistration',txOpt,orgId,repositoryId);
+    createTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string, tags:string[]) => this.transactContract('createTypeRepositoryRegistration',orgId,repositoryId,repositoryURI,tags);
+    updateTypeRepositoryRegistration = (orgId:string, repositoryId:string, repositoryURI:string) => this.transactContract('updateTypeRepositoryRegistration',orgId, repositoryId, repositoryURI);
+    addTagsToTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[]) => this.transactContract('addTagsToTypeRepositoryRegistration',orgId, repositoryId, tags);
+    removeTagsFromTypeRepositoryRegistration = (orgId:string, repositoryId:string, tags:string[]) => this.transactContract('removeTagsFromTypeRepositoryRegistration',orgId, repositoryId, tags);
+    deleteTypeRepositoryRegistration = (orgId:string, repositoryId:string) => this.transactContract('deleteTypeRepositoryRegistration',orgId,repositoryId);
 }
 
 export {Registry}

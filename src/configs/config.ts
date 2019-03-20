@@ -5,7 +5,7 @@ const CONFIG = {
     "EXPIRATION_BLOCK_TOPUP_OFFSET": 240,
     "EXPIRATION_BLOCK_MIN_OFFSET": 12,
     "IPFS_URL": "http://ipfs.singularitynet.io/api/v0/",
-    "DEFAULT_LOG_LEVEL": 5
+    "DEFAULT_LOG_LEVEL": 3
 }
 
 export {CONFIG}

@@ -5,7 +5,7 @@
 import {TransactOptions, EventOptions} from '../utils/eth';
 import {Account} from '../models/account';
 import {PromiEvent} from 'web3-core-promievent';
-import {EventEmitter} from 'events';
+import * as EventEmitter from 'eventemitter3';
 import {EthUtil} from '../utils/eth';
 import {Logger} from '../utils/logger';
 import {SnetError, ERROR_CODE} from '../errors/snet-error';
@@ -60,9 +60,10 @@ abstract class Contract {
 
         return result;
     }
-    protected transactContract(method: string, txOptions: TransactOptions, ...params: any[]): PromiEvent<any> {
+    protected transactContract(method: string, ...params: any[]): PromiEvent<any> {
         
-        txOptions.from = txOptions.from || this.account.address;
+        const txOptions = {from: this.account.address};
+        // txOptions.from = txOptions.from || this.account.address;
 
         log.debug(`contract.transactContract > eth.transact ${method} , ${txOptions} , ${params} , ${this.address}`);
         log.debug(JSON.stringify(txOptions));

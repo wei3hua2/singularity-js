@@ -7,9 +7,7 @@ import {RUN_JOB_STATE} from '../../src/models/options';
 import {AccountSvc} from '../../src/impls/account';
 import {getConfigInfo} from './utils';
 import {Logger} from '../../src/utils/logger';
-import * as Perf from 'execution-time';
 
-const perf = Perf.default();
 
 Logger.setLogLevel(2);
 
@@ -27,7 +25,7 @@ m.before(async() => {
     account = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
     testAccount = await AccountSvc.create(web3, {address: TEST_ACCOUNT, privateKey: TEST_ACCOUNT_PK});
 });
-m.after(async () => {
+m.after( async () => {
   web3.currentProvider.connection.close();
 });
 
