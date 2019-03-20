@@ -35,6 +35,7 @@ class AccountSvc extends Account {
     public async getChannels (
         opts: EventOptions = {filter:{}}, initOpts: {init:boolean} = {init:false}): Promise<ChannelSvc[]> {
 
+        if(!opts.filter) opts.filter = {};
         opts.filter['sender'] = this.address;
 
         const openChannelsEvents = Array.from(await this.mpe.ChannelOpen('past' , opts));

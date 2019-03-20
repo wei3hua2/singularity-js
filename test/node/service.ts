@@ -31,7 +31,7 @@ m.after(async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe.only('ServiceSvc', () => {
+m.describe('ServiceSvc', () => {
 
   m.xit('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
@@ -104,7 +104,7 @@ m.describe.only('ServiceSvc', () => {
     c.expect(encoding).that.be.equal('proto\n');
   });
 
-  m.xit('should run simple example-service job', async function () {
+  m.it('should run simple example-service job', async function () {
     const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
     // const balance = await account.getEscrowBalances({inCogs:true});

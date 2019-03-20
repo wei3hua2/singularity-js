@@ -115,7 +115,7 @@ class ServiceSvc extends Service {
 
     private DEFAULT_BASIC_OPTS() {
         return {
-            autohandle_channel: true, autohandle_escrow: true,
+            autohandle_channel: true, autohandle_escrow: false,
             channel_topup_amount: null, channel_min_amount: null,
             channel_topup_expiration: null, channel_min_expiration: null,
             escrow_topup_amount: null, escrow_min_amount: null};
@@ -206,13 +206,13 @@ class ServiceSvc extends Service {
         if(channelOrOpts instanceof Channel) {
             channel = channelOrOpts;
             options = opts || {};
+            channel.endpoint = this.getEndpoint();
         }
         else options = channelOrOpts || {};
         
         options = Object.assign({}, this.DEFAULT_BASIC_OPTS(), options);
         
-        channel.endpoint = this.getEndpoint();
-
+        
         return {channel, options};
     }
 
@@ -231,7 +231,7 @@ class ServiceSvc extends Service {
         // 2. Stablize channel
         let state = {id:resolved.channel.id, nonce: 0, signedAmount: 0};
         if(!resolved.isNew) {
-            const channelState = await channel.getChannelState(jobPromise); 
+            const channelState = await resolved.channel.getChannelState(jobPromise); 
             jobPromise.emit(RUN_JOB_STATE.reply_channel_state, channelState.data);
                 
             opts = Object.assign({}, opts, await this.handleAmountOpts(opts, channelState));
@@ -265,7 +265,7 @@ class ServiceSvc extends Service {
         else if(!channels.some(c => result.id === c.id)) 
             throw new SnetError(ERROR_CODE.runjob_no_channel_found, result.id);
         
-        if(opts.autohandle_channel && !channel) {
+        if(opts.autohandle_channel && !result) {
             const channel_topup_expiration = opts.channel_topup_expiration;
             const channel_topup_amount = opts.channel_topup_amount || this.getPrice(); 
 
@@ -276,16 +276,16 @@ class ServiceSvc extends Service {
                 await this.topupEscrow(jobPromise, escrowCondition, opts.autohandle_escrow);
             }
 
-            channel = await this.openChannel(channel_topup_amount, channel_topup_expiration, jobPromise);
+            result = await this.openChannel(channel_topup_amount, channel_topup_expiration, jobPromise);
 
             _newOpenChannel = true;
         }
-        else if(!opts.autohandle_channel && !channel)
+        else if(!opts.autohandle_channel && !result)
             throw new SnetError(ERROR_CODE.runjob_no_channel_found, {});
 
-        await channel.init();
+        await result.init();
 
-        return {isNew: _newOpenChannel, channel: channel};
+        return {isNew: _newOpenChannel, channel: result};
 
     }
     private async _runJobStablizeChannel(jobPromise:PromiEvent, channel:Channel, opts:RunJobOptions): Promise<void> {

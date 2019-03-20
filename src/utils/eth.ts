@@ -60,16 +60,27 @@ class EthUtil {
         } else {
             const promi = new PromiEvent();
 
-            contractMethod.send(txOptions)
+            this.getGasInfo(contractMethod, txOptions.from).then(gasInfo => {
+                if(!txOptions.gas) txOptions.gas = gasInfo['gas'];
+                if(!txOptions.gasPrice) txOptions.gasPrice = gasInfo['gas_price'];
+
+                contractMethod.send(txOptions)
                     .on('receipt', (receipt)=>promi.emit('receipt', receipt))
                     .on('transactionHash', (receipt)=>promi.emit('transactionHash', receipt))
                     .on('confirmation', (receipt)=>promi.emit('confirmation', receipt))
                     .catch((error)=> promi.reject(error))
                     .then((receipt)=>promi.resolve({method:method, tx:null , receipt:receipt}));
+            }).catch(err => promi.reject(err));
             
             return promi;
         }
-            
+    }
+
+    async getGasInfo(method, from:string): Promise<Object> {
+        const gas_price = await this.web3.eth.getGasPrice();
+        const gas = await method.estimateGas({from:from});
+
+        return {gas: gas, gas_price: parseInt(gas_price)};
     }
 
     async signTx (privateKey: string, from:string, to:string, method:any): Promise<{transaction: Object, signed: string}> {
@@ -192,6 +203,9 @@ class EthUtil {
         else throw new Error('No approach to signing');
     }
 
+    listenBlockHeaders() {
+        return this.web3.eth.subscribe('newBlockHeaders');
+    }
 }
 
 interface TransactOptions {
