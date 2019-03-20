@@ -23,7 +23,7 @@ m.after(async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe.only('Utility', () => {
+m.describe.skip('Utility', () => {
     m.it('should list organization', async function (done) {
         const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
 
