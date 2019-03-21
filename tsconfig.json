@@ -1,28 +1,23 @@
 {
-  "include": [
-    "src/**.ts"
-   ],
-   "exclude": [
-    "node_modules", "test/**.ts"
-   ],
+  "include": ["src/**.ts"],
+  "exclude": ["node_modules", "test/**.ts"],
   "compilerOptions": {
-    "lib": [
-     "es2017","es2015","dom","es6", "es5"
-    ],
+    "lib": ["es5","dom", "es2017"],
+    "types":[],
+    "typeRoots":[],
     "sourceMap": true,
     "outDir":"dist",
-    "skipLibCheck": true,
-    "types":["node"],
-    "target": "es2015",
-    "module": "commonjs",
-    // "declaration": true,
-    "strict": false,
+    "skipLibCheck": false,
+    "resolveJsonModule": true,
     "esModuleInterop": true,
-    "experimentalDecorators":true,
+    "target": "es5",
+    "moduleResolution": "node",
+    "diagnostics": true,
+    "extendedDiagnostics": true,
+    "declaration": true,
+    "strict": false,
     "noImplicitAny": false,
-    // "module": "es6",
-    // "target": "es5" 
-    // "jsx": "react"
-    "allowJs": true
+    "listFiles": false,
+    "listEmittedFiles":false
   }
 }

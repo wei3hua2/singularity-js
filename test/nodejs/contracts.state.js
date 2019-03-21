@@ -1,106 +1,27 @@
-import * as c from 'chai';
-import * as m from 'mocha';
+const c = require('chai');
+const m = require('mocha');
 
-import {initWeb3, getConfigInfo} from './utils';
-import { AccountSvc } from '../../src/impls/account';
-import {Registry} from '../../src/contracts/registry';
-import {Mpe} from '../../src/contracts/mpe';
-import {Tokens} from '../../src/contracts/tokens';
-import {Ipfs} from '../../src/utils/ipfs';
+const {Config} = require('../config/config');
 
+const { AccountSvc } = require('../../dist/impls/account');
+const {Registry} = require('../../dist/contracts/registry');
+const {Mpe} = require('../../dist/contracts/mpe');
+const {Tokens} = require('../../dist/contracts/tokens');
+const {Ipfs} = require('../../dist/utils/ipfs');
 
-let web3, acct;
-let PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PRIVATE_KEY;
+let config;
 
 m.before(async () => {
-  web3 = initWeb3();
-
-  PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-  PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-  TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-
-  acct = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
+  config = await Config.init();
 });
-m.after(() => {
-  web3.currentProvider.connection.close();
+m.after(async () => {
+  config.teardown();
 })
 
-m.describe.skip('Contract', () => {
-  m.it('should work for Tokens call functions', async function() {
-    const tokens = acct.tokens;
-
-    const name = await tokens.name();
-    const totalSupply = await tokens.totalSupply();
-    const INITIAL_SUPPLY = await tokens.INITIAL_SUPPLY();
-    const decimals = await tokens.decimals();
-    const paused = await tokens.paused();
-    const owner = await tokens.owner();
-    const symbol = await tokens.symbol();
-    const balanceOf = await tokens.balanceOf(PERSONAL_ACCOUNT);
-    const allowance = await tokens.allowance(PERSONAL_ACCOUNT, PERSONAL_ACCOUNT);
-
-    c.expect(name).to.equal('SingularityNET Token');
-    c.expect(totalSupply).to.equal(100000000000000000);
-    c.expect(INITIAL_SUPPLY).to.equal(100000000000000000);
-    c.expect(decimals).to.equal(8);
-    c.expect(paused).to.be.false;
-    c.expect(owner).to.have.string('0x');
-    c.expect(symbol).to.equal('AGI');
-    c.expect(balanceOf).to.exist;
-    c.expect(allowance).to.exist;
-
-    console.log('Tokens call result :');
-    console.log('   '+[name, totalSupply, INITIAL_SUPPLY, decimals, paused, owner, symbol, balanceOf, allowance]);
-  });
-
-  m.it('should work for MultiPartyEscrow call functions', async function () {
-    const mpe = acct.mpe;
-
-    const balances = await mpe.balances(PERSONAL_ACCOUNT);
-    const channel = await mpe.channels(1);
-    const nextChannelId = await mpe.nextChannelId();
-    const token = await mpe.token();
-
-    c.expect(balances).to.be.greaterThan(1);
-    c.expect(nextChannelId).to.be.greaterThan(1);
-    c.expect(token).to.have.string('0x');
-
-    c.expect(channel).to.contain.keys(['nonce','signer','recipient','groupId','value','expiration']);
-    c.expect(channel.nonce).to.be.greaterThan(-1);
-    c.expect(channel.value).to.be.greaterThan(0);
-    c.expect(channel.expiration).to.be.greaterThan(-1);
-
-    console.log('MultiParty Escrow call result :');
-    console.log('   '+[balances, channel, nextChannelId, token]);
-  });
-
-  m.it('should work for Registry call functions', async function () {
-    const registry = acct.registry;
-
-    const listOrganizations = await registry.listOrganizations();
-    const getOrganizationById = await registry.getOrganizationById('snet');
-    const listServicesForOrganization = await registry.listServicesForOrganization('snet');
-    const getServiceRegistrationById = await registry.getServiceRegistrationById('snet', 'example-service');
-    const listServiceTags = await registry.listServiceTags();
-    const listServicesForTag = await registry.listServicesForTag('Recognition');
-
-    c.expect(listOrganizations[0]).to.be.equal('snet');
-    c.expect(getOrganizationById).to.contain.keys(['found','id','name','owner','members','serviceIds']);
-    c.expect(listServicesForOrganization).to.contain.keys(['found','serviceIds']);
-    c.expect(getServiceRegistrationById).to.contain.keys(['found','id','metadataURI','tags']);
-    c.expect(listServiceTags.tags.length).to.be.greaterThan(1);
-    c.expect(listServicesForTag).to.contain.keys(['orgIds','serviceIds']);
-
-    console.log('Registry call result :');
-    console.log('   '
-      +[listOrganizations, getOrganizationById, listServicesForOrganization, getServiceRegistrationById, 
-        listServiceTags, listServicesForTag]);
-  });
-
-
+m.describe('contract-state', () => {
 
   m.it('Tokens: should transfer 1 cog from one account to another ', async function () {
-    const tokens = acct.tokens, TRANSFER_VALUE = 1;
+    const tokens = config.acct1.tokens, TRANSFER_VALUE = 1;
 
     const balanceOfB4 = await tokens.balanceOf(TEST_ACCOUNT);
 
@@ -113,12 +34,12 @@ m.describe.skip('Contract', () => {
 
       c.expect(balanceOfB4 + 1).to.be.equal(parseInt(balanceOfAfter));
 
-      console.log('address '+TEST_ACCOUNT+' cogs increase from '+balanceOfB4+ ' to '+balanceOfAfter);
+      config.log('address '+TEST_ACCOUNT+' cogs increase from '+balanceOfB4+ ' to '+balanceOfAfter);
     
   }).timeout(10 * 60 * 1000);
 
-  m.xit('Registry: should perform basic CRUD for organization and service', async function () {
-    const registry:Registry = acct.registry;
+  m.it('Registry: should perform basic CRUD for organization and service', async function () {
+    const registry = config.acct1.registry;
     const ORG_ID = 'snet-js-test', ORG_NAME = 'Snet Js Test';
     const SVC_ID = 'snet-js-test-svc', METADATAURI = 'fake_metadata_uri', TAGS = [];
     let org, svcReg;
@@ -135,7 +56,7 @@ m.describe.skip('Contract', () => {
     c.expect(org.members).to.be.empty;
     c.expect(org.serviceIds).to.be.empty;
     
-    console.log('1. Org id created => '+ORG_ID);
+    config.log('1. Org id created => '+ORG_ID);
 
     // **** 2. change organization name
     await registry.changeOrganizationName(ORG_ID, ORG_NAME);
@@ -149,7 +70,7 @@ m.describe.skip('Contract', () => {
     c.expect(org.members).to.be.empty;
     c.expect(org.serviceIds).to.be.empty;
 
-    console.log('2. Org name changed => '+org.name);
+    config.log('2. Org name changed => '+org.name);
 
     // **** 3. add member
     await registry.addOrganizationMembers(ORG_ID, [TEST_ACCOUNT]);
@@ -163,7 +84,7 @@ m.describe.skip('Contract', () => {
     c.expect(org.members).to.be.deep.equal([TEST_ACCOUNT]);
     c.expect(org.serviceIds).to.be.empty;
 
-    console.log('3. Org member created => '+org.members);
+    config.log('3. Org member created => '+org.members);
 
     // **** 4. remove member
     await registry.removeOrganizationMembers(ORG_ID, [TEST_ACCOUNT]);
@@ -177,7 +98,7 @@ m.describe.skip('Contract', () => {
     c.expect(org.members).to.be.empty
     c.expect(org.serviceIds).to.be.empty;
 
-    console.log('4. Org member removed => '+[TEST_ACCOUNT]);
+    config.log('4. Org member removed => '+[TEST_ACCOUNT]);
 
     // **** 5. create service registration
     await registry.createServiceRegistration(ORG_ID, SVC_ID);
@@ -193,7 +114,7 @@ m.describe.skip('Contract', () => {
 
     c.expect(org.serviceIds).to.be.deep.equal([SVC_ID]);
 
-    console.log('5. Svc created => '+SVC_ID);
+    config.log('5. Svc created => '+SVC_ID);
 
 
     // **** 6. update service registration
@@ -206,7 +127,7 @@ m.describe.skip('Contract', () => {
     c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
     c.expect(svcReg.tags).to.be.empty;
 
-    console.log('6. Svc updated => '+SVC_ID);
+    config.log('6. Svc updated => '+SVC_ID);
 
 
     const UPDATED_TAGS = ['snet-js-tag1','snet-js-tag2'];
@@ -221,7 +142,7 @@ m.describe.skip('Contract', () => {
     c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
     c.expect(svcReg.tags).to.be.deep.equal(UPDATED_TAGS);
 
-    console.log('7. Svc tag created => '+svcReg.tags);
+    config.log('7. Svc tag created => '+svcReg.tags);
 
 
     // **** 8. remove tags from service registration
@@ -234,7 +155,7 @@ m.describe.skip('Contract', () => {
     c.expect(svcReg.metadataURI).to.be.equal(METADATAURI+'_updated');
     c.expect(svcReg.tags).to.be.empty;
 
-    console.log('8. Svc tag removed => '+UPDATED_TAGS);
+    config.log('8. Svc tag removed => '+UPDATED_TAGS);
 
 
     // **** 9. delete service registration
@@ -244,7 +165,7 @@ m.describe.skip('Contract', () => {
 
     c.expect(svcReg.found).to.be.false;
 
-    console.log('9. Svc registration removed => '+SVC_ID);
+    config.log('9. Svc registration removed => '+SVC_ID);
 
 
     // **** 10. delete organization
@@ -254,12 +175,12 @@ m.describe.skip('Contract', () => {
 
     c.expect(org.found).to.be.false;
 
-    console.log('10. Org removed => '+!org.found);
+    config.log('10. Org removed => '+!org.found);
 
   }).timeout(10 * 10 * 60 * 1000);
 
   m.it('Mpe: should perform basic transfer of funds', async function () {
-    const mpe:Mpe = acct.mpe, token:Tokens = acct.tokens;
+    const mpe = config.acct1.mpe, token = config.acct1.tokens;
 
     const initBalance = await mpe.balances(PERSONAL_ACCOUNT);
     const initAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
@@ -273,11 +194,11 @@ m.describe.skip('Contract', () => {
     
     allowance = await token.allowance(PERSONAL_ACCOUNT, mpe.address);
 
-    console.log('init balance       : '+initBalance);
-    console.log('init AGI balance   : '+initAgiBalance);
-    console.log('init test balance  : '+initTestBalance);
-    console.log('allowance          : '+allowance);
-    console.log();
+    config.log('init balance       : '+initBalance);
+    config.log('init AGI balance   : '+initAgiBalance);
+    config.log('init test balance  : '+initTestBalance);
+    config.log('allowance          : '+allowance);
+    config.log();
     
 
     await mpe.deposit(100);
@@ -288,9 +209,9 @@ m.describe.skip('Contract', () => {
     c.expect(initBalance).to.be.equal(depositBalance - 100);
     c.expect(initAgiBalance).to.be.equal(depositAgiBalance + 100);
 
-    console.log('deposit balance       : '+depositBalance);
-    console.log('deposit AGI balance   : '+depositAgiBalance);
-    console.log();
+    config.log('deposit balance       : '+depositBalance);
+    config.log('deposit AGI balance   : '+depositAgiBalance);
+    config.log();
 
 
     await mpe.transfer(TEST_ACCOUNT, 50);
@@ -299,18 +220,18 @@ m.describe.skip('Contract', () => {
 
     c.expect(depositTestBalance).to.be.equal(initTestBalance + 50);
 
-    console.log('init transferred test balance   : '+initTestBalance);
-    console.log('final transferred test balance  : '+depositTestBalance);
-    console.log();
+    config.log('init transferred test balance   : '+initTestBalance);
+    config.log('final transferred test balance  : '+depositTestBalance);
+    config.log();
 
 
     await mpe.withdraw(50);
     const finalBalance = await mpe.balances(PERSONAL_ACCOUNT);
     const finalAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);
 
-    console.log('final balance       : '+finalBalance);
-    console.log('final AGI balance   : '+finalAgiBalance);
-    console.log();
+    config.log('final balance       : '+finalBalance);
+    config.log('final AGI balance   : '+finalAgiBalance);
+    config.log();
 
     c.expect(initBalance).to.be.equal(finalBalance);
     c.expect(initAgiBalance).to.be.equal(finalAgiBalance + 50);
@@ -318,9 +239,9 @@ m.describe.skip('Contract', () => {
 
   }).timeout(3 * 10 * 60 * 1000);
 
-  m.xit('Mpe: should perform operation on channel', async function () {
-    const mpe = acct.mpe;
-    const registry = acct.registry;
+  m.it('Mpe: should perform operation on channel', async function () {
+    const mpe = config.acct1.mpe;
+    const registry = config.acct1.registry;
 
     const exampleSvcReg = await registry.getServiceRegistrationById('snet','example-service');
     const metadata = await Ipfs.cat(exampleSvcReg.metadataURI);
@@ -332,9 +253,9 @@ m.describe.skip('Contract', () => {
     let openedChannel = await mpe.PastChannelOpen(
       {filter:{sender:PERSONAL_ACCOUNT, recipient:recipient, groupId:groupId}});
 
-    console.log('last available channel  :');
-    console.log(openedChannel[openedChannel.length-1] ? openedChannel[openedChannel.length-1].returnValues : 'not found');
-    console.log();
+    config.log('last available channel  :');
+    config.log(openedChannel[openedChannel.length-1] ? openedChannel[openedChannel.length-1].returnValues : 'not found');
+    config.log();
 
     if(openedChannel.length===0) {
       const receipt = await mpe.openChannel(PERSONAL_ACCOUNT, group['payment_address'], group['group_id'], 0, 0);
@@ -351,9 +272,9 @@ m.describe.skip('Contract', () => {
 
     const topupChannel = await mpe.channels(channelId);
 
-    console.log('topup channel value       :'+topupChannel.value);
-    console.log('topup channel expiration  :'+topupChannel.expiration);
-    console.log();
+    config.log('topup channel value       :'+topupChannel.value);
+    config.log('topup channel expiration  :'+topupChannel.expiration);
+    config.log();
 
     c.expect(initChannel.value).to.be.equal(topupChannel.value - 10);
     c.expect(initChannel.expiration).to.be.equal(topupChannel.expiration - 10);
@@ -368,9 +289,9 @@ m.describe.skip('Contract', () => {
     const finalBalance =  await mpe.balances(PERSONAL_ACCOUNT);
 
 
-    console.log('funded balance   :' + fundedBalance);
-    console.log('final balance    :' + finalBalance);
-    console.log();
+    config.log('funded balance   :' + fundedBalance);
+    config.log('final balance    :' + finalBalance);
+    config.log();
 
     c.expect(finalBalance).to.be.greaterThan(fundedBalance);
 

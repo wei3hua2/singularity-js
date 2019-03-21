@@ -21,6 +21,7 @@ import {NETWORK} from '../configs/network';
 import {CONFIG} from '../configs/config';
 
 import {Logger} from '../utils/logger';
+import {Buffer} from 'buffer';
 
 const log = Logger.logger();
 
@@ -642,13 +643,13 @@ class ServiceSvc extends Service {
     }
 
 
-    static async init(account:Account, 
-        organizationId:string, serviceId:string, opts:InitOptions={init: true}) {
+    static init(account:Account, 
+        organizationId:string, serviceId:string, opts:InitOptions={init: true}): Promise<ServiceSvc> | ServiceSvc {
 
         const svc = new ServiceSvc(account, organizationId,serviceId);
-        if(opts.init) await svc.init();
-
-        return svc;
+        
+        if(opts.init) return svc.init();
+        else return svc;
     }
 }
 

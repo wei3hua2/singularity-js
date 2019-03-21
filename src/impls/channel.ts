@@ -53,11 +53,11 @@ class ChannelSvc extends Channel {
     }
 
     static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
-        value:number, expiration:number, opts:TransactOptions={}):Promise<any> {
+        value:number, expiration:number):Promise<any> {
 
         const blockNo = await account.eth.getBlockNumber();
 
-        await account.mpe.openChannel(signer, recipient, groupId, value, expiration,opts);
+        await account.mpe.openChannel(signer, recipient, groupId, value, expiration);
 
         const channels = await account.mpe.ChannelOpen('past', {
             filter: {recipient: recipient, sender: signer, signer: signer, groupId: groupId},

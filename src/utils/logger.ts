@@ -7,7 +7,8 @@ class Logger {
     static _logger:Logger;
 
     constructor(logLevel?:number){
-        if(!logLevel) this.level = CONFIG.DEFAULT_LOG_LEVEL;
+        !logLevel ? this.level = CONFIG.DEFAULT_LOG_LEVEL : this.level = logLevel;
+        this.specLevel = "";
     }
 
     info(...params) {

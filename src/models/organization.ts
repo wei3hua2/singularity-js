@@ -2,13 +2,14 @@ import {Data} from './index';
 import {ServiceSvc} from '../impls/service';
 import {Account} from './account';
 import {Service} from './service';
+import * as BbPromise from 'bluebird';
 
 abstract class Organization implements Data {
     id:string;
-    name:string;
-    owner:Account;
-    members:Account[];
-    services: Service[];
+    name?:string;
+    owner?:Account;
+    members?:Account[];
+    services?: Service[];
 
     isInit: boolean = false;
 

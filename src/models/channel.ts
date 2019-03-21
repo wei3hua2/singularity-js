@@ -3,8 +3,6 @@ import {Grpc} from './grpc';
 import {rpc, Method} from 'protobufjs';
 import {Account} from './account';
 import {PromiEvent} from 'web3-core-promievent';
-import * as Perf from 'execution-time';
-const perf = Perf.default();
 
 const SERVICE_STATE_JSON = {
     "nested": {

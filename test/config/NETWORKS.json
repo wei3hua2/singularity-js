@@ -1,0 +1,14 @@
+{
+    "1": {
+        "name": "mainnet",
+        "ws_provider": "wss://mainnet.infura.io/ws"
+    },
+    "3": {
+        "name": "ropsten",
+        "ws_provider": "wss://ropsten.infura.io/ws"
+    },
+    "42": {
+        "name": "kovan",
+        "ws_provider": "wss://kovan.infura.io/ws"
+    }
+}

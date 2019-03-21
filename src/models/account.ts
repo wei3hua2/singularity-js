@@ -44,11 +44,16 @@ abstract class Account implements Data {
         if(this.isInit) return this;
 
         if(!this.address) this.address = (await this.eth.getAccounts())[0];
+        log.debug("address = " + this.address);
 
         const ethInit = await this.eth.init();
+        log.debug("eth init");
         const tokenSuccess = await this.tokens.init();
+        log.debug("tokens init");
         const mpeSuccess = await this.mpe.init();
+        log.debug("mpe init");
         const regSuccess = await this.registry.init();
+        log.debug("registry init");
 
         this.isInit = tokenSuccess && mpeSuccess && regSuccess && ethInit;
 

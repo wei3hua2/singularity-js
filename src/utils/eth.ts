@@ -2,18 +2,20 @@
  * @hidden
  */
 
-import { EventEmitter } from 'events';
+import * as EventEmitter from 'eventemitter3';
 import {PromiEvent} from 'web3-core-promievent';
 import {Base64} from 'js-base64';
 
 
 import {CONFIG} from '../configs/config';
 import {NETWORK} from '../configs/network';
+import { SnetError, ERROR_CODE } from '../errors/snet-error';
 
 class EthUtil {
     web3: any;
     ethereum: any;
     isVersion1Beyond: boolean;
+    netId: number = -1;
 
     constructor(web3: any, ethereum: any = null){
         this.web3 = web3;
@@ -40,11 +42,13 @@ class EthUtil {
                    txOptions:TransactOptions, ...params): PromiEvent {
         
         const contractMethod = contract.methods[method](...params);
+        const from:string = txOptions.from;
+        if(!from) throw new SnetError(ERROR_CODE.eth_tx_error);
 
         if(privateKey) {
             const promi = new PromiEvent();
 
-            this.signTx(privateKey, txOptions.from, toAddress, contractMethod).then((result) => {
+            this.signTx(privateKey, from, toAddress, contractMethod).then((result) => {
                 promi.emit('signed', result);
                 const rawTransaction = result.signed['rawTransaction'];
 
@@ -60,7 +64,7 @@ class EthUtil {
         } else {
             const promi = new PromiEvent();
 
-            this.getGasInfo(contractMethod, txOptions.from).then(gasInfo => {
+            this.getGasInfo(contractMethod, from).then(gasInfo => {
                 if(!txOptions.gas) txOptions.gas = gasInfo['gas'];
                 if(!txOptions.gasPrice) txOptions.gasPrice = gasInfo['gas_price'];
 
@@ -134,11 +138,11 @@ class EthUtil {
         return new this.web3.eth.Contract(abi, address);
     }
 
-    _netId: number;
+    
     async getNetworkId(): Promise<number> {
-        if(!this._netId) this._netId = await this.web3.eth.net.getId();
+        if(this.netId < 0) this.netId = await this.web3.eth.net.getId();
 
-        return this._netId;
+        return this.netId;
     }
     getNetwork(): Promise<string> {
         return this.web3.eth.net.getId().then((id) => NETWORK[id].name);
@@ -161,7 +165,7 @@ class EthUtil {
     asciiToBytes(ascii:string) { return this.web3.utils.fromAscii(ascii); }
     bytesToAscii(ascii:string) { return this.web3.utils.toAscii(ascii); }
 
-    hexToBytes(hex:string):Uint8Array { return this.web3.utils.hexToBytes(hex); }
+    hexToBytes(hex:string) { return this.web3.utils.hexToBytes(hex); }
     bytesToHex(bytes: Uint8Array): string { return this.web3.utils.bytesToHex(bytes); }
 
     hexToNumber(hex:string):number { return this.web3.utils.hexToNumber(hex); }
@@ -209,7 +213,7 @@ class EthUtil {
 }
 
 interface TransactOptions {
-    from?: string;
+    from: string;
     gasPrice?: string;
     gas?: number;
     value?: number;
@@ -225,4 +229,4 @@ interface EventOptions {
     topics?:any[]
 }
 
-export {EthUtil, TransactOptions, EventOptions}
+export {EthUtil, TransactOptions, EventOptions, SignOptions}
