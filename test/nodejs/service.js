@@ -1,12 +1,9 @@
-import * as c from 'chai';
-import * as m from 'mocha';
-import {initWeb3} from './utils';
-import {ServiceSvc} from '../../src/impls/service';
-import {ChannelSvc} from '../../src/impls/channel';
-import {RUN_JOB_STATE} from '../../src/models/options';
-import {AccountSvc} from '../../src/impls/account';
-import {getConfigInfo} from './utils';
-import {Logger} from '../../src/utils/logger';
+const c = require('chai');
+const m = require('mocha');
+const {initWeb3, getConfigInfo} = require('./utils');
+const {ServiceSvc, ChannelSvc, AccountSvc} = require('../../dist/impls');
+const {RUN_JOB_STATE} = require('../../dist/models/options');
+const {Logger} = require('../../dist/utils/logger');
 
 
 Logger.setLogLevel(2);
@@ -29,9 +26,9 @@ m.after( async () => {
   web3.currentProvider.connection.close();
 });
 
-m.describe('ServiceSvc', () => {
+m.describe('Service', () => {
 
-  m.xit('should get service channels for services', async () => {
+  m.it('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(account, 'snet', 'example-service');
     let channels = await svc.getChannels({init: true});
 
@@ -49,7 +46,7 @@ m.describe('ServiceSvc', () => {
     }
   });
 
-  m.xit('should retrieve service info', async function() {
+  m.it('should retrieve service info', async function() {
     const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
     const info = await svc.info();
@@ -84,7 +81,7 @@ m.describe('ServiceSvc', () => {
         'endpoints', 'service_description']);
   });
 
-  m.xit('should ping example service daemon for heartbeat', async function () {
+  m.it('should ping example service daemon for heartbeat', async function () {
     const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
     const heartbeat = await exampleSvc.pingDaemonHeartbeat();
 
@@ -95,14 +92,14 @@ m.describe('ServiceSvc', () => {
 
   });
 
-  m.xit('should get the encoding from example service daemon', async function () {
+  m.it('should get the encoding from example service daemon', async function () {
     const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
     const encoding = await exampleSvc.getDaemonEncoding();
 
     c.expect(encoding).that.be.equal('proto\n');
   });
 
-  m.it('should run simple example-service job', async function () {
+  m.xit('should run simple example-service job', async function () {
     const svc = await ServiceSvc.init(account, 'snet', 'example-service');
 
     // const balance = await account.getEscrowBalances({inCogs:true});

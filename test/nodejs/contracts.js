@@ -1,12 +1,12 @@
-import * as c from 'chai';
-import * as m from 'mocha';
+const c = require('chai');
+const m = require('mocha');
 
-import {initWeb3, getConfigInfo} from './utils';
-import { AccountSvc } from '../../src/impls/account';
-import {Registry} from '../../src/contracts/registry';
-import {Mpe} from '../../src/contracts/mpe';
-import {Tokens} from '../../src/contracts/tokens';
-import {Ipfs} from '../../src/utils/ipfs';
+const {initWeb3, getConfigInfo} = require('./utils');
+const { AccountSvc } = require('../../dist/impls/account');
+const {Registry} = require('../../dist/contracts/registry');
+const {Mpe} = require('../../dist/contracts/mpe');
+const {Tokens} = require('../../dist/contracts/tokens');
+const {Ipfs} = require('../../dist/utils/ipfs');
 
 
 let web3, acct;
@@ -26,7 +26,7 @@ m.after(async () => {
   web3.currentProvider.connection.close();
 })
 
-m.describe.skip('Contract', () => {
+m.describe('Contract', () => {
   m.it('should work for Tokens call functions', async function() {
     const tokens = acct.tokens;
 
@@ -100,7 +100,7 @@ m.describe.skip('Contract', () => {
 
 
 
-  m.it('Tokens: should transfer 1 cog from one account to another ', async function () {
+  m.xit('Tokens: should transfer 1 cog from one account to another ', async function () {
     const tokens = acct.tokens, TRANSFER_VALUE = 1;
 
     const balanceOfB4 = await tokens.balanceOf(TEST_ACCOUNT);
@@ -119,7 +119,7 @@ m.describe.skip('Contract', () => {
   }).timeout(10 * 60 * 1000);
 
   m.xit('Registry: should perform basic CRUD for organization and service', async function () {
-    const registry:Registry = acct.registry;
+    const registry = acct.registry;
     const ORG_ID = 'snet-js-test', ORG_NAME = 'Snet Js Test';
     const SVC_ID = 'snet-js-test-svc', METADATAURI = 'fake_metadata_uri', TAGS = [];
     let org, svcReg;
@@ -259,8 +259,8 @@ m.describe.skip('Contract', () => {
 
   }).timeout(10 * 10 * 60 * 1000);
 
-  m.it('Mpe: should perform basic transfer of funds', async function () {
-    const mpe:Mpe = acct.mpe, token:Tokens = acct.tokens;
+  m.xit('Mpe: should perform basic transfer of funds', async function () {
+    const mpe = acct.mpe, token = acct.tokens;
 
     const initBalance = await mpe.balances(PERSONAL_ACCOUNT);
     const initAgiBalance = await token.balanceOf(PERSONAL_ACCOUNT);

@@ -1,9 +1,7 @@
-import * as c from 'chai';
-import * as m from 'mocha';
-import {initWeb3, getConfigInfo} from './utils';
-import {ChannelSvc} from '../../src/impls/channel';
-import {ServiceSvc} from '../../src/impls/service';
-import { AccountSvc } from '../../src/impls/account';
+const c = require('chai');
+const m = require('mocha');
+const {initWeb3, getConfigInfo} = require('./utils');
+const {ChannelSvc, ServiceSvc, AccountSvc} = require('../../dist/impls');
 
 let web3, account, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK;
 

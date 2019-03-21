@@ -1,12 +1,12 @@
-import * as c from 'chai';
-import * as m from 'mocha';
-import {initWeb3, getConfigInfo} from './utils';
-import {AccountSvc} from '../../src/impls/account';
+const c = require('chai');
+const m = require('mocha');
+const {initWeb3, getConfigInfo} = require('./utils');
+const {AccountSvc} =  require('../../dist/impls');
 
-let web31, web32, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK,
+let web31, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK,
     TEST_ACCOUNT, TEST_ACCOUNT_PK;
 
-let log = function(s?){
+let log = function(s){
     console.log(s);
 }
 
@@ -23,55 +23,15 @@ m.before(() => {
     TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
 
     if(!getConfigInfo()['ENABLE_CONSOLE']) 
-        log = function(s?){}
+        log = function(s){}
 });
 m.after(() => {
     web31.currentProvider.connection.close();
 })
 
-m.describe.skip('Account', () => {
+m.describe('Account', () => {
 
-    m.it('should get agi token', async function () {
-        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
-
-        const personalAgiToken = await acct.getAgiTokens();
-        const testAgiToken = await testAcct.getAgiTokens();
-
-        log('Personal AGI token : ' + personalAgiToken);
-        log('Test AGI token     : ' + testAgiToken);
-
-        const personalCogsToken = await acct.getAgiTokens({inCogs:true});
-        const testCogsToken = await testAcct.getAgiTokens({inCogs:true});
-
-        log('Personal Cog token : ' + personalCogsToken);
-        log('Test Cog token     : ' + testCogsToken);
-
-        c.expect(personalAgiToken).to.be.equal(personalCogsToken / 100000000.0);
-        c.expect(testAgiToken).to.be.equal(testCogsToken / 100000000.0);
-    });
-
-    m.it('should get escrow token', async function () {
-        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
-
-        const personalAgiToken = await acct.getEscrowBalances();
-        const testAgiToken = await testAcct.getEscrowBalances();
-
-        log('Personal Escrow token : ' + personalAgiToken);
-        log('Test Escrow token     : ' + testAgiToken);
-
-        const personalCogsToken = await acct.getEscrowBalances({inCogs:true});
-        const testCogsToken = await testAcct.getEscrowBalances({inCogs:true});
-
-        log('Personal Escrow Cog token : ' + personalCogsToken);
-        log('Test Escrow Cog token     : ' + testCogsToken);
-
-        c.expect(personalAgiToken).to.be.equal(personalCogsToken / 100000000.0);
-        c.expect(testAgiToken).to.be.equal(testCogsToken / 100000000.0);
-    });
-
-    m.it('should deposit and withdraw tokens', async function () {
+    m.xit('should deposit and withdraw tokens', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
 
         // await acct.approveEscrow(0.0);
@@ -153,7 +113,7 @@ m.describe.skip('Account', () => {
 
     }).timeout(10 * 60 * 1000);
 
-    m.it('should transfer test account tokens and back', async function () {
+    m.xit('should transfer test account tokens and back', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
         const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
 
@@ -208,8 +168,7 @@ m.describe.skip('Account', () => {
         c.expect(acct.data['address']).to.be.equal(PERSONAL_ACCOUNT);
         c.expect(acct.data['privateKey']).to.be.equal(PERSONAL_ACCOUNT_PK);
         c.expect(channels.length).to.be.greaterThan(0);
-        c.expect(channels[0].data).to.contain.keys(
-            ['id', 'nonce', 'sender', 'recipient','signer','value','expiration','groupId']);
+        c.expect(channels[0].data).to.contain.keys(['id']);
 
         log();
 
