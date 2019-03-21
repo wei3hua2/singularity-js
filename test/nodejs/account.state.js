@@ -1,42 +1,25 @@
 const c = require('chai');
 const m = require('mocha');
-const {initWeb3, getConfigInfo} = require('./utils');
-const {AccountSvc} =  require('../../dist/impls');
+const {Config} = require('../config/config');
 
-let web31, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK,
-    TEST_ACCOUNT, TEST_ACCOUNT_PK;
-
-let log = function(s){
-    console.log(s);
-}
+let config, log;
 
 let roundTo8 = function (value) {
     return +(value.toFixed(8));
 }
 
-m.before(() => {
-    web31 = initWeb3();
-
-    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-    PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-    TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-    TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
-
-    if(!getConfigInfo()['ENABLE_CONSOLE']) 
-        log = function(s){}
+m.before(async () => {
+    config = await Config.init();
+    log = config.log;
 });
 m.after(() => {
-    web31.currentProvider.connection.close();
+    config.teardown();
 })
 
-m.describe('Account', () => {
+m.describe('account-state', () => {
 
-    m.xit('should deposit and withdraw tokens', async function () {
+    m.it('should deposit and withdraw tokens', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-
-        // await acct.approveEscrow(0.0);
-        // await acct.withdrawFromEscrow(5);
-        // throw new Error('done');
 
         // Handle allowance
 
@@ -113,7 +96,7 @@ m.describe('Account', () => {
 
     }).timeout(10 * 60 * 1000);
 
-    m.xit('should transfer test account tokens and back', async function () {
+    m.it('should transfer test account tokens and back', async function () {
         const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
         const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
 
@@ -147,46 +130,5 @@ m.describe('Account', () => {
         c.expect(testFinalAgiToken).to.be.equal(testAgiToken);
 
     }).timeout(10 * 60 * 1000);
-
-    m.it('should get account information', async function () {
-        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
-        try{
-        const agiTokens = await acct.getAgiTokens();
-        const escrowBalance = await acct.getEscrowBalances();
-        const allowance = await acct.escrowAllowance();
-        const channels = await acct.getChannels();
-
-        log('*** PERSONAL ACCOUNT ***');
-        log('agiTokens : ' + agiTokens);
-        log('escrowBalance : ' + escrowBalance);
-        log('escrow allowance : ' + allowance);
-        log(channels[0].data);
-
-        c.expect(agiTokens).to.be.greaterThan(0);
-        c.expect(escrowBalance).to.be.greaterThan(0);
-        c.expect(acct.data['address']).to.be.equal(PERSONAL_ACCOUNT);
-        c.expect(acct.data['privateKey']).to.be.equal(PERSONAL_ACCOUNT_PK);
-        c.expect(channels.length).to.be.greaterThan(0);
-        c.expect(channels[0].data).to.contain.keys(['id']);
-
-        log();
-
-        const testAgiTokens = await testAcct.getAgiTokens();
-        const testEscrowBalance = await testAcct.getEscrowBalances();
-        const testAllowance = await acct.escrowAllowance();
-        const testChannels = await testAcct.getChannels();
-
-        log('*** TEST ACCOUNT ***');
-        log('agiTokens : ' + testAgiTokens);
-        log('escrowBalance : ' + testEscrowBalance);
-        log('escrow allowance : ' + testAllowance);
-
-        c.expect(testAgiTokens).to.be.greaterThan(0);
-        c.expect(testAcct.data['address']).to.be.equal(TEST_ACCOUNT);
-        c.expect(testAcct.data['privateKey']).to.be.equal(TEST_ACCOUNT_PK);
-
-        }catch(er){console.error(er)}
-    }).timeout(500000);
 
 })

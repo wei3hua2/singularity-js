@@ -2,12 +2,13 @@
   "name": "singnet-js",
   "version": "0.0.1",
   "description": "Javascript library for singularitynet",
-  "main": "dist/singularity.min.js",
+  "main": "dist/snet.js",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean & tsc",
     "watch": "tsc -w",
-    "test": "npm run build && mocha test/nodejs/**.js --timeout 15000",
+    "test": "npm run build && mocha test/nodejs/**.call.js --timeout 15000",
+    "test-all": "npm run build && mocha test/nodejs/**.js --timeout 15000",
     "postinstall": "scripts/install.js",
     "uninstall": "scripts/uninstall.js"
   },

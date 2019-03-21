@@ -63,6 +63,4 @@ typings/
 # output directory for TypeScript
 build
 dist
-test/config
-
-temp.js
+test/config/CONFIG.pk.json

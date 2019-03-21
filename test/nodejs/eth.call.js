@@ -1,30 +1,27 @@
 const c = require('chai');
 const m = require('mocha');
-const {initWeb3, getConfigInfo} = require('./utils');
+const {Config} = require('../config/config');
 const {EthUtil} = require('../../dist/utils/eth');
-
 
 const AGITokenNetworks = require('singularitynet-token-contracts/networks/SingularityNetToken.json');
 const AGITokenAbi = require('singularitynet-token-contracts/abi/SingularityNetToken.json');
 
-let web3, eth, contract, PERSONAL_ACCOUNT, PERSONAL_ACCOUNT_PK, TEST_ACCOUNT, TEST_ACCOUNT_PK, CHAINID;
+let eth, contract, CHAINID;
+let config;
 
-m.before(() => {
-    web3 = initWeb3();
-    eth = new EthUtil(web3);
+m.before(async () => {
+    config = await Config.init();
+    web3 = config.web3;
+    eth = new EthUtil(config.web3);
 
-    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-    PERSONAL_ACCOUNT_PK = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-    TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-    // TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
-    CHAINID = getConfigInfo()['CHAINID'];
+    CHAINID = config.CHAINID;
     contract = eth.getContract(AGITokenAbi, AGITokenNetworks[CHAINID].address);
 });
 m.after(() => {
     eth.close();
 })
 
-m.describe('Eth', () => {
+m.describe('eth-call', () => {
 
   m.it('should ensure basic information is valid', async function() {
     const version = eth.getWeb3Version();
@@ -47,13 +44,13 @@ m.describe('Eth', () => {
     const symbol = await eth.call(contract, 'symbol');
     c.expect(symbol).to.be.equal('AGI');
 
-    const balance = (await eth.call(contract, 'balanceOf', PERSONAL_ACCOUNT)).balance;
+    const balance = (await eth.call(contract, 'balanceOf', config.PERSONAL_ACCOUNT)).balance;
     c.expect(parseInt(balance)).to.be.greaterThan(0);
 
-    const balanceTest = (await eth.call(contract, 'balanceOf', TEST_ACCOUNT)).balance;
+    const balanceTest = (await eth.call(contract, 'balanceOf', config.TEST_ACCOUNT)).balance;
     c.expect(parseInt(balance)).to.be.greaterThan(0);
 
-    console.log('Address : '+TEST_ACCOUNT);
+    console.log('Address : '+config.TEST_ACCOUNT);
     console.log('Symbol : '+symbol);
     console.log('Balance (Personal): '+balance);
     console.log('Balance (Test): '+balanceTest);
@@ -65,7 +62,7 @@ m.describe('Eth', () => {
     c.expect(blockNo).to.be.greaterThan(100000);
 
     const pastEvents = await eth.pastEvents(contract,'Transfer',
-      {fromBlock:blockNo - 1000000,toBlock:'latest', filter:{from:PERSONAL_ACCOUNT}});
+      {fromBlock:blockNo - 1000000,toBlock:'latest', filter:{from:config.PERSONAL_ACCOUNT}});
 
     
     c.expect(pastEvents.length).to.be.greaterThan(0);

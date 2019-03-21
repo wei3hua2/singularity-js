@@ -1,45 +1,32 @@
 const c = require('chai');
 const m = require('mocha');
-const {initWeb3, getConfigInfo} = require('./utils');
+const {Config} = require('../config/config');
 const {ServiceSvc, ChannelSvc, AccountSvc} = require('../../dist/impls');
 const {RUN_JOB_STATE} = require('../../dist/models/options');
-const {Logger} = require('../../dist/utils/logger');
 
-
-Logger.setLogLevel(2);
-
-let web3, account, testAccount, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY, TEST_ACCOUNT, TEST_ACCOUNT_PK;
-const log = Logger.logger();
-
+let config, log;
 m.before(async() => {
-    web3 = initWeb3();
-
-    PERSONAL_ACCOUNT = getConfigInfo()['PERSONAL_ACCOUNT'];
-    PERSONAL_PRIVATE_KEY = getConfigInfo()['PERSONAL_PRIVATE_KEY'];
-    TEST_ACCOUNT = getConfigInfo()['TEST_ACCOUNT'];
-    TEST_ACCOUNT_PK = getConfigInfo()['TEST_ACCOUNT_PRIVATE_KEY'];
-
-    account = await AccountSvc.create(web3, {address: PERSONAL_ACCOUNT, privateKey: PERSONAL_PRIVATE_KEY});
-    testAccount = await AccountSvc.create(web3, {address: TEST_ACCOUNT, privateKey: TEST_ACCOUNT_PK});
+    config = await Config.init();
+    log = config.log;
 });
 m.after( async () => {
-  web3.currentProvider.connection.close();
+  config.teardown();
 });
 
-m.describe('Service', () => {
+m.describe('service-call', () => {
 
   m.it('should get service channels for services', async () => {
-    let svc = await ServiceSvc.init(account, 'snet', 'example-service');
+    let svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
     let channels = await svc.getChannels({init: true});
 
     c.expect(channels.length).to.be.greaterThan(0);
 
-    svc = await ServiceSvc.init(account, 'snet', 'style-transfer');
+    svc = await ServiceSvc.init(config.acct1, 'snet', 'style-transfer');
     channels = await svc.getChannels();
     c.expect(channels.length).to.be.greaterThan(-1);
 
     try{
-      const svc = await ServiceSvc.init(account, 'snet', 'not-found-service');
+      const svc = await ServiceSvc.init(config.acct1, 'snet', 'not-found-service');
     }catch(err){
       c.expect(err.code).to.be.equal('sv_registry_id_not_found');
       c.expect(err.params).to.be.deep.equal(['snet','not-found-service']);
@@ -47,7 +34,7 @@ m.describe('Service', () => {
   });
 
   m.it('should retrieve service info', async function() {
-    const svc = await ServiceSvc.init(account, 'snet', 'example-service');
+    const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
 
     const info = await svc.info();
     const name = info.name;
@@ -82,7 +69,7 @@ m.describe('Service', () => {
   });
 
   m.it('should ping example service daemon for heartbeat', async function () {
-    const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
+    const exampleSvc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
     const heartbeat = await exampleSvc.pingDaemonHeartbeat();
 
     c.expect(heartbeat).have.all.keys(['daemonID','timestamp','status','serviceheartbeat']);
@@ -93,40 +80,10 @@ m.describe('Service', () => {
   });
 
   m.it('should get the encoding from example service daemon', async function () {
-    const exampleSvc = await ServiceSvc.init(account, 'snet', 'example-service');
+    const exampleSvc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
     const encoding = await exampleSvc.getDaemonEncoding();
 
     c.expect(encoding).that.be.equal('proto\n');
   });
-
-  m.xit('should run simple example-service job', async function () {
-    const svc = await ServiceSvc.init(account, 'snet', 'example-service');
-
-    // const balance = await account.getEscrowBalances({inCogs:true});
-    // console.log(balance);
-    // console.log(await account.withdrawFromEscrow(balance, {inCogs:true}));
-    // console.log(await account.getEscrowBalances({inCogs:true}));
-
-
-    const channel = await ChannelSvc.retrieve(account, 1218);
-    // console.log(channel.data);
-
-    const job = svc.runJob('add', {a:5, b:6}, channel, {channel_min_amount: 40})
-      .on('debug_update_options', d =>{ console.log(' - debug_update_options'); console.log(d); });
-
-    job.on('all_events', (evts) => {
-      log.info(' === '+evts[0]+' ===');
-      const result = evts[1];
-      if(result['request_channel_state']) result['request_channel_state'].signature = "* EXCLUDED *";
-      // if(evts[0] === 'request_svc_call') log.info(result);
-    });
-    
-    job.on('stats', console.log);
-
-    const result = await job;
-    c.expect(result.value).to.be.equals(11);
-
-  }).timeout(10 * 60 * 1000);
-
 
 })

@@ -1,6 +1,5 @@
 const c = require('chai');
 const m = require('mocha');
-const u = require('./utils');
 const Snet =  require('../../dist/snet').Snet;
 const ServiceSvc =  require('../../dist/impls').ServiceSvc;
 const OrganizationSvc =  require('../../dist/impls').OrganizationSvc;
@@ -10,22 +9,23 @@ const Organization =  require('../../dist/models').Organization;
 const Account =  require('../../dist/models').Account;
 const Utils =  require('../../dist/utils').Utils;
 
+const {Config} = require('../config/config');
 
-let web3, PERSONAL_ACCOUNT, PERSONAL_PRIVATE_KEY;
+let config, log;
 
-m.before(() => {
-    web3 = u.initWeb3();
-    PERSONAL_ACCOUNT = u.getConfigInfo()['PERSONAL_ACCOUNT'];
-    PERSONAL_PRIVATE_KEY = u.getConfigInfo()['PERSONAL_PRIVATE_KEY'];
+m.before(async () => {
+  config = await Config.init();
+  log = config.log;
 });
 m.after(() => {
-    web3.currentProvider.connection.close();
+  config.teardown();
 })
 
-m.describe('Snet', () => {
+m.describe('snet-call', () => {
 
   m.it('should have valid class', async function () {
-    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    const snet = await Snet.init(config.web3, 
+      {address:config.PERSONAL_ACCOUNT, privateKey:config.PERSONAL_ACCOUNT_PK});
     
     const orgs = await snet.listOrganizations();
     const org = await snet.getOrganization('snet', {init: false});
@@ -47,7 +47,7 @@ m.describe('Snet', () => {
   });
 
   m.it('should list organization', async function () {
-    const snet = await Snet.init(web3, {address:PERSONAL_ACCOUNT, privateKey:PERSONAL_PRIVATE_KEY});
+    const snet = await Snet.init(config.web3, {address:config.PERSONAL_ACCOUNT, privateKey:config.PERSONAL_ACCOUNT_PK});
     // organizations
 
     let orgs = await snet.listOrganizations();
