@@ -643,13 +643,13 @@ class ServiceSvc extends Service {
     }
 
 
-    static async init(account:Account, 
-        organizationId:string, serviceId:string, opts:InitOptions={init: true}) {
+    static init(account:Account, 
+        organizationId:string, serviceId:string, opts:InitOptions={init: true}): Promise<ServiceSvc> | ServiceSvc {
 
         const svc = new ServiceSvc(account, organizationId,serviceId);
-        if(opts.init) await svc.init();
-
-        return svc;
+        
+        if(opts.init) return svc.init();
+        else return svc;
     }
 }
 

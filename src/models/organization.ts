@@ -2,6 +2,7 @@ import {Data} from './index';
 import {ServiceSvc} from '../impls/service';
 import {Account} from './account';
 import {Service} from './service';
+import * as BbPromise from 'bluebird';
 
 abstract class Organization implements Data {
     id:string;

@@ -99,7 +99,8 @@ class Snet {
      *
      */
     async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<ServiceSvc> {
-        return ServiceSvc.init(this.account, orgId, serviceId, opts);
+        if(opts.init) return await ServiceSvc.init(this.account, orgId, serviceId, opts);
+        else return Promise.resolve(ServiceSvc.init(this.account, orgId, serviceId, opts));
     }
 
     /**
@@ -118,7 +119,9 @@ class Snet {
     runJob (orgId:string, serviceId:string, method:string, 
         request:any, opts:RunJobOptions= {}): PromiEvent {
 
-        return <PromiEvent>ServiceSvc.init(this.account, orgId, serviceId).then((svc) => {
+        const service = <PromiEvent>ServiceSvc.init(this.account, orgId, serviceId);
+
+        return service.then((svc) => {
             return svc.runJob(method, request, opts);
         });
     }
