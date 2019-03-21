@@ -5,8 +5,8 @@ const SINGNET_ACCOUNT_ADDRESS = process.env.SINGNET_ACCOUNT_ADDRESS || 'EMPTY';
 const SINGNET_ACCOUNT_PK = process.env.SINGNET_ACCOUNT_PK || 'EMPTY';
 const ROPSTEN_WSS = "wss://ropsten.infura.io/ws";
 
-console.log('address     : '+SINGNET_ACCOUNT_ADDRESS);
-console.log('private key : '+SINGNET_ACCOUNT_PK.substr(0, 5)+'****************');
+// console.log('address     : '+SINGNET_ACCOUNT_ADDRESS);
+// console.log('private key : '+SINGNET_ACCOUNT_PK.substr(0, 5)+'****************');
 
 (async function() {
     const web3 = new Web3(new Web3.providers.WebsocketProvider(ROPSTEN_WSS));

@@ -2,7 +2,7 @@ FROM node:latest
 
 WORKDIR /app
 
-RUN git clone --branch build-for-deliverable https://github.com/wei3hua2/singularity-js.git
+RUN git clone https://github.com/wei3hua2/singularity-js.git
 
 RUN npm install --prefix ./singularity-js
 # RUN npm run test
