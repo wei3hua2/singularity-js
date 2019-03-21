@@ -43,8 +43,8 @@ m.describe('contract-call', () => {
     c.expect(balanceOf).to.exist;
     c.expect(allowance).to.exist;
 
-    console.log('Tokens call result :');
-    console.log('   '+[name, totalSupply, INITIAL_SUPPLY, decimals, paused, owner, symbol, balanceOf, allowance]);
+    config.log('Tokens call result :');
+    config.log('   '+[name, totalSupply, INITIAL_SUPPLY, decimals, paused, owner, symbol, balanceOf, allowance]);
   });
 
   m.it('should work for MultiPartyEscrow call functions', async function () {
@@ -64,8 +64,8 @@ m.describe('contract-call', () => {
     c.expect(channel.value).to.be.greaterThan(0);
     c.expect(channel.expiration).to.be.greaterThan(-1);
 
-    console.log('MultiParty Escrow call result :');
-    console.log('   '+[balances, channel, nextChannelId, token]);
+    config.log('MultiParty Escrow call result :');
+    config.log('   '+[balances, channel, nextChannelId, token]);
   });
 
   m.it('should work for Registry call functions', async function () {
@@ -85,8 +85,8 @@ m.describe('contract-call', () => {
     c.expect(listServiceTags.tags.length).to.be.greaterThan(1);
     c.expect(listServicesForTag).to.contain.keys(['orgIds','serviceIds']);
 
-    console.log('Registry call result :');
-    console.log('   '
+    config.log('Registry call result :');
+    config.log('   '
       +[listOrganizations, getOrganizationById, listServicesForOrganization, getServiceRegistrationById, 
         listServiceTags, listServicesForTag]);
   });

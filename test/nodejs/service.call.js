@@ -4,10 +4,9 @@ const {Config} = require('../config/config');
 const {ServiceSvc, ChannelSvc, AccountSvc} = require('../../dist/impls');
 const {RUN_JOB_STATE} = require('../../dist/models/options');
 
-let config, log;
+let config;
 m.before(async() => {
     config = await Config.init();
-    log = config.log;
 });
 m.after( async () => {
   config.teardown();

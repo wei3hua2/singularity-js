@@ -21,13 +21,15 @@ class Config {
         this.TEST_ACCOUNT_PK = CONFIG['TEST_ACCOUNT_PRIVATE_KEY'];
         this.CHAINID = CONFIG['CHAINID'];
 
+        if(process.env.SINGNET_DISABLE_TEST_CONSOLE) this.DISABLE_CONSOLE = true;
+        else this.DISABLE_CONSOLE = CONFIG['DISABLE_CONSOLE'];
+
         this._init = false;
         this.initcount = 0;
     }
 
     log(s) {
-        if(CONFIG['ENABLE_CONSOLE'])
-            console.log(s);
+        if(!this.DISABLE_CONSOLE) console.log(s);
     }
 
     async init() {

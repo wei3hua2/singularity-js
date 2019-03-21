@@ -2,7 +2,7 @@ const c = require('chai');
 const m = require('mocha');
 const {Config} = require('../config/config');
 
-let config, log;
+let config;
 
 let roundTo8 = function (value) {
     return +(value.toFixed(8));
@@ -10,7 +10,6 @@ let roundTo8 = function (value) {
 
 m.before(async () => {
     config = await Config.init();
-    log = config.log;
 });
 m.after(() => {
     config.teardown();
@@ -25,13 +24,13 @@ m.describe('account-state', () => {
 
         const allowance = await acct.escrowAllowance();
 
-        log('current allowance : '+allowance);
+        config.log('current allowance : '+allowance);
         c.expect(allowance).to.be.equal(0);
 
         const approve = await acct.approveEscrow(1.1);
         const approvedAllowance = await acct.escrowAllowance();
 
-        log('approved allowance  : '+approvedAllowance);
+        config.log('approved allowance  : '+approvedAllowance);
         c.expect(approvedAllowance).to.be.equal(1.1);
 
 
@@ -40,9 +39,9 @@ m.describe('account-state', () => {
         const originalAgiToken = await acct.getAgiTokens();
         const originalEscrowBalance = await acct.getEscrowBalances();
 
-        log('original tokens : '+ originalAgiToken + ' escrow : '+ originalEscrowBalance);
+        config.log('original tokens : '+ originalAgiToken + ' escrow : '+ originalEscrowBalance);
 
-        log('deposit escrow  1.0 agi token');
+        config.log('deposit escrow  1.0 agi token');
         await acct.depositToEscrow(1);
 
         const depositAgiAgiToken = await acct.getAgiTokens();
@@ -53,7 +52,7 @@ m.describe('account-state', () => {
 
         // deposit 0.1 agi
 
-        log('deposit escrow  0.1 agi token');
+        config.log('deposit escrow  0.1 agi token');
         await acct.depositToEscrow(10000000, {inCogs: true});
 
         const depositCogsAgiToken = await acct.getAgiTokens();
@@ -65,7 +64,7 @@ m.describe('account-state', () => {
 
         // withdraw 1 agi
 
-        log('withdraw escrow 1.0 agi token');
+        config.log('withdraw escrow 1.0 agi token');
         await acct.withdrawFromEscrow(1);
 
         const withdrawAgiAgiToken = await acct.getAgiTokens();
@@ -76,7 +75,7 @@ m.describe('account-state', () => {
 
         // withdraw 0.1 agi
 
-        log('withdraw escrow  0.1 agi token');
+        config.log('withdraw escrow  0.1 agi token');
         await acct.withdrawFromEscrow(10000000, {inCogs: true});
 
         const withdrawCogsAgiToken = await acct.getAgiTokens();
@@ -88,7 +87,7 @@ m.describe('account-state', () => {
 
         // restore allowance
 
-        log('restore approval to ' + allowance);
+        config.log('restore approval to ' + allowance);
         const restoreApproval = await acct.approveEscrow(allowance * 100000000.0, {inCogs: true});
         const resultAllowance = await acct.escrowAllowance();
 
@@ -103,7 +102,7 @@ m.describe('account-state', () => {
         const originalAgiToken = await acct.getAgiTokens();
         const testAgiToken = await testAcct.getAgiTokens({inCogs: true});
 
-        log('original tokens : '+ originalAgiToken + ' test tokens : '+ testAgiToken);
+        config.log('original tokens : '+ originalAgiToken + ' test tokens : '+ testAgiToken);
 
         await acct.transfer(testAcct, 1);
 

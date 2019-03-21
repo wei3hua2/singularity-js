@@ -29,10 +29,10 @@ m.describe('eth-call', () => {
     const blockNo = await eth.getBlockNumber();
     const accounts = await eth.getAccounts();
 
-    console.log('version  : ' + version);
-    console.log('netId    : ' + netId);
-    console.log('accounts : ' + accounts);
-    console.log('blockNo  : ' + blockNo);
+    config.log('version  : ' + version);
+    config.log('netId    : ' + netId);
+    config.log('accounts : ' + accounts);
+    config.log('blockNo  : ' + blockNo);
 
     c.expect(version).to.have.string('1.0.0');
     c.expect(netId).to.equal(3);
@@ -50,10 +50,10 @@ m.describe('eth-call', () => {
     const balanceTest = (await eth.call(contract, 'balanceOf', config.TEST_ACCOUNT)).balance;
     c.expect(parseInt(balance)).to.be.greaterThan(0);
 
-    console.log('Address : '+config.TEST_ACCOUNT);
-    console.log('Symbol : '+symbol);
-    console.log('Balance (Personal): '+balance);
-    console.log('Balance (Test): '+balanceTest);
+    config.log('Address : '+config.TEST_ACCOUNT);
+    config.log('Symbol : '+symbol);
+    config.log('Balance (Personal): '+balance);
+    config.log('Balance (Test): '+balanceTest);
   });
 
 

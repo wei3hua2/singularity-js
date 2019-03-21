@@ -2,7 +2,7 @@ const c = require('chai');
 const m = require('mocha');
 const {Config} = require('../config/config');
 
-let config, log;
+let config;
 
 let roundTo8 = function (value) {
     return +(value.toFixed(8));
@@ -10,7 +10,6 @@ let roundTo8 = function (value) {
 
 m.before(async () => {
     config = await Config.init();
-    log = config.log;
 });
 m.after(() => {
     config.teardown();
@@ -25,11 +24,11 @@ m.describe('account-call', () => {
         const allowance = await config.acct1.escrowAllowance();
         const channels = await config.acct1.getChannels();
 
-        log('*** PERSONAL ACCOUNT ***');
-        log('agiTokens : ' + agiTokens);
-        log('escrowBalance : ' + escrowBalance);
-        log('escrow allowance : ' + allowance);
-        log(channels[0].data);
+        config.log('*** PERSONAL ACCOUNT ***');
+        config.log('agiTokens : ' + agiTokens);
+        config.log('escrowBalance : ' + escrowBalance);
+        config.log('escrow allowance : ' + allowance);
+        config.log(channels[0].data);
 
         c.expect(agiTokens).to.be.greaterThan(0);
         c.expect(escrowBalance).to.be.greaterThan(0);
@@ -38,17 +37,17 @@ m.describe('account-call', () => {
         c.expect(channels.length).to.be.greaterThan(0);
         c.expect(channels[0].data).to.contain.keys(['id']);
 
-        log();
+        config.log();
 
         const testAgiTokens = await config.acct2.getAgiTokens();
         const testEscrowBalance = await config.acct2.getEscrowBalances();
         const testAllowance = await config.acct2.escrowAllowance();
         const testChannels = await config.acct2.getChannels();
 
-        log('*** TEST ACCOUNT ***');
-        log('agiTokens : ' + testAgiTokens);
-        log('escrowBalance : ' + testEscrowBalance);
-        log('escrow allowance : ' + testAllowance);
+        config.log('*** TEST ACCOUNT ***');
+        config.log('agiTokens : ' + testAgiTokens);
+        config.log('escrowBalance : ' + testEscrowBalance);
+        config.log('escrow allowance : ' + testAllowance);
 
         c.expect(testAgiTokens).to.be.greaterThan(0);
         c.expect(config.acct2.data['address']).to.be.equal(config.TEST_ACCOUNT);

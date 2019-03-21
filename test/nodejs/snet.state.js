@@ -11,11 +11,10 @@ const Utils =  require('../../dist/utils').Utils;
 
 const {Config} = require('../config/config');
 
-let config, log;
+let config;
 
 m.before(async () => {
   config = await Config.init();
-  log = config.log;
 });
 m.after(() => {
   config.teardown();
