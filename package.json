@@ -8,6 +8,7 @@
     "build": "npm run clean & tsc",
     "watch": "tsc -w",
     "test": "npm run build && mocha test/nodejs/**.call.js --timeout 15000",
+    "test-cov": "npm run build && nyc mocha test/nodejs/**.call.js --timeout 15000",
     "test-all": "npm run build && mocha test/nodejs/**.js --timeout 15000",
     "postinstall": "scripts/install.js",
     "uninstall": "scripts/uninstall.js"
@@ -37,6 +38,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
+    "nyc": "^13.3.0",
     "typescript": "^2.8.3",
     "web3": "^1.0.0-beta.46"
   }
