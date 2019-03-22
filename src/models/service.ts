@@ -1,60 +1,71 @@
 import {Data} from './index';
-import {Account} from './account';
-import {Ipfs} from '../utils/ipfs';
-import {Grpc} from './grpc';
+import {Channel, Account, RunJobOptions, InitOptions} from '.';
+import {ServiceSvc} from '../impls';
 import axios from 'axios';
+import {PromiEvent} from 'web3-core-promievent';
 
 import {NETWORK} from '../configs/network';
 
-abstract class Service extends Grpc implements Data {
+abstract class Service implements Data {
+    account: Account;
     id: string;
     organizationId: string;
     metadata?: ServiceMetadata;
+    metadataURI?: string
     tags?: string[];
 
     isInit: boolean = false;
+    isMetaInit: boolean = false;
+    isProtoInit: boolean = false;
 
     constructor(account: Account, organizationId:string, serviceId:string, fields?:any) {
-        super(account);
-        this.data = {id: serviceId, organizationId: organizationId};
+        this.account = account;
     }
+    
+    public abstract init(): Promise<Service>;
+    public abstract initMetadata(): Promise<Service>;
+    public abstract initProtoBuf(): Promise<Service>;
+    public abstract pingDaemonHeartbeat(): Promise<ServiceHeartbeat>;
+    public abstract getDaemonEncoding(): Promise<string>;
+    public abstract getChannels(opts:{init:boolean}): Promise<Channel[]>;
+    
+    public abstract get data():Object;
+    public abstract set data(data:Object);
+    public abstract get groupId():string;
+    public abstract get paymentAddress():string;
+    public abstract get paymentExpirationThreshold(): number;
+    public abstract get endpoint(): string;
+    public abstract get price(): number;
+    public abstract defaultRequest: (method: string) => Object;
+    public abstract info:() => ServiceInfo;
 
-    get data() {
-        let d = {id: this.id, organizationId: this.organizationId};
-        if(this.isInit) {
-            d = Object.assign(d, {
-                metadata: this.metadata, tags: this.tags
-            });
-        }
-        return d;
-    }
-    set data(data: Object) {
-        this.id = data['id'] || this.id; 
-        this.organizationId = data['organizationId'] || this.organizationId;
-        this.metadata = data['metadata'] || this.metadata;
-        this.tags = data['tags'] || this.tags;
-    }
+    public abstract runJob(method:string, request:any, channelOrOpts?:Channel|RunJobOptions, opts?:RunJobOptions): PromiEvent<any>;
+    public abstract openChannel(amount:number, expiration: number, jobPromi?: PromiEvent): Promise<any>;
 
-    async init(): Promise<any> {
-        if(this.isInit) return this;
 
-        const svcReg = await this.account.registry.getServiceRegistrationById(this.organizationId, this.id);
+    protected DEFAULT_BASIC_OPTS = {
+        autohandle_channel: true, autohandle_escrow: false,
+        channel_topup_amount: null, channel_min_amount: null,
+        channel_topup_expiration: null, channel_min_expiration: null,
+        escrow_topup_amount: null, escrow_min_amount: null
+    };
 
-        this.data = {tags: svcReg.tags, metadata: await Ipfs.cat(svcReg.metadataURI)};
 
-        this.processProto(await this.getServiceProto(this.organizationId, this.id));
-
-        this.isInit = true;
-
-        return this;
-    }
-
-    protected async getServiceProto(organizationId: string, serviceId: string): Promise<object> {
+    public async getServiceProto(organizationId: string, serviceId: string): Promise<object> {
         const netId = await this.account.eth.getNetworkId();
         const network = NETWORK[netId].protobufjs;
         const url = encodeURI(network + organizationId + '/' +  serviceId);
     
         return (await axios.get(url)).data;
+    }
+
+    static init(account:Account, 
+        organizationId:string, serviceId:string, opts:InitOptions={init: true}): Promise<Service> | Service {
+
+        const svc = new ServiceSvc(account, organizationId,serviceId);
+        
+        if(opts.init) return svc.init();
+        else return svc;
     }
 }
 

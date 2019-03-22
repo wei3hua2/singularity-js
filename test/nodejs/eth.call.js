@@ -2,6 +2,7 @@ const c = require('chai');
 const m = require('mocha');
 const {Config} = require('../config/config');
 const {EthUtil} = require('../../dist/utils/eth');
+const {ERROR_CODES} = require('../../dist/errors');
 
 const AGITokenNetworks = require('singularitynet-token-contracts/networks/SingularityNetToken.json');
 const AGITokenAbi = require('singularitynet-token-contracts/abi/SingularityNetToken.json');
@@ -27,17 +28,21 @@ m.describe('eth-call', () => {
     const version = eth.getWeb3Version();
     const netId = await eth.getNetworkId();
     const blockNo = await eth.getBlockNumber();
-    const accounts = await eth.getAccounts();
 
     config.log('version  : ' + version);
     config.log('netId    : ' + netId);
-    config.log('accounts : ' + accounts);
     config.log('blockNo  : ' + blockNo);
 
     c.expect(version).to.have.string('1.0.0');
     c.expect(netId).to.equal(3);
-    c.expect(typeof accounts).to.equal('object');
     c.expect(blockNo).to.be.greaterThan(1000000);
+
+    try {
+      const account = await eth.getAccount();
+    }catch(err) {
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.eth_account_error);
+    }
   });
 
   m.it('should call token contract to get available tokens', async function () {

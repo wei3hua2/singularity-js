@@ -14,6 +14,13 @@ m.after( async () => {
 
 m.describe('service-state', () => {
 
+  m.it('should throw error for when not init', async function (){
+    // runJob
+    // openChannel
+  });
+
+  m.xit('should open a channel for snet example-service', async function (){});
+
   m.it('should run simple example-service job', async function () {
     const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
 
@@ -42,6 +49,4 @@ m.describe('service-state', () => {
     c.expect(result.value).to.be.equals(11);
 
   }).timeout(10 * 60 * 1000);
-
-
 })

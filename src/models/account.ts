@@ -1,14 +1,14 @@
 import {Data} from './index';
 import {Registry, Tokens, Mpe} from '../contracts';
 import {EthUtil, EventOptions} from '../utils/eth';
-import {ChannelSvc} from '../impls';
+import {ChannelSvc, AccountSvc} from '../impls';
 import PromiEvent from 'web3-core-promievent';
 import {Logger} from '../utils/logger';
 const log = Logger.logger();
 
 abstract class Account implements Data {
     address: string;
-    privateKey?: string;   
+    privateKey?: string;
 
     isInit: boolean = false;
 
@@ -18,68 +18,35 @@ abstract class Account implements Data {
     protected web3:any;
     public eth:EthUtil;
 
-    constructor(web3:any, opts:InitOptions={}) {
-        this.web3 = web3;
-        this.eth = new EthUtil(web3, opts.ethereum);
+    constructor(web3:any, opts:AccountInitOptions={}) {}
 
-        this.tokens = new Tokens(this);
-        this.mpe = new Mpe(this);
-        this.registry = new Registry(this);
-
-        this.data = opts;
-    }
-
-    set data(data: Object) {
-        this.address = data['address'] || this.address;
-        this.privateKey = data['privateKey'] || this.privateKey;
-    }
-
-    get data(): Object {
-        return {
-            address: this.address, privateKey: this.privateKey
-        };
-    }
-
-    async init(): Promise<Account> {
-        if(this.isInit) return this;
-
-        if(!this.address) this.address = (await this.eth.getAccounts())[0];
-        log.debug("address = " + this.address);
-
-        const ethInit = await this.eth.init();
-        log.debug("eth init");
-        const tokenSuccess = await this.tokens.init();
-        log.debug("tokens init");
-        const mpeSuccess = await this.mpe.init();
-        log.debug("mpe init");
-        const regSuccess = await this.registry.init();
-        log.debug("registry init");
-
-        this.isInit = tokenSuccess && mpeSuccess && regSuccess && ethInit;
-
-        return this;
-    }
+    public abstract init(): Promise<Account>;
+    public abstract get data():Object;
+    public abstract set data(data:Object);
 
     abstract getAgiTokens(opts?:{inCogs: boolean}): Promise<number>;
     abstract getEscrowBalances(opts?:{inCogs: boolean}): Promise<number>;
     abstract escrowAllowance(opts?: {inCogs: boolean}): Promise<number>;
-    abstract approveEscrow(amount: number, opts?: {inCogs: boolean}): PromiEvent<any>;
     abstract getChannels(opts?: EventOptions, initOpts?: {init:boolean}): Promise<ChannelSvc[]>;
+
+    abstract approveEscrow(amount: number, opts?: {inCogs: boolean}): PromiEvent<any>;
     abstract transfer(to:string|Account, amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
     abstract depositToEscrow(amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
     abstract withdrawFromEscrow(amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
 
-    public toString(): string {
-        return `*** Account : ${this.address}` +
-            `\ninit : ${this.isInit} `;
+    public static async create(web3:any, opts:AccountInitOptions={}): Promise<Account> {
+        const acct = new AccountSvc(web3, opts);
+        await acct.init();
+        
+        return acct;
     }
 }
 
-interface InitOptions {
+interface AccountInitOptions {
     address?: string;
     privateKey?: string;
     ethereum?: any;
 }
 
 
-export {Account, InitOptions}
+export {Account, AccountInitOptions}

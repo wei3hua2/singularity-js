@@ -1,53 +1,7 @@
-import {Data, RUN_JOB_STATE} from './index';
+import {Data, Account, RUN_JOB_STATE} from '.';
 import {Grpc} from './grpc';
-import {rpc, Method} from 'protobufjs';
-import {Account} from './account';
+import {SERVICE_STATE_JSON} from '../configs/service_state_json';
 import {PromiEvent} from 'web3-core-promievent';
-
-const SERVICE_STATE_JSON = {
-    "nested": {
-      "escrow": {
-        "nested": {
-          "PaymentChannelStateService": {
-            "methods": {
-              "GetChannelState": {
-                "requestType": "ChannelStateRequest",
-                "responseType": "ChannelStateReply"
-              }
-            }
-          },
-          "ChannelStateRequest": {
-            "fields": {
-              "channelId": {
-                "type": "bytes",
-                "id": 1
-              },
-              "signature": {
-                "type": "bytes",
-                "id": 2
-              }
-            }
-          },
-          "ChannelStateReply": {
-            "fields": {
-              "currentNonce": {
-                "type": "bytes",
-                "id": 1
-              },
-              "currentSignedAmount": {
-                "type": "bytes",
-                "id": 2
-              },
-              "currentSignature": {
-                "type": "bytes",
-                "id": 3
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 
 abstract class Channel implements Data {
     id:number;
@@ -121,87 +75,48 @@ abstract class Channel implements Data {
 }
 
 abstract class ChannelState extends Grpc implements Data {
-    PACKAGENAME = 'escrow';
-    SERVICENAME = 'PaymentChannelStateService';
-    GET_CHANNEL_STATE = 'GetChannelState';
-    FULLSERVICENAME = this.PACKAGENAME + '.' + this.SERVICENAME;
-
     endpoint:string;
-    channelId: string;
-    url: string;
+    channelId: number;
     currentSignature: string;
     currentNonce: number;
     currentSignedAmount: number;
+    account: Account;
 
     isInit: boolean = false;
-    channel:Channel;
 
-    constructor(web3:any, endpoint:string, channel:Channel) {
-        super(web3);
-        this.channel = channel;
-        this.data = {channelId: channel.id, endpoint: endpoint};
-        
-        this.processProto(SERVICE_STATE_JSON);
+    constructor(account:Account, endpoint:string, channelId:number) {
+      super();
+      this.endpoint = endpoint;
+      this.channelId = channelId;
+      this.account = account;
     }
 
-    set data (data: Object) {
-        this.endpoint = data['endpoint'] || this.endpoint;
-        this.url = data['url'] || this.url;
-        this.channelId = data['channelId'] || this.channelId;
-        this.currentSignature = data['currentSignature'] || this.currentSignature;
-        this.currentNonce = data['currentNonce'] || this.currentNonce;
-        this.currentSignedAmount = data['currentSignedAmount'] || this.currentSignedAmount;
-    }
-
-    get data () {
-        return {
-            channelId: this.channelId, endpoint: this.endpoint, url: this.url,
-            currentSignature: this.currentSignature, currentNonce: this.currentNonce,
-            currentSignedAmount: this.currentSignedAmount
-        };
-    }
+    abstract set data(data: Object);
+    abstract get data();
+    abstract signChannelId(promi?: PromiEvent): Promise<Uint8Array>;
 
     async init(promi?: PromiEvent): Promise<ChannelState> {
-        if(this.isInit) return this;
+      if(this.isInit) return this;
 
-        const byteschannelID = this.account.eth.numberToBytes(this.channel.id, 4);
-        const byteSig:Uint8Array = await this.signChannelId(promi);
-        const request = {"channelId":byteschannelID, "signature":byteSig};
+      this.initGrpc(SERVICE_STATE_JSON);
 
-        if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
-        
-        const channelResponse = await this.createService()['getChannelState'](request);
+      const byteschannelID = this.account.eth.numberToBytes(this.channelId, 4);
+      const byteSig:Uint8Array = await this.signChannelId(promi);
+      const request = {"channelId":byteschannelID, "signature":byteSig};
 
-        this.data = {
-            currentNonce: this.account.eth.bytesToNumber(channelResponse.currentNonce), 
-            currentSignedAmount: parseInt(this.account.eth.bytesToHex(channelResponse.currentSignedAmount))
-        };
+      if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
+      
+      const channelResponse = await this.createService()['getChannelState'](request);
 
-        this.isInit = true;
+      this.data = {
+          currentNonce: this.account.eth.bytesToNumber(channelResponse.currentNonce), 
+          currentSignedAmount: parseInt(this.account.eth.bytesToHex(channelResponse.currentSignedAmount))
+      };
 
-        return this;
-    }
+      this.isInit = true;
 
-    async signChannelId(promi?: PromiEvent): Promise<Uint8Array> {
-        const sha3Message: string = this.account.eth.soliditySha3({t: 'uint256', v: this.channel.id});
-        const privateKey: string = this.account.privateKey;
-        const opts = {privateKey: privateKey,address: this.account.address};
-        
-        if(promi) promi.emit('sign_channel_opts', opts);
-  
-        const signedPayload = await this.account.eth.sign(sha3Message, opts);
-  
-        if(promi) promi.emit('signed_channel', signedPayload);
-  
-        const signed = signedPayload.signature ? signedPayload.signature : signedPayload;
-        const stripped = signed.substring(2, signed.length);
-  
-        return new Uint8Array(stripped.match(/[\da-f]{2}/gi).map((h) => parseInt(h, 16)));
-    }
-
-    protected serviceUrl(method: Method): string {
-        return `${this.endpoint}/${this.FULLSERVICENAME}/${this.GET_CHANNEL_STATE}`;
-    }
+      return this;
+  }
 }
 
 

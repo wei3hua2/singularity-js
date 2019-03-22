@@ -1,10 +1,6 @@
-/**
- * @module account
- */
-
-import {Account, Data} from '../models';
-import {InitOptions} from '../models/account';
-import {TransactOptions, EventOptions} from '../utils/eth';
+import {Account, Data, AccountInitOptions} from '../models';
+import {Registry, Tokens, Mpe} from '../contracts';
+import {EthUtil, EventOptions} from '../utils/eth';
 import {ChannelSvc} from './channel';
 import * as BbPromise from 'bluebird';
 import {PromiEvent} from 'web3-core-promievent';
@@ -12,11 +8,47 @@ import {PromiEvent} from 'web3-core-promievent';
 
 class AccountSvc extends Account {
     
-    private constructor(web3:any, opts:InitOptions={}){
+    constructor(web3:any, opts:AccountInitOptions){
         super(web3, opts);
+        this.web3 = web3;
+        this.eth = new EthUtil(web3, opts);
+
+        this.tokens = new Tokens(this);
+        this.mpe = new Mpe(this);
+        this.registry = new Registry(this);
+
+        this.data = opts;
     }
 
-    ///////// call
+    get clientType(): string {
+        return this.eth.clientType;
+    }
+
+    async init(): Promise<Account> {
+        if(this.isInit) return this;
+
+        if(!this.address) this.address = await this.eth.getAccount();
+
+        const ethInit = await this.eth.init();
+        const tokenSuccess = await this.tokens.init();
+        const mpeSuccess = await this.mpe.init();
+        const regSuccess = await this.registry.init();
+
+        this.isInit = tokenSuccess && mpeSuccess && regSuccess && ethInit;
+
+        return this;
+    }
+
+    set data(data: Object) {
+        this.address = data['address'] || this.address;
+        this.privateKey = data['privateKey'] || this.privateKey;
+    }
+
+    get data(): Object {
+        return {
+            address: this.address, privateKey: this.privateKey
+        };
+    }
 
     get network(): Promise<string> {
         return this.eth.getNetwork();
@@ -80,17 +112,6 @@ class AccountSvc extends Account {
     private toAgis(cogs: number): number {
         return +((cogs / 100000000.0).toFixed(8));
     }
-
-    ///////// event
-
-
-    public static async create(web3:any, opts:InitOptions={}): Promise<AccountSvc> {
-        const acct = new AccountSvc(web3, opts);
-        await acct.init();
-        
-        return acct;
-    }
-
 }
 
 export {AccountSvc}

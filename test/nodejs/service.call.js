@@ -3,6 +3,7 @@ const m = require('mocha');
 const {Config} = require('../config/config');
 const {ServiceSvc, ChannelSvc, AccountSvc} = require('../../dist/impls');
 const {RUN_JOB_STATE} = require('../../dist/models/options');
+const {ERROR_CODES} = require('../../dist/errors');
 
 let config;
 m.before(async() => {
@@ -12,7 +13,61 @@ m.after( async () => {
   config.teardown();
 });
 
-m.describe('service-call', () => {
+m.describe.only('service-call', () => {
+
+  m.it('should throw error for when not init', async function (){
+    const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service', {init: false});
+    
+    c.expect(svc.data).to.be.deep.equal({id:'example-service',organizationId:'snet'});
+
+    try{ const gId = svc.groupId;}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ const gId = svc.paymentAddress;}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ const gId = svc.paymentExpirationThreshold;}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ const gId = svc.endpoint;}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ const gId = svc.price;}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ await svc.pingDaemonHeartbeat();}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ await svc.getDaemonEncoding();}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+    try{ await svc.getChannels();}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_metadata_not_init);
+    }
+
+    try{ svc.defaultRequest('add');}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_protobuf_not_init);
+    }
+    try{ svc.info();}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_protobuf_not_init);
+    }
+
+    try{ await svc.runJob('add',{a:1,b:4});}catch(err){
+      c.expect(err.name).to.be.equal('SnetError');
+      c.expect(err.code).to.be.equal(ERROR_CODES.svc_not_init);
+    }
+
+  });
 
   m.it('should get service channels for services', async () => {
     let svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
@@ -32,10 +87,10 @@ m.describe('service-call', () => {
     }
   });
 
-  m.it('should retrieve service info', async function() {
+  m.it('should retrieve snet example-service detailed info', async function() {
     const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
 
-    const info = await svc.info();
+    const info = svc.info();
     const name = info.name;
     const methods = info.methods;
 

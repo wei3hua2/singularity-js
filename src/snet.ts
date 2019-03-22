@@ -1,53 +1,35 @@
-/**
- * @module snet
- * @preferred
- * 
- * Main module. To instantiate other model, please use this module.
- */
-
-import {OrganizationSvc} from './impls/organization';
-import {AccountSvc} from './impls/account';
-import {ServiceSvc} from './impls/service';
-import {RunJobOptions} from './models';
+import {Organization, Account, Service, RunJobOptions, InitOptions} from './models';
+import {SnetError, ERROR_CODES} from './errors';
 import {Utils} from './utils';
 import PromiEvent from 'web3-core-promievent';
 
-/**
- * Main class of the library. To execute a job, instance has to be instantiate with the `init` static method.
- * 
- * 
- * ```typescript
- * import {Snet} from 'singularitynet-js';
- * 
- * const instance = Snet.init(web3)
- * 
- * ```
- */
 class Snet {
+    protected isInit: boolean;
     protected web3: any;
-    protected currentAccount: AccountSvc;
+    protected currentAccount: Account;
     protected _utils: Utils;
-    protected opts:InitOption;
+    protected opts:SnetInitOption;
 
-    /**
-     * @hidden
-     */
-    private constructor(web3:any, opts:InitOption={}) {
+    private constructor(web3:any, opts:SnetInitOption) {
         this.web3 = web3;
         this.opts = opts;
+        this.validateWeb3(this.web3);
     }
 
-    async init():Promise<boolean> {
+    async init():Promise<Snet> {
+        
+        if(this.isInit) return this;
+
         if(this.opts.privateKey && this.opts.address)
-            this.account = await AccountSvc.create(this.web3,{address:this.opts.address, privateKey:this.opts.privateKey});
+            this.account = await Account.create(this.web3,{address:this.opts.address, privateKey:this.opts.privateKey});
         else if(this.opts.ethereum)
-            this.account = await AccountSvc.create(this.web3,{ethereum: this.opts.ethereum});
+            this.account = await Account.create(this.web3,{ethereum: this.opts.ethereum});
         else
-            throw new Error('Init error');
+            throw new SnetError(ERROR_CODES.snet_init_params_not_found, this.web3, this.opts);
 
         this.utils = new Utils(this.account.eth);
         
-        return true;
+        return this;
     }
 
     get utils(): Utils {
@@ -56,87 +38,51 @@ class Snet {
     set utils(utils:Utils){
         this._utils = utils;
     }
-    get account(): AccountSvc {
+    get account(): Account {
         return this.currentAccount;
     }
-    set account(acct: AccountSvc){
+    set account(acct: Account){
         this.currentAccount = acct;
     }
 
-    /**
-     * List organizations available on the blockchain.
-     *
-     * @remarks
-     * Only id is populated. To get the detail, call the fetch method in [[OrganizationSvc]].
-     *
-     * @returns A list of organization.
-     *
-     */
-    async listOrganizations(opts:{init:boolean} = {init:false}): Promise<OrganizationSvc[]>{
-        return Array.from(await OrganizationSvc.listOrganizations(this.account, opts));
+    async listOrganizations(opts:InitOptions = {init:false}): Promise<Organization[]>{
+        return Array.from(await Organization.listOrganizations(this.account, opts));
     }
 
-    /**
-     * Get organization instance given an organization Id.
-     *
-     * @param OrganizationSvc Id. example: snet
-     * 
-     * @returns OrganizationSvc detail.
-     *
-     */
-    getOrganization(orgId:string, opts:{init:boolean} = {init:true}): Promise<OrganizationSvc> {
-        return OrganizationSvc.init(this.account, orgId, opts);
+    async getOrganization(orgId:string, opts:InitOptions = {init:true}): Promise<Organization> {
+        if(opts.init) return await Organization.init(this.account, orgId, opts);
+        else return Promise.resolve(Organization.init(this.account, orgId, opts));
     }
 
-
-    /**
-     * Get service instance given an organization and service Id.
-     *
-     * @param orgId example: snet
-     * @param serviceId example: example-service
-     * 
-     * @returns ServiceSvc detail.
-     *
-     */
-    async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<ServiceSvc> {
-        if(opts.init) return await ServiceSvc.init(this.account, orgId, serviceId, opts);
-        else return Promise.resolve(ServiceSvc.init(this.account, orgId, serviceId, opts));
+    async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<Service> {
+        if(opts.init) return await Service.init(this.account, orgId, serviceId, opts);
+        else return Promise.resolve(Service.init(this.account, orgId, serviceId, opts));
     }
 
-    /**
-     * 
-     * run job
-     * 
-     * @param orgId organization Id. example: snet
-     * @param serviceId service Id. example: example-service
-     * @param method method to run. example: add
-     * @param request payload for the method: example {a:1, b:3}
-     * @param opts Options for running a job
-     * 
-     * @returns PromiEvent. This is the object used for web3.js
-     * 
-     */
     runJob (orgId:string, serviceId:string, method:string, 
         request:any, opts:RunJobOptions= {}): PromiEvent {
 
-        const service = <PromiEvent>ServiceSvc.init(this.account, orgId, serviceId);
+        const service = <PromiEvent>Service.init(this.account, orgId, serviceId);
 
         return service.then((svc) => {
             return svc.runJob(method, request, opts);
         });
     }
 
+    private validateWeb3(web3) {
+        if(!web3)
+            throw new SnetError(ERROR_CODES.snet_invalid_web3, 'the web3 object not found');
+            
+        if(web3.constructor.name !== 'Web3')
+            throw new SnetError(ERROR_CODES.snet_invalid_web3, 'the web3 object is invalid');
+
+        if(web3.version && web3.version[0] !== '1')
+            throw new SnetError(ERROR_CODES.snet_invalid_web3, 'web3 version must be 1: ' + web3.version);
+        
+    }
 
 
-
-    /**
-     * 
-     * Initialize the main instance for Snet
-     * 
-     * @param web3 
-     * @param opts 
-     */
-    static async init (web3, opts:InitOption={}): Promise<Snet> {
+    static async init (web3, opts:SnetInitOption={}): Promise<Snet> {
         const snet = new Snet(web3, opts);
         await snet.init();
         
@@ -144,13 +90,12 @@ class Snet {
     }
 }
 
-class InitOption {
-    web3Provider?: string;
+class SnetInitOption {
     address?: string;
     privateKey?: string;
     ethereum?: any;
 }
 
 export {
-    Snet, InitOption
+    Snet, SnetInitOption
 };

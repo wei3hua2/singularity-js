@@ -3,41 +3,31 @@
  */
 
 import {SnetError} from '../errors/snet-error';
-import {Account} from './account';
 import { Root, NamespaceBase, Service, rpc, Type, Method } from 'protobufjs';
 import axios from 'axios';
 
-// const { ChunkParser, ChunkType } = require("grpc-web-client/dist/ChunkParser") 
 import { ChunkParser, ChunkType } from "grpc-web-client/dist/ChunkParser";
 
 
 abstract class Grpc {
-    public rootProtoBuf:NamespaceBase;
-    public protoModelArray: {[k:string]:NamespaceBase[]};
     public ServiceProto: Service;
-    public dataTypesProto: {[type:string]:Type};
-    public rawJsonProto: Object;
+    public protoDataTypes: {[type:string]:Type};
 
-    public account: Account;
+    public initGrpc(protoJson:Object) {
+        const rootProtoBuf = this.getRootNamespace(protoJson);
+        const protoModelArray = this.convertProtoToArray(rootProtoBuf);
 
-    constructor(account:Account) {
-        this.account = account;
-    }
-
-    processProto(protoJson:Object) : void {
-        this.rawJsonProto = protoJson;
-        this.rootProtoBuf = this.getRootNamespace(protoJson);
-        this.protoModelArray = this.convertProtoToArray(this.rootProtoBuf);
-
-        this.ServiceProto = <Service>this.protoModelArray['Service'][0];
-        this.dataTypesProto = this.getTypes(this.protoModelArray);
+        this.ServiceProto = <Service>protoModelArray['Service'][0];
+        this.protoDataTypes = this.getTypes(protoModelArray);
         
         if(!this.ServiceProto) throw new SnetError('proto_svc_not_found');
+
+        return this.ServiceProto;
     }
 
-    protected abstract serviceUrl(method: Method): string;
+    public abstract serviceUrl(method: Method): string;
     
-    protected createService(additionalHeaders:any={}): rpc.Service {
+    public createService(additionalHeaders:any={}): rpc.Service {
         
         return this.ServiceProto.create(
             (method:Method, requestObj, callback) => {
@@ -55,14 +45,14 @@ abstract class Grpc {
             }, false, false);
     }
 
-    private getTypes(protoArray): {[type:string]:Type} {
+    public getTypes(protoArray): {[type:string]:Type} {
         return protoArray['Type'].reduce( (result, t) => {
             result[t['name']] = t;
             return result;
         },{});
     }
 
-    private convertProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase[]} {
+    public convertProtoToArray(root:NamespaceBase): {[k:string]:NamespaceBase[]} {
         const proto = root['nestedArray'].reduce( (accumulator, ele) => {
             const type = ele.toString().split(' ')[0];
     
@@ -75,7 +65,7 @@ abstract class Grpc {
         return proto;
     }
 
-    private getRootNamespace(protoJson: Object) : NamespaceBase {
+    public getRootNamespace(protoJson: Object) : NamespaceBase {
         const rootPb = Array.isArray(protoJson) ? Root.fromJSON(protoJson[0]) : Root.fromJSON(protoJson);
 
         const nestedNamespace = rootPb['nestedArray'].find( (element) => {
@@ -86,7 +76,7 @@ abstract class Grpc {
         else return <NamespaceBase>nestedNamespace;
     }
 
-    protected frameRequest(bytes:any) {
+    public frameRequest(bytes:any) {
         const frame = new ArrayBuffer(bytes.byteLength + 5);
         new DataView(frame, 1, 4).setUint32(0, bytes.length, false);
         new Uint8Array(frame, 5).set(bytes);
@@ -94,7 +84,7 @@ abstract class Grpc {
         return new Uint8Array(frame);
     }
 
-    protected convertGrpcResponseChunk(response, callback) {
+    public convertGrpcResponseChunk(response, callback) {
         let errorMsg = null, chunkMessage;
         const status = response.statusText;
 

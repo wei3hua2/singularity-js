@@ -17,15 +17,13 @@ m.after(() => {
 
 m.describe('account-state', () => {
 
-    m.it('should deposit and withdraw tokens', async function () {
-        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
+    m.it('should deposit and withdraw tokens from escrow', async function () {
+        const acct = config.acct1
 
         // Handle allowance
 
         const allowance = await acct.escrowAllowance();
-
         config.log('current allowance : '+allowance);
-        c.expect(allowance).to.be.equal(0);
 
         const approve = await acct.approveEscrow(1.1);
         const approvedAllowance = await acct.escrowAllowance();
@@ -96,8 +94,8 @@ m.describe('account-state', () => {
     }).timeout(10 * 60 * 1000);
 
     m.it('should transfer test account tokens and back', async function () {
-        const acct = await AccountSvc.create(web31, {address:PERSONAL_ACCOUNT,privateKey:PERSONAL_ACCOUNT_PK});
-        const testAcct = await AccountSvc.create(web31, {address:TEST_ACCOUNT,privateKey:TEST_ACCOUNT_PK});
+        const acct = config.acct1
+        const testAcct = config.acct2;
 
         const originalAgiToken = await acct.getAgiTokens();
         const testAgiToken = await testAcct.getAgiTokens({inCogs: true});

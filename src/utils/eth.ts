@@ -5,22 +5,31 @@
 import * as EventEmitter from 'eventemitter3';
 import {PromiEvent} from 'web3-core-promievent';
 import {Base64} from 'js-base64';
-
+import {AccountInitOptions} from '../models';
 
 import {CONFIG} from '../configs/config';
 import {NETWORK} from '../configs/network';
-import { SnetError, ERROR_CODE } from '../errors/snet-error';
+import { SnetError, ERROR_CODES } from '../errors/snet-error';
 
 class EthUtil {
     web3: any;
     ethereum: any;
+    address: string;
+    privateKey: string;
     isVersion1Beyond: boolean;
     netId: number = -1;
+    public clientType: string; // browser or privatekey
 
-    constructor(web3: any, ethereum: any = null){
+    constructor(web3: any, opts: AccountInitOptions = {}){
         this.web3 = web3;
-        this.ethereum = ethereum;
+        this.ethereum = opts.ethereum;
+        this.address = opts.address;
+        this.privateKey = opts.privateKey;
+        
         this.isVersion1Beyond = !(this.getWeb3Version()[0] === '0');
+
+        if(this.ethereum) this.clientType = 'browser';
+        else if(this.address && this.privateKey) this.clientType = 'privatekey';
     }
 
     async init() {
@@ -38,17 +47,17 @@ class EthUtil {
         return contract.methods[method](...params).call();
     }
 
-    transact(privateKey:string, contract, method:string, toAddress:string, 
+    transact(contract, method:string, toAddress:string, 
                    txOptions:TransactOptions, ...params): PromiEvent {
         
         const contractMethod = contract.methods[method](...params);
         const from:string = txOptions.from;
-        if(!from) throw new SnetError(ERROR_CODE.eth_tx_error);
+        if(!from) throw new SnetError(ERROR_CODES.eth_tx_error, 'sender address not found');
 
-        if(privateKey) {
+        if(this.clientType === 'privatekey') {
             const promi = new PromiEvent();
 
-            this.signTx(privateKey, from, toAddress, contractMethod).then((result) => {
+            this.signTx(this.privateKey, from, toAddress, contractMethod).then((result) => {
                 promi.emit('signed', result);
                 const rawTransaction = result.signed['rawTransaction'];
 
@@ -61,7 +70,8 @@ class EthUtil {
             }).catch(error => promi.reject(error));
 
             return promi;
-        } else {
+
+        } else if(this.clientType === 'browser'){
             const promi = new PromiEvent();
 
             this.getGasInfo(contractMethod, from).then(gasInfo => {
@@ -77,7 +87,8 @@ class EthUtil {
             }).catch(err => promi.reject(err));
             
             return promi;
-        }
+
+        } else throw new SnetError(ERROR_CODES.eth_tx_error, 'No signing approach presented');
     }
 
     async getGasInfo(method, from:string): Promise<Object> {
@@ -140,7 +151,13 @@ class EthUtil {
 
     
     async getNetworkId(): Promise<number> {
-        if(this.netId < 0) this.netId = await this.web3.eth.net.getId();
+        try{
+            if(this.netId < 0) this.netId = await this.web3.eth.net.getId();
+        }catch(err) {
+            throw new SnetError(ERROR_CODES.eth_networkid_error, this.netId);
+        }
+        if(this.netId < 0) throw new SnetError(ERROR_CODES.eth_networkid_error, '');
+
 
         return this.netId;
     }
@@ -152,8 +169,18 @@ class EthUtil {
         return this.web3.eth.getBlockNumber();
     }
 
-    getAccounts(): Promise<string[]> {
-        return this.web3.eth.getAccounts();
+    async getAccount(): Promise<string> {
+        let accts = [];
+        try{
+            accts = await this.web3.eth.getAccounts();
+        }catch(err){
+            throw new SnetError(ERROR_CODES.eth_account_error, err.message);
+        }
+
+        if(accts.length === 0) throw new SnetError(ERROR_CODES.eth_account_error, 'no account found');
+        if(accts.length > 1) throw new SnetError(ERROR_CODES.eth_account_error, `multiple account found ${accts}`);
+
+        return accts[0];
     }
 
     hexToAscii(strVal: string): string { return this.web3.utils.hexToAscii(strVal); }

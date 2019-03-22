@@ -1,7 +1,6 @@
 import {Data} from './index';
-import {ServiceSvc} from '../impls/service';
-import {Account} from './account';
-import {Service} from './service';
+import {Account, Service, InitOptions} from '.';
+import {OrganizationSvc} from '../impls';
 import * as BbPromise from 'bluebird';
 
 abstract class Organization implements Data {
@@ -15,39 +14,30 @@ abstract class Organization implements Data {
 
     account: Account;
 
-    constructor(account:Account, id: string, fields:any= {}) {
-        this.account = account;
-        this.data = Object.assign({}, fields, {id: id});
+    constructor(account:Account, id: string, fields:any= {}) {}
+
+    public abstract init(): Promise<Organization>;
+    public abstract get data():Object;
+    public abstract set data(data:Object);
+    public abstract getService (serviceId: string) : Promise<Service>;
+    public abstract getServices (opts:InitOptions) : Promise<Service[]>;
+
+
+    static init(account:Account, id:string, opts:InitOptions={}) : Promise<Organization> | Organization {
+        const org = new OrganizationSvc(account, id, {});
+
+        if(opts.init) return org.init();
+        else return org;
     }
 
-    set data(data: Object) {
-        this.id = data['id'] || this.id;
-        this.owner = data['owner'] || this.owner;
-        this.name = data['name'] || this.name;
-        this.members = data['members'] || this.members;
+    static async listOrganizations(account:Account, opts:InitOptions={}) : Promise<Organization[]> {
+        const orgIds = await account.registry.listOrganizations();
 
-        const svcs = data['serviceIds'] ? 
-            data['serviceIds'].map((svcId) => ServiceSvc.init(this.account, this.id, svcId, {init:false})) : [];
-        this.services = svcs || this.services;
-    }
+        const orgs = orgIds.map((orgId) => new OrganizationSvc(account,orgId));
 
-    get data(): Object {
-        let d = {id: this.id};
+        if(opts.init) await BbPromise.each(orgs, (org) => org.init());
 
-        if(this.isInit) d = Object.assign(d, {
-            name: this.name, owner: this.owner, members: this.members, services: this.services}
-        );
-        return d;
-    }
-
-    async init(): Promise<any> {
-        if(this.isInit) return this;
-        
-        const fields = await this.account.registry.getOrganizationById(this.id);
-        this.data = fields;
-        this.isInit = true;
-        
-        return this;
+        return orgs;
     }
 }
 

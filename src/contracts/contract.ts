@@ -8,7 +8,7 @@ import {PromiEvent} from 'web3-core-promievent';
 import * as EventEmitter from 'eventemitter3';
 import {EthUtil} from '../utils/eth';
 import {Logger} from '../utils/logger';
-import {SnetError, ERROR_CODE} from '../errors/snet-error';
+import {SnetError, ERROR_CODES} from '../errors/snet-error';
 
 const log = Logger.logger();
 
@@ -33,15 +33,17 @@ abstract class Contract {
 
     async init():Promise<boolean> {
         if(!this.isInit) {
-            log.debug('contract.init > getNetworkId ');
             const netId = await this.eth.getNetworkId();
-            log.debug('contract.init >> getNetworkId : ' + netId);
-            
-            const contractInfo = this.getNetworkObj()[netId];
-            this.address = contractInfo.address;
-            const abi = this.getAbi();
 
-            this.contract = this.eth.getContract(abi, this.address);
+            try{
+                const contractInfo = this.getNetworkObj()[netId];
+                this.address = contractInfo.address;
+                const abi = this.getAbi();
+
+                this.contract = this.eth.getContract(abi, this.address);
+            }catch(err) {
+                throw new SnetError(ERROR_CODES.contract_init_error);
+            }
 
             this.isInit = true;
         }
@@ -69,9 +71,9 @@ abstract class Contract {
         log.debug(JSON.stringify(txOptions));
         log.debug(JSON.stringify(params));
 
-        return this.eth.transact(this.account.privateKey,
+        return this.eth.transact(
             this.contract, method, this.address, txOptions, ...params)
-            .catch(err => {throw new SnetError(ERROR_CODE.eth_tx_error, err.message)});
+            .catch(err => {throw new SnetError(ERROR_CODES.eth_tx_error, err.message)});
     }
 
     protected event(method: string, type: string, opts:EventOptions={}): EventEmitter | Promise<any> {
