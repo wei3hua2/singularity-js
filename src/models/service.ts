@@ -17,33 +17,38 @@ abstract class Service implements Data {
     isInit: boolean = false;
     isMetaInit: boolean = false;
     isProtoInit: boolean = false;
+    isRegistryInit: boolean = false;
 
     constructor(account: Account, organizationId:string, serviceId:string, fields?:any) {
         this.account = account;
     }
     
-    public abstract init(): Promise<Service>;
-    public abstract initMetadata(): Promise<Service>;
-    public abstract initProtoBuf(): Promise<Service>;
+    public abstract runJob(method:string, request:any, channelOrOpts?:Channel|RunJobOptions, opts?:RunJobOptions) : PromiEvent<any>;
     public abstract pingDaemonHeartbeat(): Promise<ServiceHeartbeat>;
     public abstract getDaemonEncoding(): Promise<string>;
-    public abstract getChannels(opts:{init:boolean}): Promise<Channel[]>;
+
+    public abstract init(): Promise<Service>;
+    public abstract initRegistry: () => Promise<Service>;
+    public abstract initMetadata:() => Promise<Service>;
+    public abstract initProtoBuf:() => Promise<Service>;
     
     public abstract get data():Object;
     public abstract set data(data:Object);
+
     public abstract get groupId():string;
     public abstract get paymentAddress():string;
     public abstract get paymentExpirationThreshold(): number;
     public abstract get endpoint(): string;
     public abstract get price(): number;
+    
     public abstract defaultRequest: (method: string) => Object;
     public abstract info:() => ServiceInfo;
 
-    public abstract runJob(method:string, request:any, channelOrOpts?:Channel|RunJobOptions, opts?:RunJobOptions): PromiEvent<any>;
-    public abstract openChannel(amount:number, expiration: number, jobPromi?: PromiEvent): Promise<any>;
+    public abstract openChannel: (amount:number, expiration: number, jobPromi?: PromiEvent) => Promise<any>;
+    public abstract getChannels: (opts:{init:boolean}) => Promise<Channel[]>;
 
 
-    protected DEFAULT_BASIC_OPTS = {
+    DEFAULT_BASIC_OPTS = {
         autohandle_channel: true, autohandle_escrow: false,
         channel_topup_amount: null, channel_min_amount: null,
         channel_topup_expiration: null, channel_min_expiration: null,
@@ -60,11 +65,14 @@ abstract class Service implements Data {
     }
 
     static init(account:Account, 
-        organizationId:string, serviceId:string, opts:InitOptions={init: true}): Promise<Service> | Service {
+        organizationId:string, serviceId:string, opts:SvcInitOptions={init: true}): Promise<Service> | Service {
 
         const svc = new ServiceSvc(account, organizationId,serviceId);
         
-        if(opts.init) return svc.init();
+
+        if(opts.init === 'registry') return svc.initRegistry();
+        else if(opts.init === 'metadata') return svc.initMetadata();
+        else if(opts.init === true) return svc.init();
         else return svc;
     }
 }
@@ -133,4 +141,12 @@ interface ServiceHeartbeat {
     }
 }
 
-export {Service, ServiceMetadata, ServiceFieldInfo, ServiceInfo, ServiceHeartbeat}
+interface SvcInitOptions {
+    init: string | boolean;
+}
+interface TopupOptions {
+    min_amount: number;
+    topup_amount: number;
+}
+
+export {Service, ServiceMetadata, ServiceFieldInfo, ServiceInfo, ServiceHeartbeat, SvcInitOptions, TopupOptions}

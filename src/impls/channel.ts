@@ -1,12 +1,11 @@
 import { Channel, ChannelState, Account, RUN_JOB_STATE } from '../models';
 import { SnetError, ERROR_CODES } from '../errors/snet-error';
-import { TransactOptions, EventOptions } from '../utils/eth';
 import  * as pb from 'protobufjs';
 import {PromiEvent} from 'web3-core-promievent';
 import {GET_CHANNEL_STATE, FULLSERVICENAME} from '../configs/service_state_json';
 
 class ChannelSvc extends Channel {
-    private constructor(account:Account, id: number, fields:any = {}) {
+    constructor(account:Account, id: number, fields:any = {}) {
         super(account, id, fields);
     }
 
@@ -31,35 +30,6 @@ class ChannelSvc extends Channel {
         return await this.account.mpe.channelClaimTimeout(this.id);
     }
 
-    static async retrieve(account:Account, channelId:number, init:boolean=true): Promise<Channel> {
-        const channel = new ChannelSvc(account, channelId);
-        if(init) await channel.init();
-
-        return channel;
-    }
-
-    static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
-        value:number, expiration:number):Promise<any> {
-
-        const blockNo = await account.eth.getBlockNumber();
-
-        await account.mpe.openChannel(signer, recipient, groupId, value, expiration);
-
-        const channels = await account.mpe.ChannelOpen('past', {
-            filter: {recipient: recipient, sender: signer, signer: signer, groupId: groupId},
-            fromBlock: blockNo
-        });
-        const channel = channels[0];
-        channel.value = channel.amount;
-        delete channel.amount;
-
-        return new ChannelSvc(account, channel.id, channel);
-    }
-
-    static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {
-        return account.mpe.allEvents(opts);
-    }
-    
 }
 
 class ChannelStateSvc extends ChannelState {

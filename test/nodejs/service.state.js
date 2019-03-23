@@ -12,7 +12,15 @@ m.after( async () => {
   config.teardown();
 });
 
-m.describe('service-state', () => {
+m.describe.only('service-state', () => {
+
+  m.it('should run example-service add job 5 + 8 = 13 with min params', async function () {
+    const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
+
+    const reply = await svc.runJob('add', {a:5, b:8});
+    
+    c.expect(reply.value).to.be.equal(13);
+  });
 
   m.it('should throw error for when not init', async function (){
     // runJob
@@ -21,7 +29,7 @@ m.describe('service-state', () => {
 
   m.xit('should open a channel for snet example-service', async function (){});
 
-  m.it('should run simple example-service job', async function () {
+  m.xit('should run simple example-service job', async function () {
     const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
 
     // const balance = await account.getEscrowBalances({inCogs:true});

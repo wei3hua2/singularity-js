@@ -1,7 +1,10 @@
 import {Data, Account, RUN_JOB_STATE} from '.';
+import {ChannelSvc} from '../impls';
 import {Grpc} from './grpc';
 import {SERVICE_STATE_JSON} from '../configs/service_state_json';
 import {PromiEvent} from 'web3-core-promievent';
+import { EventOptions } from '../utils/eth';
+import { SnetError, ERROR_CODES } from '../errors';
 
 abstract class Channel implements Data {
     id:number;
@@ -72,6 +75,36 @@ abstract class Channel implements Data {
     abstract extendAndAddFunds(newExpiration:number, amount:number): Promise<any>;
     abstract channelAddFunds(value:number):Promise<any>;
     abstract channelExtend(expiration:number):Promise<any>;
+
+
+    static async retrieve(account:Account, channelId:number, init:boolean=true): Promise<Channel> {
+        const channel = new ChannelSvc(account, channelId);
+        if(init) await channel.init();
+
+        return channel;
+    }
+
+    static async openChannel(account:Account,signer:string, recipient:string, groupId:string, 
+        value:number, expiration:number):Promise<any> {
+
+        const blockNo = await account.eth.getBlockNumber();
+
+        await account.mpe.openChannel(signer, recipient, groupId, value, expiration);
+
+        const channels = await account.mpe.ChannelOpen('past', {
+            filter: {recipient: recipient, sender: signer, signer: signer, groupId: groupId},
+            fromBlock: blockNo
+        });
+        const channel = channels[0];
+        channel.value = channel.amount;
+        delete channel.amount;
+
+        return new ChannelSvc(account, channel.id, channel);
+    }
+
+    static getAllEvents(account:Account, opts:EventOptions={}):Promise<any> {
+        return account.mpe.allEvents(opts);
+    }
 }
 
 abstract class ChannelState extends Grpc implements Data {
@@ -106,7 +139,12 @@ abstract class ChannelState extends Grpc implements Data {
 
       if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
       
-      const channelResponse = await this.createService()['getChannelState'](request);
+      let channelResponse;
+      try{
+        channelResponse = await this.createService()['getChannelState'](request);
+      }catch(err) {
+        throw new SnetError(ERROR_CODES.channelstate_svc_call_error, err.message);
+      }
 
       this.data = {
           currentNonce: this.account.eth.bytesToNumber(channelResponse.currentNonce), 
@@ -116,7 +154,7 @@ abstract class ChannelState extends Grpc implements Data {
       this.isInit = true;
 
       return this;
-  }
+    }
 }
 
 

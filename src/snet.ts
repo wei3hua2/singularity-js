@@ -1,4 +1,4 @@
-import {Organization, Account, Service, RunJobOptions, InitOptions} from './models';
+import {Organization, Account, Service, RunJobOptions, InitOptions, SvcInitOptions} from './models';
 import {SnetError, ERROR_CODES} from './errors';
 import {Utils} from './utils';
 import PromiEvent from 'web3-core-promievent';
@@ -54,7 +54,7 @@ class Snet {
         else return Promise.resolve(Organization.init(this.account, orgId, opts));
     }
 
-    async getService(orgId:string, serviceId:string, opts:{init:boolean} = {init:true}): Promise<Service> {
+    async getService(orgId:string, serviceId:string, opts:SvcInitOptions = {init:true}): Promise<Service> {
         if(opts.init) return await Service.init(this.account, orgId, serviceId, opts);
         else return Promise.resolve(Service.init(this.account, orgId, serviceId, opts));
     }

@@ -38,7 +38,8 @@ enum CONTRACT_ERROR_CODE {
     contract_init_error = "contract_init_error"
 }
 enum CHANNEL_ERROR_CODE {
-    channel_endpoint_not_found = 'channel_endpoint_not_found'
+    channel_endpoint_not_found = 'channel_endpoint_not_found',
+    channelstate_svc_call_error = 'channelstate_svc_call_error'
 }
 enum ORG_ERROR_CODE {
     org_id_not_found = "org_id_not_found",
@@ -89,6 +90,8 @@ function handleErrorCodeMessage(errorCode: string, params: any[]): string {
 
         // channel
         case ERROR_CODES.channel_endpoint_not_found: return `Channel ${params[0].id} endpoint not found`;
+        case ERROR_CODES.channelstate_svc_call_error: return `Can't get channel state : ${params[0]}`;
+        
 
         //Run job
         case ERROR_CODES.runjob_svc_call_error: 

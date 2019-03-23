@@ -1,5 +1,5 @@
 import {Data} from './index';
-import {Account, Service, InitOptions} from '.';
+import {Account, Service, InitOptions, SvcInitOptions} from '.';
 import {OrganizationSvc} from '../impls';
 import * as BbPromise from 'bluebird';
 
@@ -19,8 +19,8 @@ abstract class Organization implements Data {
     public abstract init(): Promise<Organization>;
     public abstract get data():Object;
     public abstract set data(data:Object);
-    public abstract getService (serviceId: string) : Promise<Service>;
-    public abstract getServices (opts:InitOptions) : Promise<Service[]>;
+    public abstract getService (serviceId: string, opts?:SvcInitOptions) : Promise<Service>;
+    public abstract getServices (opts:SvcInitOptions) : Promise<Service[]>;
 
 
     static init(account:Account, id:string, opts:InitOptions={}) : Promise<Organization> | Organization {

@@ -3,7 +3,7 @@
  */
 
  import * as BbPromise from 'bluebird';
-import {Organization, Account, Service, InitOptions} from '../models';
+import {Organization, Account, Service, SvcInitOptions} from '../models';
 import {SnetError} from '../errors/snet-error';
 
 class OrganizationSvc extends Organization {
@@ -43,11 +43,11 @@ class OrganizationSvc extends Organization {
         return d;
     }
 
-    async getService (serviceId: string) : Promise<Service> {
-        const svc = await Service.init(this.account, this.id, serviceId);
+    async getService (serviceId: string, opts:SvcInitOptions={init:true}) : Promise<Service> {
+        const svc = await Service.init(this.account, this.id, serviceId, opts);
         return svc;
     }
-    async getServices (opts:InitOptions={init:false}) : Promise<Service[]> {
+    async getServices (opts:SvcInitOptions={init:false}) : Promise<Service[]> {
         const svcIds:string[] = (await this.account.registry.listServicesForOrganization(this.id)).serviceIds;
         return await BbPromise.map(svcIds, (svcId) => Service.init(this.account, this.id, svcId, opts));
     }

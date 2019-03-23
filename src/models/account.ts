@@ -4,6 +4,7 @@ import {EthUtil, EventOptions} from '../utils/eth';
 import {ChannelSvc, AccountSvc} from '../impls';
 import PromiEvent from 'web3-core-promievent';
 import {Logger} from '../utils/logger';
+import { InitOptions } from './options';
 const log = Logger.logger();
 
 abstract class Account implements Data {
@@ -27,7 +28,7 @@ abstract class Account implements Data {
     abstract getAgiTokens(opts?:{inCogs: boolean}): Promise<number>;
     abstract getEscrowBalances(opts?:{inCogs: boolean}): Promise<number>;
     abstract escrowAllowance(opts?: {inCogs: boolean}): Promise<number>;
-    abstract getChannels(opts?: EventOptions, initOpts?: {init:boolean}): Promise<ChannelSvc[]>;
+    abstract getChannels(opts?: EventOptions, initOpts?: InitOptions): Promise<ChannelSvc[]>;
 
     abstract approveEscrow(amount: number, opts?: {inCogs: boolean}): PromiEvent<any>;
     abstract transfer(to:string|Account, amount:number, opts?:{inCogs: boolean}): PromiEvent<any>;
