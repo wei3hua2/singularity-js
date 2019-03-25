@@ -16,7 +16,7 @@ m.after(() => {
   config.teardown();
 })
 
-m.describe('snet-call', () => {
+m.describe.only('snet-call', () => {
 
   m.it('should have valid class', async function () {
     const snet = await Snet.init(config.web3, 
@@ -128,6 +128,8 @@ m.describe('snet-call', () => {
 
     c.expect(orgExampleSvc.data).to.be.deep.equal(exampleSvcDetail.data);
 
+    c.expect(orgExampleSvc.data).to.have.all.keys(['id','organizationId','tags','metadataURI','metadata', 'protoInfo']);
+
   });
 
   m.it('should get account information', async function () {
@@ -142,6 +144,21 @@ m.describe('snet-call', () => {
     const util = snet.utils;
 
     c.expect(util).to.exist;
+  });
+
+
+  m.it('for testing only', async function () {
+    const snet = await Snet.init(config.web3, {address:config.PERSONAL_ACCOUNT, privateKey:config.PERSONAL_ACCOUNT_PK});
+
+    const snetOrg = await snet.getOrganization('snet');
+
+    console.log('snet no of services : ' + snetOrg.services.length);
+    console.log(snetOrg.services.map(s=>s.data));
+
+
+    const svc = await snet.getService('snet', 'news-summary');
+    // console.log(svc.data);
+    console.log(svc.protoInfo);
   });
 
 })

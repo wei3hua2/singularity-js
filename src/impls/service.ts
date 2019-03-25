@@ -50,6 +50,11 @@ class ServiceSvc extends Service implements SvcGrpc, SvcRunJob, SvcRegistry, Svc
                 metadataURI: this.metadataURI, metadata: this.metadata
             });
         }
+        if(this.isProtoInit) {
+            d = Object.assign(d, {
+                protoInfo: this.protoInformation
+            });
+        }
         
         return d;
     }
@@ -59,6 +64,7 @@ class ServiceSvc extends Service implements SvcGrpc, SvcRunJob, SvcRegistry, Svc
         this.metadata = data['metadata'] || this.metadata;
         this.metadataURI = data['metadataURI'] || this.metadataURI;
         this.tags = data['tags'] || this.tags;
+        this.protoInformation = data['protoInfo'] || this.protoInformation;
     }
     public async init(): Promise<Service> {
         if(this.isInit) return this;
@@ -93,6 +99,10 @@ class ServiceSvc extends Service implements SvcGrpc, SvcRunJob, SvcRegistry, Svc
     public get price () {
         if(!this.isMetaInit) throw new SnetError(ERROR_CODES.svc_metadata_not_init);
         return this.metadata.pricing.price_in_cogs;
+    }
+    public get protoInfo () {
+        if(!this.isProtoInit) throw new SnetError(ERROR_CODES.svc_protobuf_not_init);
+        return this.protoInformation;
     }
 
     public runJob(method:string, request:any, channelOrOpts?:Channel|RunJobOptions, opts?:RunJobOptions): PromiEvent<any> {
@@ -217,8 +227,8 @@ class ServiceSvc extends Service implements SvcGrpc, SvcRunJob, SvcRegistry, Svc
     // method to override for mixin (service.grpc)
     public initProtoBuf: () => Promise<Service>;
     public defaultRequest: (method: string) => Object;
-    public info: () => ServiceInfo;
     
+    parseInfo: () => ServiceInfo;
     serviceUrl: (method: pb.Method) => string;
     ServiceProto: pb.Service;
     protoDataTypes: {[type:string]:pb.Type};

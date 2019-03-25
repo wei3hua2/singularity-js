@@ -12,7 +12,7 @@ m.after( async () => {
   config.teardown();
 });
 
-m.describe.only('service-state', () => {
+m.describe('service-state', () => {
 
   m.it('should run example-service add job 5 + 8 = 13 with min params', async function () {
     const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');

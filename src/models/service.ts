@@ -13,6 +13,7 @@ abstract class Service implements Data {
     metadata?: ServiceMetadata;
     metadataURI?: string
     tags?: string[];
+    protoInformation?: ServiceInfo;
 
     isInit: boolean = false;
     isMetaInit: boolean = false;
@@ -41,8 +42,9 @@ abstract class Service implements Data {
     public abstract get endpoint(): string;
     public abstract get price(): number;
     
+    public abstract get protoInfo(): ServiceInfo;
+
     public abstract defaultRequest: (method: string) => Object;
-    public abstract info:() => ServiceInfo;
 
     public abstract openChannel: (amount:number, expiration: number, jobPromi?: PromiEvent) => Promise<any>;
     public abstract getChannels: (opts:{init:boolean}) => Promise<Channel[]>;

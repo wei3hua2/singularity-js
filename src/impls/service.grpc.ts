@@ -16,6 +16,7 @@ abstract class SvcGrpc extends Grpc {
     endpoint: string;
     isProtoInit: boolean;
     price: number;
+    protoInformation?: ServiceInfo;
     
     account: Account;
 
@@ -28,6 +29,7 @@ abstract class SvcGrpc extends Grpc {
         
         const proto = await this.getServiceProto(this.organizationId, this.id);
         this.initGrpc(proto);
+        this.protoInformation = this.parseInfo();
         
         this.isProtoInit = true;
 
@@ -42,8 +44,7 @@ abstract class SvcGrpc extends Grpc {
 
         return type.toObject(type.fromObject({}), {defaults:true});
     }
-    public info(): ServiceInfo{
-        if(!this.isProtoInit) throw new SnetError(ERROR_CODES.svc_protobuf_not_init);
+    public parseInfo(): ServiceInfo{
         
         const methods = this.ServiceProto.methods;
         const types = this.protoDataTypes;
