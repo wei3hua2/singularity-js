@@ -2,7 +2,7 @@ import { Channel, ChannelState, Account, RUN_JOB_STATE } from '../models';
 import { SnetError, ERROR_CODES } from '../errors/snet-error';
 import  * as pb from 'protobufjs';
 import {PromiEvent} from 'web3-core-promievent';
-import {GET_CHANNEL_STATE, FULLSERVICENAME} from '../configs/service_state_json';
+import {SERVICE_STATE_JSON, GET_CHANNEL_STATE, FULLSERVICENAME} from '../configs/service_state_json';
 
 class ChannelSvc extends Channel {
     constructor(account:Account, id: number, fields:any = {}) {
@@ -37,6 +37,34 @@ class ChannelStateSvc extends ChannelState {
         super(account, endpoint, channelId);
     }
 
+    async init(promi?: PromiEvent): Promise<ChannelState> {
+        if(this.isInit) return this;
+  
+        this.initGrpc(SERVICE_STATE_JSON);
+  
+        const byteschannelID = this.account.eth.numberToBytes(this.channelId, 4);
+        const byteSig:Uint8Array = await this.signChannelId();
+        const request = {"channelId":byteschannelID, "signature":byteSig};
+  
+        if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
+        
+        let channelResponse;
+        try{
+          channelResponse = await this.createService()['getChannelState'](request);
+        }catch(err) {
+          throw new SnetError(ERROR_CODES.channelstate_svc_call_error, err.message);
+        }
+  
+        this.data = {
+            currentNonce: this.account.eth.bytesToNumber(channelResponse.currentNonce), 
+            currentSignedAmount: parseInt(this.account.eth.bytesToHex(channelResponse.currentSignedAmount))
+        };
+  
+        this.isInit = true;
+  
+        return this;
+      }
+
     set data (data: Object) {
         this.endpoint = data['endpoint'] || this.endpoint;
         this.channelId = data['channelId'] || this.channelId;
@@ -53,16 +81,12 @@ class ChannelStateSvc extends ChannelState {
         };
     }
 
-    async signChannelId(promi?: PromiEvent): Promise<Uint8Array> {
+    async signChannelId(): Promise<Uint8Array> {
         const sha3Message: string = this.account.eth.soliditySha3({t: 'uint256', v: this.channelId});
         const privateKey: string = this.account.privateKey;
-        const opts = {privateKey: privateKey,address: this.account.address};
-        
-        if(promi) promi.emit('sign_channel_opts', opts);
+        const opts = {privateKey: privateKey,address: this.account.address};      
   
         const signedPayload = await this.account.eth.sign(sha3Message, opts);
-  
-        if(promi) promi.emit('signed_channel', signedPayload);
   
         const signed = signedPayload.signature ? signedPayload.signature : signedPayload;
         const stripped = signed.substring(2, signed.length);

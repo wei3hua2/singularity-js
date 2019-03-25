@@ -1,10 +1,8 @@
 import {Data, Account, RUN_JOB_STATE} from '.';
 import {ChannelSvc} from '../impls';
 import {Grpc} from './grpc';
-import {SERVICE_STATE_JSON} from '../configs/service_state_json';
 import {PromiEvent} from 'web3-core-promievent';
 import { EventOptions } from '../utils/eth';
-import { SnetError, ERROR_CODES } from '../errors';
 
 abstract class Channel implements Data {
     id:number;
@@ -124,37 +122,13 @@ abstract class ChannelState extends Grpc implements Data {
       this.account = account;
     }
 
+    // abstract init()
+    abstract init(promi?: PromiEvent): Promise<ChannelState>;
     abstract set data(data: Object);
     abstract get data();
-    abstract signChannelId(promi?: PromiEvent): Promise<Uint8Array>;
+    abstract signChannelId(): Promise<Uint8Array>;
 
-    async init(promi?: PromiEvent): Promise<ChannelState> {
-      if(this.isInit) return this;
 
-      this.initGrpc(SERVICE_STATE_JSON);
-
-      const byteschannelID = this.account.eth.numberToBytes(this.channelId, 4);
-      const byteSig:Uint8Array = await this.signChannelId(promi);
-      const request = {"channelId":byteschannelID, "signature":byteSig};
-
-      if(promi) promi.emit(RUN_JOB_STATE.request_channel_state, request);
-      
-      let channelResponse;
-      try{
-        channelResponse = await this.createService()['getChannelState'](request);
-      }catch(err) {
-        throw new SnetError(ERROR_CODES.channelstate_svc_call_error, err.message);
-      }
-
-      this.data = {
-          currentNonce: this.account.eth.bytesToNumber(channelResponse.currentNonce), 
-          currentSignedAmount: parseInt(this.account.eth.bytesToHex(channelResponse.currentSignedAmount))
-      };
-
-      this.isInit = true;
-
-      return this;
-    }
 }
 
 

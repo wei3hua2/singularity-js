@@ -17,44 +17,53 @@ m.describe.only('service-state', () => {
   m.it('should run example-service add job 5 + 8 = 13 with min params', async function () {
     const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
 
-    const reply = await svc.runJob('add', {a:5, b:8});
-    
-    c.expect(reply.value).to.be.equal(13);
-  });
+    const reply = svc.runJob('add', {a:5, b:8});
 
-  m.it('should throw error for when not init', async function (){
-    // runJob
-    // openChannel
-  });
-
-  m.xit('should open a channel for snet example-service', async function (){});
-
-  m.xit('should run simple example-service job', async function () {
-    const svc = await ServiceSvc.init(config.acct1, 'snet', 'example-service');
-
-    // const balance = await account.getEscrowBalances({inCogs:true});
-    // config.log((balance);
-    // config.log((await account.withdrawFromEscrow(balance, {inCogs:true}));
-    // config.log((await account.getEscrowBalances({inCogs:true}));
-
-
-    const channel = await ChannelSvc.retrieve(config.acct1, 1218);
-    // config.log((channel.data);
-
-    const job = svc.runJob('add', {a:5, b:6}, channel, {channel_min_amount: 40})
-      .on('debug_update_options', d =>{ config.log(' - debug_update_options'); config.log(d); });
-
-    job.on('all_events', (evts) => {
-      log.info(' === '+evts[0]+' ===');
-      const result = evts[1];
-      if(result['request_channel_state']) result['request_channel_state'].signature = "* EXCLUDED *";
-      // if(evts[0] === 'request_svc_call') log.info(result);
+    reply.on('all_events', (evts) => {
+      if(evts[0] === 'reply_svc_call')
+        EXAMPLE_SERVICE_ALL_EVENTS_REPLY_SVC_CALL(evts[1]);
     });
+
+    reply.on('reply_svc_call', (result) => {
+      c.expect(result.value).to.be.equal(13);
+    });
+
+    reply.on('stats', (stats) => {
+      c.expect(stats).that.have.all.keys(['txs', 'time_taken','total_tx','total_gas','channel_id',
+      'channel_nonce','channel_signed_amount','request','response','escrow','agi','channel_value']);
+    })
+
+    const result = await reply;
     
-    job.on('stats', config.log);
-
-    const result = await job;
-    c.expect(result.value).to.be.equals(11);
-
-  }).timeout(10 * 60 * 1000);
+    c.expect(result.value).to.be.equal(13);
+  });
 })
+
+
+const EXAMPLE_SERVICE_ALL_EVENTS_REPLY_SVC_CALL = function (allEvts) {
+
+  c.expect(allEvts).to.have.all.keys(['request_available_channels','reply_available_channels',
+  'request_new_channel','reply_new_channel', 'resolved_channel','request_channel_state', 'reply_channel_state',
+  'checked_channel_validity', 'request_channel_extend_and_add_funds', 'reply_channel_extend_and_add_funds',
+  'request_channel_add_funds', 'reply_channel_add_funds', 'request_channel_extend_expiration', 'reply_channel_extend_expiration',
+  'request_svc_call','reply_svc_call']);
+
+  c.expect(allEvts.request_available_channels).to.be.true;
+  c.expect(allEvts.reply_available_channels.length).to.be.greaterThan(0);
+  c.expect(allEvts.request_new_channel).to.be.null;
+  c.expect(allEvts.reply_new_channel).to.be.null;
+  c.expect(allEvts.resolved_channel).to.have.all.keys(['id', 'sender','signer','recipient','groupId','value','expiration','endpoint']);
+  c.expect(allEvts.request_channel_state).to.have.all.keys(['channelId', 'signature']);
+  c.expect(allEvts.reply_channel_state).to.have.all.keys(['channelId', 'endpoint','currentSignedAmount']);
+  c.expect(allEvts.checked_channel_validity).to.have.all.keys(['options', 'validity']);
+  c.expect(allEvts.request_channel_extend_and_add_funds).to.be.null;
+  c.expect(allEvts.reply_channel_extend_and_add_funds).to.be.null;
+  c.expect(allEvts.request_channel_add_funds).to.be.null;
+  c.expect(allEvts.reply_channel_add_funds).to.be.null;
+  c.expect(allEvts.request_channel_extend_expiration).to.be.null;
+  c.expect(allEvts.reply_channel_extend_expiration).to.be.null;
+  
+  c.expect(allEvts.request_svc_call).to.have.all.keys(['header','body']);
+  c.expect(allEvts.reply_svc_call.value).to.be.equal(13);
+
+}
